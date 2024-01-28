@@ -1,0 +1,65 @@
+import { Logger } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import * as bodyParser from 'body-parser';
+import * as chalk from 'chalk';
+import * as compression from 'compression';
+import * as cookieParser from 'cookie-parser';
+import { cleanEnv, port, str } from 'envalid';
+import helmet from 'helmet';
+
+import { APP_SECRET, CREDENTIALS, HOST, ORIGIN, PORT } from './app.config';
+import { AppModule } from './app.module';
+import { HttpExceptionMiddleware } from './middlewares/http-exception.middlewave';
+
+async function bootstrap() {
+  try {
+    validateEnv();
+    const app = await NestFactory.create(AppModule, {
+      logger: ['error', 'warn', 'log', 'verbose'],
+      cors: {
+        origin: ORIGIN,
+        credentials: CREDENTIALS,
+      },
+    });
+    Logger.log(HOST, PORT);
+
+    Logger.log(`🚀 Environment: ${chalk.hex('#33d32e').bold(`Development`)}`);
+
+    app.use(helmet());
+    app.use(cookieParser(APP_SECRET));
+    app.use(compression());
+    app.use(bodyParser.json({ limit: '50mb' }));
+    app.use(
+      bodyParser.urlencoded({
+        limit: '50mb',
+        extended: true,
+        parameterLimit: 50000,
+      }),
+    );
+    // app.useGlobalInterceptors(new LoggingInterceptor());
+    // app.useGlobalInterceptors(new PrismaExceptionInterceptor());
+    app.useGlobalFilters(new HttpExceptionMiddleware());
+    app.setGlobalPrefix('api/v1');
+
+    await app.listen(PORT || 5000);
+
+    Logger.log(
+      `🪽 Server is listening on port ${chalk.hex('#87e8de').bold(`${PORT}`)}`,
+    );
+  } catch (error) {
+    Logger.error(`❌  Error starting server, ${error}`);
+    process.exit();
+  }
+}
+
+function validateEnv() {
+  cleanEnv(process.env, {
+    DATABASE_URL: str(),
+    PORT: port(),
+  });
+}
+
+bootstrap().catch((e) => {
+  Logger.error(`❌  Error starting server, ${e}`);
+  throw e;
+});
