@@ -39,7 +39,7 @@ async function bootstrap() {
     // app.useGlobalInterceptors(new LoggingInterceptor());
     // app.useGlobalInterceptors(new PrismaExceptionInterceptor());
     app.useGlobalFilters(new HttpExceptionMiddleware());
-    app.setGlobalPrefix('api/v1');
+    app.setGlobalPrefix('api');
 
     await app.listen(PORT || 5000);
 
@@ -54,7 +54,7 @@ async function bootstrap() {
 
 function validateEnv() {
   cleanEnv(process.env, {
-    DATABASE_URL: str(),
+    DATABASE_URL_DEV: str(),
     PORT: port(),
   });
 }

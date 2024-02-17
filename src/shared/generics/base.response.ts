@@ -1,11 +1,11 @@
 import { Nullable } from '../helpers/type.helper';
 
 export class BaseResponse<T> {
-  data: Nullable<T | null>;
+  metadata: { data: Nullable<T | null> };
   message: string;
 
   private constructor(data: Nullable<T>, message: string) {
-    this.data = data;
+    this.metadata = { data };
     this.message = message;
   }
 
@@ -19,5 +19,9 @@ export class BaseResponse<T> {
 
   public static ok<T>(): BaseResponse<Nullable<T>> {
     return new BaseResponse(null, 'OK');
+  }
+
+  public static withMessage<T>(data: T, message: string): BaseResponse<T> {
+    return new BaseResponse(data, message);
   }
 }

@@ -2,9 +2,11 @@ import { config } from 'dotenv';
 config({ path: `.env` });
 
 export const CREDENTIALS = process.env.CREDENTIALS === 'true';
+export const NODE_ENV = process.env.NODE_ENV;
+export const SALT_ROUNDS = Number(process.env.SALT_ROUNDS);
 
 export const {
-  DATABASE_URL,
+  DATABASE_URL_DEV,
   PORT,
   HOST,
   ORIGIN,
@@ -13,7 +15,6 @@ export const {
   JWT_REFRESH_TOKEN_SECRET,
   JWT_ACCESS_TOKEN_EXPIRES,
   JWT_REFRESH_TOKEN_EXPIRES,
-  SALT_ROUNDS,
   FIREBASE_PROJECT_ID,
   FIREBASE_CLIENT_EMAIL,
   FIREBASE_PRIVATE_KEY,
