@@ -8,8 +8,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ROLES } from 'src/shared/constants/role.constant';
-import { User } from '../user/schemas/user.schema';
+import { ROLE_NAME } from 'src/shared/enums/role-name.enum';
+import { User } from '../user/schema/user.schema';
 import { AuthService } from './auth.service';
 import { Roles } from './decorators/auth-role.decorator';
 import { AuthJwtATGuard } from './guards/auth-jwt-at.guard';
@@ -23,32 +23,38 @@ export class AuthController {
 
   @UseGuards(AuthGuard('local'))
   @Post('login')
-  async login(@Req() req) {
+  login(@Req() req) {
     const user: User = req.user;
     return this.authService.login(user);
   }
 
   @Post('signup')
-  async signup(@Body() body: AuthSignUpREQ) {
+  signup(@Body() body: AuthSignUpREQ) {
     return this.authService.signup(body);
   }
 
   @Post('forgetPassword')
-  async forgetPassword(@Body() body: ForgetPassREQ) {
+  forgetPassword(@Body() body: ForgetPassREQ) {
     return this.authService.forgetPassword(body);
   }
 
-  @Roles(ROLES.ADMIN, ROLES.USER, ROLES.SELLER, ROLES.MANAGER, ROLES.SHIPPER)
+  @Roles(
+    ROLE_NAME.ADMIN,
+    ROLE_NAME.USER,
+    ROLE_NAME.SELLER,
+    ROLE_NAME.MANAGER,
+    ROLE_NAME.SHIPPER,
+  )
   @UseGuards(AuthJwtATGuard)
   @Delete('logout')
-  async logout(@Req() req) {
+  logout(@Req() req) {
     const user = req.user;
     return this.authService.logout(user);
   }
 
   @UseGuards(AuthJwtRTGuard)
   @Get('refreshToken')
-  async refreshToken(@Req() req) {
+  refreshToken(@Req() req) {
     const { userId, refreshToken } = req.user;
     return this.authService.refreshToken(userId, refreshToken);
   }

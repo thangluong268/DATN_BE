@@ -9,7 +9,9 @@ import helmet from 'helmet';
 
 import { APP_SECRET, CREDENTIALS, HOST, ORIGIN, PORT } from './app.config';
 import { AppModule } from './app.module';
+import { SocketIoAdapter } from './domains/conversations/conversation.adapter';
 import { HttpExceptionMiddleware } from './middlewares/http-exception.middlewave';
+import { ValidationCustomPipe } from './pipes/validation-custom.pipe';
 
 async function bootstrap() {
   try {
@@ -36,10 +38,11 @@ async function bootstrap() {
         parameterLimit: 50000,
       }),
     );
-    // app.useGlobalInterceptors(new LoggingInterceptor());
-    // app.useGlobalInterceptors(new PrismaExceptionInterceptor());
+    app.useGlobalPipes(ValidationCustomPipe.compactVersion());
     app.useGlobalFilters(new HttpExceptionMiddleware());
     app.setGlobalPrefix('api');
+
+    app.useWebSocketAdapter(new SocketIoAdapter(app));
 
     await app.listen(PORT || 5000);
 

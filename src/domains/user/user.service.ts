@@ -1,12 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { Connection, Model } from 'mongoose';
 import { SALT_ROUNDS } from 'src/app.config';
-import { ROLES } from 'src/shared/constants/role.constant';
+import { ROLE_NAME } from 'src/shared/enums/role-name.enum';
+import { BaseResponse } from 'src/shared/generics/base.response';
 import { ForgetPassREQ } from '../auth/request/forget-password.request';
 import { AuthSignUpREQ } from '../auth/request/sign-up.request';
-import { User } from './schemas/user.schema';
+import { UserUpdateREQ } from './request/user-update.request';
+import { User } from './schema/user.schema';
 
 @Injectable()
 export class UserService {
@@ -22,18 +24,22 @@ export class UserService {
     const newUser = await this.userModel.create(body);
     newUser.avatar =
       'https://res.cloudinary.com/dl3b2j3td/image/upload/v1702564956/TLCN/ov6t50kl5npfmwfopzrk.png';
-    newUser.role = [ROLES.USER];
+    newUser.role = [ROLE_NAME.USER];
     await newUser.save();
 
     return User.toDocModel(newUser);
   }
 
   async findById(id: string) {
-    return await this.userModel.findById(id, {}, { lean: true });
+    const user = await this.userModel.findById(id, {}, { lean: true });
+    user?.address?.sort((a, b) => (b.default ? 1 : -1) - (a.default ? 1 : -1));
+    return user;
   }
 
   async findOneByEmail(email: string) {
-    return await this.userModel.findOne({ email }, {}, { lean: true });
+    const user = await this.userModel.findOne({ email }, {}, { lean: true });
+    user?.address?.sort((a, b) => (b.default ? 1 : -1) - (a.default ? 1 : -1));
+    return user;
   }
 
   async updatePassword(body: ForgetPassREQ) {
@@ -44,5 +50,27 @@ export class UserService {
       { password: hashedPassword },
       { lean: true, new: true },
     );
+  }
+
+  async updateById(id: string, body: UserUpdateREQ, user: User) {
+    if (user.role.includes(ROLE_NAME.USER) && user._id.toString() !== id) {
+      return new ForbiddenException(
+        'Bạn không có quyền cập nhật thông tin người dùng khác!',
+      );
+    }
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      id,
+      { ...body },
+      { lean: true, new: true },
+    );
+    return BaseResponse.withMessage<User>(
+      User.toDocModel(updatedUser),
+      'Cập nhật thông tin thành công!',
+    );
+  }
+
+  async getDetail(id: string) {
+    const user = await this.findById(id);
+    return BaseResponse.withMessage<User>(user, 'Lấy thông tin thành công!');
   }
 }

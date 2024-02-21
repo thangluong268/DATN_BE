@@ -1,4 +1,4 @@
-import { User } from 'src/domains/user/schemas/user.schema';
+import { User } from 'src/domains/user/schema/user.schema';
 import { TokenRESP } from './token.response';
 
 export class AuthLoginRESP {
@@ -6,7 +6,7 @@ export class AuthLoginRESP {
   stsTokenManager: TokenRESP;
   role: string[];
 
-  static fromUser(user: User, tokens: TokenRESP): AuthLoginRESP {
+  static of(user: User, tokens: TokenRESP): AuthLoginRESP {
     delete user.password;
     delete user['createdAt'];
     delete user['updatedAt'];

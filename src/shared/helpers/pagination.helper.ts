@@ -1,12 +1,13 @@
 export class QueryPagingHelper {
-  static queryPaging({ pageSize, pageNumber }): {
-    take?: number;
-    skip?: number;
+  static queryPaging({ page, limit }): {
+    skip: number;
+    limit: number;
   } {
-    if (!pageNumber || !pageSize) return {};
+    if (!page) page = 1;
+    if (!limit) limit = 5;
     return {
-      skip: (pageNumber - 1) * pageSize,
-      take: pageSize,
+      skip: (page - 1) * limit,
+      limit,
     };
   }
 }

@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import * as bcrypt from 'bcrypt';
 import { Strategy } from 'passport-local';
-import { User } from 'src/domains/user/schemas/user.schema';
+import { User } from 'src/domains/user/schema/user.schema';
 import { UserService } from 'src/domains/user/user.service';
 
 @Injectable()

@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types, UpdateWriteOpResult } from 'mongoose';
 
 @Schema({
   versionKey: false,
@@ -10,7 +10,18 @@ export class UserOTP extends Document {
   email: string;
 
   @Prop({ required: true })
-  otp: number;
+  otp: string;
+
+  static toDocModel(
+    userOTP:
+      | (Document<unknown, `object`, UserOTP> &
+          UserOTP & {
+            _id: Types.ObjectId;
+          })
+      | UpdateWriteOpResult,
+  ): UserOTP {
+    return userOTP['_doc'] ? userOTP['_doc'] : userOTP;
+  }
 }
 
 export const UserOTPSchema = SchemaFactory.createForClass(UserOTP);

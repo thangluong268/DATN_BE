@@ -4,15 +4,12 @@ export function PasswordValidator() {
   return function (object: object, propertyName: string) {
     IsString({ message: 'password must be a string' })(object, propertyName);
     Length(6, 20, {
-      message: 'password should be between 6 and 20 characters',
+      message: 'Mật khẩu phải từ 6 đến 20 ký tự',
     })(object, propertyName);
-    Matches(
-      /^(?=.*[a-zA-Z])(?=.*[0-9])[a-zA-Z0-9!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]*$/,
-      {
-        message:
-          'password should contain a combination of English letters and numbers with optional special characters',
-        each: true,
-      },
-    )(object, propertyName);
+    Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z])/, {
+      message:
+        'Mật khẩu chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt',
+      each: true,
+    })(object, propertyName);
   };
 }

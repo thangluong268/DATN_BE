@@ -5,12 +5,12 @@ export class PaginationREQ {
   @IsNumber()
   @IsOptional()
   @Min(1)
-  @Transform(({ value }) => value && parseInt(value))
-  pageSize: number;
+  @Transform(({ value }) => (value ? parseInt(value) : 1))
+  page: number;
 
   @IsNumber()
   @IsOptional()
-  @Transform(({ value }) => value && parseInt(value))
+  @Transform(({ value }) => (value ? parseInt(value) : 5))
   @Min(1)
-  pageNumber: number;
+  limit: number;
 }

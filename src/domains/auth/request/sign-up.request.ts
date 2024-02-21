@@ -1,4 +1,5 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { PasswordValidator } from 'src/shared/validators/password.validator';
 
 export class AuthSignUpREQ {
   @IsNotEmpty()
@@ -9,7 +10,6 @@ export class AuthSignUpREQ {
   @IsEmail({}, { message: 'Email is invalid' })
   email: string;
 
-  @IsNotEmpty()
-  @MinLength(6)
+  @PasswordValidator()
   password: string;
 }

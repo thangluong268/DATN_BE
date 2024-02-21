@@ -13,7 +13,7 @@ import {
 } from 'src/app.config';
 import { BaseResponse } from 'src/shared/generics/base.response';
 import { UserTokenService } from '../user-token/user-token.service';
-import { User } from '../user/schemas/user.schema';
+import { User } from '../user/schema/user.schema';
 import { UserService } from '../user/user.service';
 import { ForgetPassREQ } from './request/forget-password.request';
 import { AuthSignUpREQ } from './request/sign-up.request';
@@ -35,7 +35,7 @@ export class AuthService {
     const tokens = await this.getTokens(payload);
     await this.userTokenService.upsert(user._id, tokens.refreshToken);
     return BaseResponse.withMessage<AuthLoginRESP>(
-      AuthLoginRESP.fromUser(user, tokens),
+      AuthLoginRESP.of(user, tokens),
       'Đăng nhập thành công!',
     );
   }
@@ -48,7 +48,7 @@ export class AuthService {
     const tokens = await this.getTokens(payload);
     await this.userTokenService.upsert(newUser._id, tokens.refreshToken);
     return BaseResponse.withMessage<AuthSignUpRESP>(
-      AuthSignUpRESP.fromUser(newUser),
+      AuthSignUpRESP.of(newUser),
       'Đăng ký thành công!',
     );
   }
