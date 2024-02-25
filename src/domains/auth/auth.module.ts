@@ -7,6 +7,8 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtATStrategy } from './strategies/auth-jwt-at.strategy';
 import { JwtRTStrategy } from './strategies/auth-jwt-rt.strategy';
+import { FacebookStrategy } from './strategies/facebook.strategy';
+import { GoogleStrategy } from './strategies/google.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 
 @Module({
@@ -18,6 +20,8 @@ import { LocalStrategy } from './strategies/local.strategy';
     JwtRTStrategy,
     LocalStrategy,
     JwtHelper,
+    GoogleStrategy,
+    FacebookStrategy,
   ],
   exports: [JwtHelper],
 })

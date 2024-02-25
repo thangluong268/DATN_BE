@@ -118,22 +118,22 @@ export class ConversationGateway
     });
   }
 
-  @SubscribeMessage(WS_EVENT.IS_ONLINE)
-  async isOnline(
-    @ConnectedSocket() client: AuthSocket,
-    @MessageBody('isOnline') isOnline: boolean,
-  ) {
-    const userId = client.userId;
-    const user = await this.userService.findById(userId);
-    const conversation = await this.conversationService.findOneByParticipants(
-      userId,
-      body.receiverId,
-    );
-    client.broadcast.to(conversation._id).emit(WS_EVENT.IS_TYPING, {
-      userName: user.fullName,
-      isTyping: body.isTyping,
-    });
-  }
+  // @SubscribeMessage(WS_EVENT.IS_ONLINE)
+  // async isOnline(
+  //   @ConnectedSocket() client: AuthSocket,
+  //   @MessageBody('isOnline') isOnline: boolean,
+  // ) {
+  //   const userId = client.userId;
+  //   const user = await this.userService.findById(userId);
+  //   const conversation = await this.conversationService.findOneByParticipants(
+  //     userId,
+  //     body.receiverId,
+  //   );
+  //   client.broadcast.to(conversation._id).emit(WS_EVENT.IS_TYPING, {
+  //     userName: user.fullName,
+  //     isTyping: body.isTyping,
+  //   });
+  // }
 
   async handleConnection(client: Socket): Promise<void> {
     this.logger.log(`WS Client with id: ${client.id} connected!`);

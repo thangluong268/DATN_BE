@@ -30,6 +30,17 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
+  async loginWithGoogle(req) {
+    if (!req.user) {
+      return 'No user from google';
+    }
+
+    return {
+      message: 'User information from google',
+      user: req.user,
+    };
+  }
+
   async login(user: User) {
     const payload = { userId: user._id };
     const tokens = await this.getTokens(payload);
