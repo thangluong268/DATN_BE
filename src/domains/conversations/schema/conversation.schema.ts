@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, FlattenMaps, Types, UpdateWriteOpResult } from 'mongoose';
-import { CONVERSATION_RELATIONSHIP } from 'src/shared/enums/conversation.enum';
 
 @Schema({
   versionKey: false,
@@ -9,9 +8,6 @@ import { CONVERSATION_RELATIONSHIP } from 'src/shared/enums/conversation.enum';
 export class Conversation extends Document {
   @Prop({ type: [String] })
   participants: string[];
-
-  @Prop({ enum: CONVERSATION_RELATIONSHIP })
-  relationship: CONVERSATION_RELATIONSHIP;
 
   static toDocModel(
     conversation:

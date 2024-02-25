@@ -4,7 +4,7 @@ export class QueryPagingHelper {
     limit: number;
   } {
     if (!page) page = 1;
-    if (!limit) limit = 5;
+    if (!limit) limit = 10;
     return {
       skip: (page - 1) * limit,
       limit,
