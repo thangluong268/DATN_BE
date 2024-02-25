@@ -12,7 +12,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(email: string, password: string): Promise<User> {
-    const user = await this.userService.findOneByEmail(email);
+    const user = await this.userService.findOneByEmailSystem(email);
     if (!user)
       throw new BadRequestException('Email hoặc mật khẩu không chính xác!');
     const isMatch = await bcrypt.compare(password, user.password);

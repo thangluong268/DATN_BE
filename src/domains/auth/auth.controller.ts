@@ -62,7 +62,7 @@ export class AuthController {
     return this.authService.refreshToken(userId, refreshToken);
   }
 
-  @Get('google')
+  @Get('login/google')
   @UseGuards(GoogleOAuthGuard)
   async googleLogin(): Promise<any> {
     return HttpStatus.OK;
@@ -70,22 +70,19 @@ export class AuthController {
 
   @Get('login/oauth2/google')
   @UseGuards(GoogleOAuthGuard)
-  googleAuthRedirect(@Req() req) {
-    return this.authService.loginWithGoogle(req);
+  googleLoginRedirect(@Req() req) {
+    return this.authService.loginWithSocial(req);
   }
 
-  @Get('facebook')
+  @Get('login/facebook')
   @UseGuards(FacebookOAuthGuard)
   async facebookLogin(): Promise<any> {
     return HttpStatus.OK;
   }
 
-  @Get('login/facebook')
+  @Get('login/facebook/redirect')
   @UseGuards(FacebookOAuthGuard)
-  async facebookLoginRedirect(@Req() req): Promise<any> {
-    return {
-      statusCode: HttpStatus.OK,
-      data: req.user,
-    };
+  async facebookLoginRedirect(@Req() req) {
+    return this.authService.loginWithSocial(req);
   }
 }

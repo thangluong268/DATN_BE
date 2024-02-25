@@ -1,0 +1,4 @@
+export enum SOCIAL_APP {
+  GOOGLE = 'GOOGLE',
+  FACEBOOK = 'FACEBOOK',
+}

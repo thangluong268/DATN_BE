@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IsNotEmpty, IsOptional } from 'class-validator';
 import { Document, FlattenMaps, Types, UpdateWriteOpResult } from 'mongoose';
+import { SOCIAL_APP } from 'src/shared/constants/user.constant';
 import { ROLE_NAME } from 'src/shared/enums/role-name.enum';
 
 export class AddressProfile {
@@ -25,13 +26,13 @@ export class User extends Document {
   @Prop({ type: String })
   avatar: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String })
   fullName: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String })
   email: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String })
   password: string;
 
   @Prop({ type: [Object] })
@@ -43,8 +44,8 @@ export class User extends Document {
   @Prop({ type: String })
   gender: string;
 
-  @Prop({ type: String })
-  birthday: string;
+  @Prop({ type: Date })
+  birthday: Date;
 
   @Prop({ type: [String], enum: ROLE_NAME, default: [] })
   role: ROLE_NAME[];
@@ -64,8 +65,11 @@ export class User extends Document {
   @Prop({ type: String, default: 'true' })
   status: string;
 
-  @Prop({ type: Boolean, default: 'false' })
-  isSocial: boolean;
+  @Prop({ type: String })
+  socialId: string;
+
+  @Prop({ type: String, enum: SOCIAL_APP })
+  socialApp: SOCIAL_APP;
 
   static toDocModel(
     user:

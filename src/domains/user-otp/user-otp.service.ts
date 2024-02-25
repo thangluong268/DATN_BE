@@ -24,7 +24,7 @@ export class UserOTPService {
 
   async sendOTP(body: SendOTPREQ) {
     const email = body.email;
-    const user = await this.userService.findOneByEmail(email);
+    const user = await this.userService.findOneByEmailSystem(email);
     if (user) {
       throw new ConflictException('Email đã tồn tại!');
     }
@@ -49,12 +49,9 @@ export class UserOTPService {
 
   async sendOTPForget(body: SendOTPREQ) {
     const email = body.email;
-    const user = await this.userService.findOneByEmail(email);
+    const user = await this.userService.findOneByEmailSystem(email);
     if (!user) {
       throw new NotFoundException('Email không tồn tại!');
-    }
-    if (user.isSocial) {
-      throw new BadRequestException('Tài khoản thuộc quyền quản lý của Google');
     }
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     this.mailService.sendOTP(email, otp);

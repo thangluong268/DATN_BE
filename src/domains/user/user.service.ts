@@ -3,6 +3,7 @@ import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { Connection, Model } from 'mongoose';
 import { SALT_ROUNDS } from 'src/app.config';
+import { SOCIAL_APP } from 'src/shared/constants/user.constant';
 import { ROLE_NAME } from 'src/shared/enums/role-name.enum';
 import { BaseResponse } from 'src/shared/generics/base.response';
 import { ForgetPassREQ } from '../auth/request/forget-password.request';
@@ -17,7 +18,7 @@ export class UserService {
     @InjectConnection() private readonly connection: Connection,
   ) {}
 
-  async createUser(body: AuthSignUpREQ) {
+  async createUserSystem(body: AuthSignUpREQ) {
     const hashedPassword = await bcrypt.hash(body.password, SALT_ROUNDS);
     body.password = hashedPassword;
 
@@ -25,7 +26,18 @@ export class UserService {
     newUser.avatar =
       'https://res.cloudinary.com/dl3b2j3td/image/upload/v1702564956/TLCN/ov6t50kl5npfmwfopzrk.png';
     newUser.role = [ROLE_NAME.USER];
+    newUser.socialId = null;
+    newUser.socialApp = null;
     await newUser.save();
+
+    return User.toDocModel(newUser);
+  }
+
+  async createUserSocial(body: any) {
+    const newUser = await this.userModel.create({
+      ...body,
+      role: [ROLE_NAME.USER],
+    });
 
     return User.toDocModel(newUser);
   }
@@ -36,8 +48,26 @@ export class UserService {
     return user;
   }
 
-  async findOneByEmail(email: string) {
-    const user = await this.userModel.findOne({ email }, {}, { lean: true });
+  async findOneByEmailSystem(email: string) {
+    const user = await this.userModel.findOne(
+      { email, socialId: null, socialApp: null },
+      {},
+      { lean: true },
+    );
+    user?.address?.sort((a, b) => (b.default ? 1 : -1) - (a.default ? 1 : -1));
+    return user;
+  }
+
+  async findOneBySocial(
+    email: string,
+    socialId: string,
+    socialApp: SOCIAL_APP,
+  ) {
+    const user = await this.userModel.findOne(
+      { email, socialId, socialApp },
+      {},
+      { lean: true },
+    );
     user?.address?.sort((a, b) => (b.default ? 1 : -1) - (a.default ? 1 : -1));
     return user;
   }

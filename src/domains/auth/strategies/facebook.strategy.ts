@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-facebook';
 import { FACEBOOK_CLIENT_ID, FACEBOOK_CLIENT_SECRET } from 'src/app.config';
+import { SOCIAL_APP } from 'src/shared/constants/user.constant';
 
 @Injectable()
 export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
@@ -9,13 +10,12 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
     super({
       clientID: FACEBOOK_CLIENT_ID,
       clientSecret: FACEBOOK_CLIENT_SECRET,
-      callbackURL: 'http://localhost:5000/api/auth/login/facebook',
+      callbackURL: 'http://localhost:5000/api/auth/login/facebook/redirect',
       scope: ['email'],
       profileFields: [
         'emails',
         'name',
         'picture.type(large)',
-        'location',
         'birthday',
         'displayName',
         'gender',
@@ -29,20 +29,19 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
     profile: any,
     done: any,
   ): Promise<any> {
-    console.log(accessToken);
-    console.log(profile);
-    const { name, emails, photos } = profile;
+    if (!profile || !accessToken) {
+      return done('No user from facebook', null);
+    }
+    const { id, displayName, gender, _json, emails } = profile;
     const user = {
+      socialId: id,
       email: emails[0].value,
-      firstName: name.givenName,
-      lastName: name.familyName,
-      picture: photos[0].value,
-    };
-    const payload = {
-      user,
-      accessToken,
+      fullName: displayName,
+      gender,
+      birthday: new Date(_json.birthday),
+      socialApp: SOCIAL_APP.FACEBOOK,
     };
 
-    done(null, payload);
+    done(null, user);
   }
 }

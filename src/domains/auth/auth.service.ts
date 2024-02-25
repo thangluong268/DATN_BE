@@ -30,15 +30,25 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async loginWithGoogle(req) {
+  async loginWithSocial(req) {
     if (!req.user) {
-      return 'No user from google';
+      return `No user from ${req.user.socialApp}`;
     }
 
-    return {
-      message: 'User information from google',
-      user: req.user,
-    };
+    const { email, socialId, socialApp } = req.user;
+
+    const user = await this.userService.findOneBySocial(
+      email,
+      socialId,
+      socialApp,
+    );
+
+    if (!user) {
+      const newUser = await this.userService.createUserSocial(req.user);
+      return await this.login(newUser);
+    }
+
+    return await this.login(user);
   }
 
   async login(user: User) {
@@ -52,9 +62,9 @@ export class AuthService {
   }
 
   async signup(body: AuthSignUpREQ) {
-    const user = await this.userService.findOneByEmail(body.email);
+    const user = await this.userService.findOneByEmailSystem(body.email);
     if (user) return new ConflictException('Email đã tồn tại!');
-    const newUser = await this.userService.createUser(body);
+    const newUser = await this.userService.createUserSystem(body);
     const payload = { userId: newUser._id };
     const tokens = await this.getTokens(payload);
     await this.userTokenService.upsert(newUser._id, tokens.refreshToken);
