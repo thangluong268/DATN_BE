@@ -1,9 +1,9 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import * as bodyParser from 'body-parser';
-import * as chalk from 'chalk';
-import * as compression from 'compression';
-import * as cookieParser from 'cookie-parser';
+import bodyParser from 'body-parser';
+import chalk from 'chalk';
+import compression from 'compression';
+import cookieParser from 'cookie-parser';
 import { cleanEnv, port, str } from 'envalid';
 import helmet from 'helmet';
 
