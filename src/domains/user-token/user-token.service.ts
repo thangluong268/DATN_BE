@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { SALT_ROUNDS } from 'app.config';
 import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
-import { SALT_ROUNDS } from 'src/app.config';
 import { UserToken } from './schema/user-token.schema';
 
 @Injectable()

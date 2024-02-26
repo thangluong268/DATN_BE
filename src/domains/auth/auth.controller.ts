@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ROLE_NAME } from 'src/shared/enums/role-name.enum';
+import { ROLE_NAME } from '../../shared/enums/role-name.enum';
 import { User } from '../user/schema/user.schema';
 import { AuthService } from './auth.service';
 import { Roles } from './decorators/auth-role.decorator';

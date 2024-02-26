@@ -1,11 +1,11 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { SALT_ROUNDS } from 'app.config';
 import * as bcrypt from 'bcrypt';
 import { Connection, Model } from 'mongoose';
-import { SALT_ROUNDS } from 'src/app.config';
-import { SOCIAL_APP } from 'src/shared/constants/user.constant';
-import { ROLE_NAME } from 'src/shared/enums/role-name.enum';
-import { BaseResponse } from 'src/shared/generics/base.response';
+import { SOCIAL_APP } from 'shared/constants/user.constant';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
+import { BaseResponse } from 'shared/generics/base.response';
 import { ForgetPassREQ } from '../auth/request/forget-password.request';
 import { AuthSignUpREQ } from '../auth/request/sign-up.request';
 import { UserUpdateREQ } from './request/user-update.request';

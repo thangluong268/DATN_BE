@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { EMAIL_ADMIN, PASSWORD_ADMIN, SALT_ROUNDS } from 'app.config';
 import * as bcrypt from 'bcrypt';
+import { Category } from 'domains/category/schema/category.schema';
+import { User } from 'domains/user/schema/user.schema';
 import { Model } from 'mongoose';
-import { EMAIL_ADMIN, PASSWORD_ADMIN, SALT_ROUNDS } from 'src/app.config';
-import { Category } from 'src/domains/category/schema/category.schema';
-import { User } from 'src/domains/user/schema/user.schema';
-import { ROLE_NAME } from 'src/shared/enums/role-name.enum';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
 
 @Injectable()
 export class SeederService {

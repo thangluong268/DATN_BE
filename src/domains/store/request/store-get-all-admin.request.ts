@@ -1,5 +1,5 @@
 import { IsOptional, IsString } from 'class-validator';
-import { PaginationREQ } from 'src/shared/generics/pagination.request';
+import { PaginationREQ } from 'shared/generics/pagination.request';
 
 export class GetStoresByAdminREQ extends PaginationREQ {
   @IsOptional()

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { JwtHelper } from 'src/shared/helpers/jwt.helper';
+import { JwtHelper } from '../../shared/helpers/jwt.helper';
 import { UserTokenModule } from '../user-token/user-token.module';
 import { UserModule } from '../user/user.module';
 import { AuthController } from './auth.controller';

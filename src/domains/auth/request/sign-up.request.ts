@@ -1,5 +1,5 @@
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
-import { PasswordValidator } from 'src/shared/validators/password.validator';
+import { PasswordValidator } from 'shared/validators/password.validator';
 
 export class AuthSignUpREQ {
   @IsNotEmpty()

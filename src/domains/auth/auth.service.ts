@@ -10,8 +10,8 @@ import {
   JWT_ACCESS_TOKEN_SECRET,
   JWT_REFRESH_TOKEN_EXPIRES,
   JWT_REFRESH_TOKEN_SECRET,
-} from 'src/app.config';
-import { BaseResponse } from 'src/shared/generics/base.response';
+} from '../../app.config';
+import { BaseResponse } from '../../shared/generics/base.response';
 import { UserTokenService } from '../user-token/user-token.service';
 import { User } from '../user/schema/user.schema';
 import { UserService } from '../user/user.service';

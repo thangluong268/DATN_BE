@@ -8,13 +8,13 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ROLE_NAME } from 'src/shared/enums/role-name.enum';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { Roles } from '../auth/decorators/auth-role.decorator';
 import { AuthJwtATGuard } from '../auth/guards/auth-jwt-at.guard';
 import { StoreCreateREQ } from './request/store-create.request';
 import { GetStoresByAdminREQ } from './request/store-get-all-admin.request';
-import { StoreService } from './store.service';
 import { StoreUpdateREQ } from './request/store-update.request';
+import { StoreService } from './store.service';
 
 @Controller()
 export class StoreController {

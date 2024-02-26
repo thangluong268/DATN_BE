@@ -1,7 +1,7 @@
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { Module } from '@nestjs/common';
-import { MAIL_FROM, MAIL_HOST, MAIL_PASSWORD, MAIL_USER } from 'src/app.config';
+import { MAIL_FROM, MAIL_HOST, MAIL_PASSWORD, MAIL_USER } from 'app.config';
 import { MailService } from './mail.service';
 
 @Module({
@@ -19,7 +19,7 @@ import { MailService } from './mail.service';
         from: MAIL_FROM,
       },
       template: {
-        dir: process.cwd() + '/src/services/mail/templates',
+        dir: process.cwd() + '/services/mail/templates',
         adapter: new HandlebarsAdapter(),
         options: {
           strict: true,

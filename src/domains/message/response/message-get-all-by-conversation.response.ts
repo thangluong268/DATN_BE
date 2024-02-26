@@ -1,4 +1,4 @@
-import { User } from 'src/domains/user/schema/user.schema';
+import { User } from 'domains/user/schema/user.schema';
 import { Message } from '../schema/message.schema';
 
 export class MessageGetAllByConversationRES {

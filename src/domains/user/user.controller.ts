@@ -7,11 +7,11 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ROLE_NAME } from 'src/shared/enums/role-name.enum';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { Roles } from '../auth/decorators/auth-role.decorator';
 import { AuthJwtATGuard } from '../auth/guards/auth-jwt-at.guard';
-import { UserService } from './user.service';
 import { UserUpdateREQ } from './request/user-update.request';
+import { UserService } from './user.service';
 
 @Controller()
 export class UserController {

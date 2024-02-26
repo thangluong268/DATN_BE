@@ -1,9 +1,9 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { PaginationREQ } from 'src/shared/generics/pagination.request';
-import { PaginationResponse } from 'src/shared/generics/pagination.response';
-import { QueryPagingHelper } from 'src/shared/helpers/pagination.helper';
+import { PaginationREQ } from 'shared/generics/pagination.request';
+import { PaginationResponse } from 'shared/generics/pagination.response';
+import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { UserService } from '../user/user.service';
 import { MessageGetAllByConversationRES } from './response/message-get-all-by-conversation.response';
 import { Message } from './schema/message.schema';

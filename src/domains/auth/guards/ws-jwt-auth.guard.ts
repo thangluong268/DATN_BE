@@ -1,8 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Socket } from 'socket.io';
-import { JWT_ACCESS_TOKEN_SECRET } from 'src/app.config';
-import { UserService } from 'src/domains/user/user.service';
+import { JWT_ACCESS_TOKEN_SECRET } from '../../../app.config';
+import { UserService } from '../../../domains/user/user.service';
 import { JwtPayload } from '../strategies/auth-jwt-at.strategy';
 
 export interface AuthSocket extends Socket {

@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ROLE_NAME } from 'src/shared/enums/role-name.enum';
-import { BaseResponse } from 'src/shared/generics/base.response';
-import { PaginationResponse } from 'src/shared/generics/pagination.response';
-import { QueryPagingHelper } from 'src/shared/helpers/pagination.helper';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
+import { BaseResponse } from 'shared/generics/base.response';
+import { PaginationResponse } from 'shared/generics/pagination.response';
+import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { User } from '../user/schema/user.schema';
 import { UserService } from '../user/user.service';
 import { StoreCreateREQ } from './request/store-create.request';

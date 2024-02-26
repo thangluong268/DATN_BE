@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import * as bcrypt from 'bcrypt';
+import { User } from 'domains/user/schema/user.schema';
+import { UserService } from 'domains/user/user.service';
 import { Strategy } from 'passport-local';
-import { User } from 'src/domains/user/schema/user.schema';
-import { UserService } from 'src/domains/user/user.service';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {

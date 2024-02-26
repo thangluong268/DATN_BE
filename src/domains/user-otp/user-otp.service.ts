@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { MailService } from 'src/services/mail/mail.service';
-import { BaseResponse } from 'src/shared/generics/base.response';
+import { MailService } from 'services/mail/mail.service';
+import { BaseResponse } from 'shared/generics/base.response';
 import { UserService } from '../user/user.service';
 import { CheckOTPREQ } from './request/check-otp.request';
 import { SendOTPREQ } from './request/send-otp.request';

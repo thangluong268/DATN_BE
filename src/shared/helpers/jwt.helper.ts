@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { JwtPayload } from 'src/domains/auth/strategies/auth-jwt-at.strategy';
+import { JwtPayload } from 'domains/auth/strategies/auth-jwt-at.strategy';
 
 @Injectable()
 export class JwtHelper {

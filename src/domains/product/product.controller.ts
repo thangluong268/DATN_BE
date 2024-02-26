@@ -7,8 +7,8 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ROLE_NAME } from 'src/shared/enums/role-name.enum';
-import { PaginationREQ } from 'src/shared/generics/pagination.request';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
+import { PaginationREQ } from 'shared/generics/pagination.request';
 import { Roles } from '../auth/decorators/auth-role.decorator';
 import { AuthJwtATGuard } from '../auth/guards/auth-jwt-at.guard';
 import { ProductService } from './product.service';

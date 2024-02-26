@@ -1,5 +1,5 @@
-import { User } from 'src/domains/user/schema/user.schema';
-import { ROLE_NAME } from 'src/shared/enums/role-name.enum';
+import { User } from 'domains/user/schema/user.schema';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { TokenRESP } from './token.response';
 
 export class AuthLoginRESP {

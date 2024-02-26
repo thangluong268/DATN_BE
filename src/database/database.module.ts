@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { DATABASE_URL_DEV, NODE_ENV } from 'src/app.config';
+import { DATABASE_URL_DEV, NODE_ENV } from '../../src/app.config';
 import { DatabaseService } from './database.service';
 
 @Module({

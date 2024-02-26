@@ -1,8 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
+import { JWT_ACCESS_TOKEN_SECRET } from 'app.config';
+import { UserService } from 'domains/user/user.service';
 import { ExtractJwt, JwtFromRequestFunction, Strategy } from 'passport-jwt';
-import { JWT_ACCESS_TOKEN_SECRET } from 'src/app.config';
-import { UserService } from 'src/domains/user/user.service';
 
 export interface JwtPayload {
   userId: string;

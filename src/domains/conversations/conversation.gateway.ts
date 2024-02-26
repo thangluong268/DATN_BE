@@ -11,9 +11,9 @@ import {
   WsResponse,
 } from '@nestjs/websockets';
 
+import { AllExceptionsSocketFilter } from 'filter/ws-exception.filter';
+import { WS_EVENT } from 'shared/constants/ws-event.constant';
 import { Namespace, Socket } from 'socket.io';
-import { AllExceptionsSocketFilter } from 'src/filter/ws-exception.filter';
-import { WS_EVENT } from 'src/shared/constants/ws-event.constant';
 import { AuthSocket, WsGuard } from '../auth/guards/ws-jwt-auth.guard';
 import { MessageService } from '../message/message.service';
 import { MessageCreateREQ } from '../message/request/message-create.request';

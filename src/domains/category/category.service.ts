@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { BaseResponse } from 'src/shared/generics/base.response';
+import { BaseResponse } from 'shared/generics/base.response';
 import { GetCategoriesREQ } from './request/categories-get.request';
 import { Category } from './schema/category.schema';
 
