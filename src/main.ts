@@ -1,7 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import * as bodyParser from 'body-parser';
-import * as chalk from 'chalk';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import { cleanEnv, port, str } from 'envalid';
@@ -25,8 +24,6 @@ async function bootstrap() {
     });
     Logger.log(HOST, PORT);
 
-    Logger.log(`🚀 Environment: ${chalk.hex('#33d32e').bold(`Development`)}`);
-
     app.use(helmet());
     app.use(cookieParser(APP_SECRET));
     app.use(compression());
@@ -45,10 +42,6 @@ async function bootstrap() {
     app.useWebSocketAdapter(new SocketIoAdapter(app));
 
     await app.listen(PORT || 5000);
-
-    Logger.log(
-      `🪽 Server is listening on port ${chalk.hex('#87e8de').bold(`${PORT}`)}`,
-    );
   } catch (error) {
     Logger.error(`❌  Error starting server, ${error}`);
     process.exit();
