@@ -1,12 +1,20 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import * as bodyParser from 'body-parser';
-import compression from 'compression';
-import cookieParser from 'cookie-parser';
+import * as chalk from 'chalk';
+import * as compression from 'compression';
+import * as cookieParser from 'cookie-parser';
 import { cleanEnv, port, str } from 'envalid';
 import helmet from 'helmet';
 
-import { APP_SECRET, CREDENTIALS, HOST, ORIGIN, PORT } from './app.config';
+import {
+  APP_SECRET,
+  CREDENTIALS,
+  HOST,
+  NODE_ENV,
+  ORIGIN,
+  PORT,
+} from './app.config';
 import { AppModule } from './app.module';
 import { SocketIoAdapter } from './domains/conversations/conversation.adapter';
 import { HttpExceptionMiddleware } from './middlewares/http-exception.middlewave';
@@ -23,6 +31,7 @@ async function bootstrap() {
       },
     });
     Logger.log(HOST, PORT);
+    Logger.log(`🚀 Environment: ${chalk.hex('#33d32e').bold(`${NODE_ENV}`)}`);
 
     app.use(helmet());
     app.use(cookieParser(APP_SECRET));
@@ -42,6 +51,14 @@ async function bootstrap() {
     app.useWebSocketAdapter(new SocketIoAdapter(app));
 
     await app.listen(PORT || 5000);
+
+    NODE_ENV !== 'production'
+      ? Logger.log(
+          `🪭  Server ready at http://${chalk.hex('#e5ff00').bold(`${HOST}`)}:${chalk.hex('#ff6e26').bold(`${PORT}`)}`,
+        )
+      : Logger.log(
+          `🪽 Server is listening on port ${chalk.hex('#87e8de').bold(`${PORT}`)}`,
+        );
   } catch (error) {
     Logger.error(`❌  Error starting server, ${error}`);
     process.exit();

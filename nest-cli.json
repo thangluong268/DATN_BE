@@ -3,7 +3,13 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "assets": ["**/*.njk"],
+    "assets": [
+      {
+        "include": "services/mail/templates/*",
+        "outDir": "dist",
+        "watchAssets": true
+      }
+    ],
     "watchAssets": true,
     "deleteOutDir": true
   }

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { PolicyModule } from 'domains/policy/policy.module';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './domains/auth/auth.module';
 import { CategoryModule } from './domains/category/category.module';
@@ -23,6 +24,7 @@ import { SeederService } from './services/seeder.service';
     CategoryModule,
     ConversationModule,
     MessageModule,
+    PolicyModule,
   ],
   controllers: [],
   providers: [SeederService],
