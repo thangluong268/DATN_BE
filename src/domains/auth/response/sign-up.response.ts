@@ -1,10 +1,7 @@
-import { User } from 'domains/user/schema/user.schema';
+import { UserCreateRESP } from 'domains/user/response/user-create.response';
 
 export class AuthSignUpRESP {
-  static of(user: User): User {
-    delete user.password;
-    delete user['createdAt'];
-    delete user['updatedAt'];
+  static of(user: UserCreateRESP) {
     return user;
   }
 }

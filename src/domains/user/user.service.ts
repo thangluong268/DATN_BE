@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { SALT_ROUNDS } from 'app.config';
 import * as bcrypt from 'bcrypt';
@@ -8,7 +12,9 @@ import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { ForgetPassREQ } from '../auth/request/forget-password.request';
 import { AuthSignUpREQ } from '../auth/request/sign-up.request';
+import { UserCreateREQ } from './request/user-create.request';
 import { UserUpdateREQ } from './request/user-update.request';
+import { UserCreateRESP } from './response/user-create.response';
 import { User } from './schema/user.schema';
 
 @Injectable()
@@ -21,16 +27,29 @@ export class UserService {
   async createUserSystem(body: AuthSignUpREQ) {
     const hashedPassword = await bcrypt.hash(body.password, SALT_ROUNDS);
     body.password = hashedPassword;
-
+    const user = await this.findOneByEmailSystem(body.email);
+    if (user) {
+      throw new ConflictException('Email đã tồn tại!');
+    }
     const newUser = await this.userModel.create(body);
-    newUser.avatar =
-      'https://res.cloudinary.com/dl3b2j3td/image/upload/v1702564956/TLCN/ov6t50kl5npfmwfopzrk.png';
-    newUser.role = [ROLE_NAME.USER];
-    newUser.socialId = null;
-    newUser.socialApp = null;
+    AuthSignUpREQ.setDefault(newUser);
     await newUser.save();
 
-    return User.toDocModel(newUser);
+    return UserCreateRESP.of(User.toDocModel(newUser));
+  }
+
+  async createUserWithoutRole(body: UserCreateREQ) {
+    const hashedPassword = await bcrypt.hash(body.password, SALT_ROUNDS);
+    body.password = hashedPassword;
+    const user = await this.findOneByEmailSystem(body.email);
+    if (user) {
+      throw new ConflictException('Email đã tồn tại!');
+    }
+    const newUser = await this.userModel.create(body);
+    UserCreateREQ.setDefault(newUser);
+    await newUser.save();
+
+    return UserCreateRESP.of(User.toDocModel(newUser));
   }
 
   async createUserSocial(body: any) {

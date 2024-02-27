@@ -4,12 +4,14 @@ import {
   Get,
   Param,
   Patch,
+  Post,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { Roles } from '../auth/decorators/auth-role.decorator';
 import { AuthJwtATGuard } from '../auth/guards/auth-jwt-at.guard';
+import { UserCreateREQ } from './request/user-create.request';
 import { UserUpdateREQ } from './request/user-update.request';
 import { UserService } from './user.service';
 
@@ -22,6 +24,13 @@ export class UserController {
   @Get('user/:id')
   getUserById(@Param('id') id: string) {
     return this.userService.getDetail(id);
+  }
+
+  @Roles(ROLE_NAME.ADMIN)
+  @Post('user')
+  @UseGuards(AuthJwtATGuard)
+  createUser(@Body() body: UserCreateREQ) {
+    return this.userService.createUserWithoutRole(body);
   }
 
   @Roles(ROLE_NAME.USER, ROLE_NAME.MANAGER)

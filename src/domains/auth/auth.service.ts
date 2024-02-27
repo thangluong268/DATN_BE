@@ -2,9 +2,13 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
+import { Model } from 'mongoose';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import {
   JWT_ACCESS_TOKEN_EXPIRES,
   JWT_ACCESS_TOKEN_SECRET,
@@ -15,6 +19,7 @@ import { BaseResponse } from '../../shared/generics/base.response';
 import { UserTokenService } from '../user-token/user-token.service';
 import { User } from '../user/schema/user.schema';
 import { UserService } from '../user/user.service';
+import { AuthSetRoleUserREQ } from './request/auth-set-role-user.request';
 import { ForgetPassREQ } from './request/forget-password.request';
 import { AuthSignUpREQ } from './request/sign-up.request';
 import { AuthLoginRESP } from './response/login.response';
@@ -25,6 +30,9 @@ import { JwtPayload } from './strategies/auth-jwt-at.strategy';
 @Injectable()
 export class AuthService {
   constructor(
+    @InjectModel(User.name)
+    private readonly userModel: Model<User>,
+
     private readonly userService: UserService,
     private readonly userTokenService: UserTokenService,
     private readonly jwtService: JwtService,
@@ -34,20 +42,16 @@ export class AuthService {
     if (!req.user) {
       return `No user from ${req.user.socialApp}`;
     }
-
     const { email, socialId, socialApp } = req.user;
-
     const user = await this.userService.findOneBySocial(
       email,
       socialId,
       socialApp,
     );
-
     if (!user) {
       const newUser = await this.userService.createUserSocial(req.user);
       return await this.login(newUser);
     }
-
     return await this.login(user);
   }
 
@@ -102,6 +106,25 @@ export class AuthService {
     return BaseResponse.withMessage<TokenRESP>(
       tokens,
       'Lấy token mới thành công!',
+    );
+  }
+
+  async changeRole(userId: string, query: AuthSetRoleUserREQ) {
+    if (query.role === ROLE_NAME.ADMIN) {
+      throw new ForbiddenException(`Không thể cấp quyền ${ROLE_NAME.ADMIN}!`);
+    }
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy người dùng!');
+    }
+    await this.userModel.findByIdAndUpdate(
+      { _id: userId },
+      { role: [query.role] },
+      { new: true, lean: true },
+    );
+    return BaseResponse.withMessage<string>(
+      query.role,
+      'Cập nhật quyền thành công!',
     );
   }
 

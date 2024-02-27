@@ -4,7 +4,10 @@ import {
   Delete,
   Get,
   HttpStatus,
+  Param,
+  Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -17,12 +20,46 @@ import { AuthJwtATGuard } from './guards/auth-jwt-at.guard';
 import { AuthJwtRTGuard } from './guards/auth-jwt-rt.guard';
 import { FacebookOAuthGuard } from './guards/facebook-oauth.guard';
 import { GoogleOAuthGuard } from './guards/google-oauth.guard';
+import { AuthSetRoleUserREQ } from './request/auth-set-role-user.request';
 import { ForgetPassREQ } from './request/forget-password.request';
 import { AuthSignUpREQ } from './request/sign-up.request';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @UseGuards(AuthJwtRTGuard)
+  @Get('refreshToken')
+  refreshToken(@Req() req) {
+    const { userId, refreshToken } = req.user;
+    return this.authService.refreshToken(userId, refreshToken);
+  }
+
+  @Get('login/google')
+  @UseGuards(GoogleOAuthGuard)
+  async googleLogin(): Promise<any> {
+    return HttpStatus.OK;
+  }
+
+  // Call back google
+  @Get('login/oauth2/google')
+  @UseGuards(GoogleOAuthGuard)
+  googleLoginRedirect(@Req() req) {
+    return this.authService.loginWithSocial(req);
+  }
+
+  @Get('login/facebook')
+  @UseGuards(FacebookOAuthGuard)
+  async facebookLogin(): Promise<any> {
+    return HttpStatus.OK;
+  }
+
+  // Call back facebook
+  @Get('login/facebook/redirect')
+  @UseGuards(FacebookOAuthGuard)
+  async facebookLoginRedirect(@Req() req) {
+    return this.authService.loginWithSocial(req);
+  }
 
   @UseGuards(AuthGuard('local'))
   @Post('login')
@@ -41,6 +78,16 @@ export class AuthController {
     return this.authService.forgetPassword(body);
   }
 
+  @Roles(ROLE_NAME.ADMIN)
+  @Patch(':userId/role')
+  @UseGuards(AuthJwtATGuard)
+  changeRole(
+    @Param('userId') userId: string,
+    @Query() query: AuthSetRoleUserREQ,
+  ) {
+    return this.authService.changeRole(userId, query);
+  }
+
   @Roles(
     ROLE_NAME.ADMIN,
     ROLE_NAME.USER,
@@ -53,36 +100,5 @@ export class AuthController {
   logout(@Req() req) {
     const user = req.user;
     return this.authService.logout(user);
-  }
-
-  @UseGuards(AuthJwtRTGuard)
-  @Get('refreshToken')
-  refreshToken(@Req() req) {
-    const { userId, refreshToken } = req.user;
-    return this.authService.refreshToken(userId, refreshToken);
-  }
-
-  @Get('login/google')
-  @UseGuards(GoogleOAuthGuard)
-  async googleLogin(): Promise<any> {
-    return HttpStatus.OK;
-  }
-
-  @Get('login/oauth2/google')
-  @UseGuards(GoogleOAuthGuard)
-  googleLoginRedirect(@Req() req) {
-    return this.authService.loginWithSocial(req);
-  }
-
-  @Get('login/facebook')
-  @UseGuards(FacebookOAuthGuard)
-  async facebookLogin(): Promise<any> {
-    return HttpStatus.OK;
-  }
-
-  @Get('login/facebook/redirect')
-  @UseGuards(FacebookOAuthGuard)
-  async facebookLoginRedirect(@Req() req) {
-    return this.authService.loginWithSocial(req);
   }
 }
