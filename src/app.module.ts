@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PolicyModule } from 'domains/policy/policy.module';
-import { PaypalPaymentService } from 'payment/paypal/paypal.service';
-import { VNPayGateWay } from 'payment/vn-pay/vn-pay.controller';
+import { PaymentModule } from 'payment/paymen.module';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './domains/auth/auth.module';
 import { CategoryModule } from './domains/category/category.module';
@@ -27,8 +26,9 @@ import { SeederService } from './services/seeder.service';
     ConversationModule,
     MessageModule,
     PolicyModule,
+    PaymentModule,
   ],
-  controllers: [VNPayGateWay],
-  providers: [SeederService, PaypalPaymentService],
+  controllers: [],
+  providers: [SeederService],
 })
 export class AppModule {}

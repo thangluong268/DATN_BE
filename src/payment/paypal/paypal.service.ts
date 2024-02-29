@@ -1,4 +1,4 @@
-import { PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET } from 'app.config';
+import { HOST_URL, PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET } from 'app.config';
 import axios, { Axios, AxiosHeaders } from 'axios';
 import { v4 as uuid } from 'uuid';
 import { PaymentOrderRto } from './paypal.route';
@@ -111,8 +111,6 @@ export class PaypalPaymentService {
     headers.set('Authorization', `Bearer ${accessToken}`);
     headers.set('Paypal-Request-Id', paypalRequestID);
 
-    console.log(accessToken);
-
     const body = {
       intent: 'CAPTURE',
       purchase_units: [
@@ -122,7 +120,7 @@ export class PaypalPaymentService {
             currency_code: 'USD',
             value: '10.00',
           },
-          // payee: { email_address: 'choewy@receiver.com' },
+          payee: { email: 'choewy@receiver.com' },
         },
       ],
       payment_source: {
@@ -134,13 +132,14 @@ export class PaypalPaymentService {
             locale: 'en-US',
             shipping_preference: 'NO_SHIPPING',
             user_action: 'PAY_NOW',
-            return_url:
-              'http://localhost:5000/api/vn-pay/payment/paypal/callback',
-            cancel_url: 'http://localhost:5000/cancelUrl',
+            return_url: `${HOST_URL}/api/paypal/payment/callback`,
+            cancel_url: `${HOST_URL}/cancelUrl`,
           },
         },
       },
     };
+
+    console.log(HOST_URL);
 
     const { data } = await this.axios.post(url, body, { headers });
 

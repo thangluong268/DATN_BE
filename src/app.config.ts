@@ -4,6 +4,10 @@ config({ path: `.env` });
 export const CREDENTIALS = process.env.CREDENTIALS === 'true';
 export const NODE_ENV = process.env.NODE_ENV;
 export const SALT_ROUNDS = Number(process.env.SALT_ROUNDS);
+export const HOST_URL =
+  process.env.NODE_ENV === 'production'
+    ? process.env.HOST_PRODUCT
+    : process.env.HOST_DEV;
 
 export const {
   DATABASE_URL_DEV,
