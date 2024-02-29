@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { FACEBOOK_CLIENT_ID, FACEBOOK_CLIENT_SECRET } from 'app.config';
+import {
+  FACEBOOK_CLIENT_ID,
+  FACEBOOK_CLIENT_SECRET,
+  HOST_URL,
+} from 'app.config';
 import { Strategy } from 'passport-facebook';
 import { SOCIAL_APP } from 'shared/constants/user.constant';
 
@@ -10,7 +14,7 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
     super({
       clientID: FACEBOOK_CLIENT_ID,
       clientSecret: FACEBOOK_CLIENT_SECRET,
-      callbackURL: 'http://localhost:5000/api/auth/login/facebook/redirect',
+      callbackURL: `${HOST_URL}/api/auth/login/facebook/redirect`,
       scope: ['email'],
       profileFields: [
         'emails',
