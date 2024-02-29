@@ -42,4 +42,6 @@ export const {
   VN_PAY_MERCHANT,
   VN_PAY_SECRET,
   VN_PAY_PAYMENT_URL,
+  PAYPAL_CLIENT_ID,
+  PAYPAL_CLIENT_SECRET,
 } = process.env;

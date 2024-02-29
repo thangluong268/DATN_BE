@@ -2,13 +2,30 @@ import { Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { VN_PAY_MERCHANT, VN_PAY_PAYMENT_URL, VN_PAY_SECRET } from 'app.config';
 import * as crypto from 'crypto';
 import * as dayjs from 'dayjs';
+import { PaypalPaymentService } from 'payment/paypal/paypal.service';
 import * as querystring from 'qs';
 import { getReturnUrlStatus, sortObject } from 'shared/helpers/vn-pay.helper';
 import { v4 as uuid } from 'uuid';
 
 @Controller('vn-pay')
 export class VNPayGateWay {
-  constructor() {}
+  constructor(private readonly paypalPaymentService: PaypalPaymentService) {}
+
+  @Get('paypal')
+  async testPayPal() {
+    const order = await this.paypalPaymentService.createOrder();
+
+    return order;
+  }
+
+  @Get('payment/paypal/callback')
+  async callBackPayPal(@Req() req, @Res() res) {
+    const orderID = req.query.token;
+
+    const order = await this.paypalPaymentService.captureOrder(orderID);
+
+    return order;
+  }
 
   @Post()
   addVNPay(@Req() req, @Res() res) {
