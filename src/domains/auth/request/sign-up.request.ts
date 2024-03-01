@@ -16,8 +16,7 @@ export class AuthSignUpREQ {
   password: string;
 
   static setDefault(user: User) {
-    user.avatar =
-      'https://res.cloudinary.com/dl3b2j3td/image/upload/v1702564956/TLCN/ov6t50kl5npfmwfopzrk.png';
+    user.avatar = 'https://res.cloudinary.com/dl3b2j3td/image/upload/v1702564956/TLCN/ov6t50kl5npfmwfopzrk.png';
     user.role = [ROLE_NAME.USER];
     user.socialId = null;
     user.socialApp = null;

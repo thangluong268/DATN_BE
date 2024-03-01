@@ -1,8 +1,4 @@
-import {
-  HttpStatus,
-  UnprocessableEntityException,
-  ValidationPipe,
-} from '@nestjs/common';
+import { HttpStatus, UnprocessableEntityException, ValidationPipe } from '@nestjs/common';
 import { ValidationError } from 'class-validator';
 
 export class ValidationCustomPipe {
@@ -20,9 +16,7 @@ export class ValidationCustomPipe {
       exceptionFactory: (validationErrors: ValidationError[] = []) => {
         type MyError = { field: string; errors: string[] | MyError[] };
         function parseError(error: ValidationError, parentName = ''): MyError {
-          const fieldName = parentName
-            ? [parentName, error.property].join('.')
-            : error.property;
+          const fieldName = parentName ? [parentName, error.property].join('.') : error.property;
           if (error.children.length === 0)
             return {
               field: fieldName,
@@ -33,9 +27,7 @@ export class ValidationCustomPipe {
             errors: error.children.map((e) => parseError(e, fieldName)),
           };
         }
-        return new UnprocessableEntityException(
-          validationErrors.map((e) => parseError(e)),
-        );
+        return new UnprocessableEntityException(validationErrors.map((e) => parseError(e)));
       },
     });
   }

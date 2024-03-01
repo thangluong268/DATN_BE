@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { SALT_ROUNDS } from 'app.config';
 import * as bcrypt from 'bcrypt';
@@ -68,25 +64,13 @@ export class UserService {
   }
 
   async findOneByEmailSystem(email: string) {
-    const user = await this.userModel.findOne(
-      { email, socialId: null, socialApp: null },
-      {},
-      { lean: true },
-    );
+    const user = await this.userModel.findOne({ email, socialId: null, socialApp: null }, {}, { lean: true });
     user?.address?.sort((a, b) => (b.default ? 1 : -1) - (a.default ? 1 : -1));
     return user;
   }
 
-  async findOneBySocial(
-    email: string,
-    socialId: string,
-    socialApp: SOCIAL_APP,
-  ) {
-    const user = await this.userModel.findOne(
-      { email, socialId, socialApp },
-      {},
-      { lean: true },
-    );
+  async findOneBySocial(email: string, socialId: string, socialApp: SOCIAL_APP) {
+    const user = await this.userModel.findOne({ email, socialId, socialApp }, {}, { lean: true });
     user?.address?.sort((a, b) => (b.default ? 1 : -1) - (a.default ? 1 : -1));
     return user;
   }
@@ -94,28 +78,15 @@ export class UserService {
   async updatePassword(body: ForgetPassREQ) {
     const { email, password } = body;
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-    return await this.userModel.findOneAndUpdate(
-      { email },
-      { password: hashedPassword },
-      { lean: true, new: true },
-    );
+    return await this.userModel.findOneAndUpdate({ email }, { password: hashedPassword }, { lean: true, new: true });
   }
 
   async updateById(id: string, body: UserUpdateREQ, user: User) {
     if (user.role.includes(ROLE_NAME.USER) && user._id.toString() !== id) {
-      return new ForbiddenException(
-        'Bạn không có quyền cập nhật thông tin người dùng khác!',
-      );
+      return new ForbiddenException('Bạn không có quyền cập nhật thông tin người dùng khác!');
     }
-    const updatedUser = await this.userModel.findByIdAndUpdate(
-      id,
-      { ...body },
-      { lean: true, new: true },
-    );
-    return BaseResponse.withMessage<User>(
-      User.toDocModel(updatedUser),
-      'Cập nhật thông tin thành công!',
-    );
+    const updatedUser = await this.userModel.findByIdAndUpdate(id, { ...body }, { lean: true, new: true });
+    return BaseResponse.withMessage<User>(User.toDocModel(updatedUser), 'Cập nhật thông tin thành công!');
   }
 
   async getDetail(id: string) {

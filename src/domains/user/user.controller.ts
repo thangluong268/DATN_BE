@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { Roles } from '../auth/decorators/auth-role.decorator';
 import { AuthJwtATGuard } from '../auth/guards/auth-jwt-at.guard';
@@ -36,11 +27,7 @@ export class UserController {
   @Roles(ROLE_NAME.USER, ROLE_NAME.MANAGER)
   @UseGuards(AuthJwtATGuard)
   @Patch('user/:id')
-  updateUserById(
-    @Param('id') id: string,
-    @Body() body: UserUpdateREQ,
-    @Req() req,
-  ) {
+  updateUserById(@Param('id') id: string, @Body() body: UserUpdateREQ, @Req() req) {
     const user = req.user;
     return this.userService.updateById(id, body, user);
   }

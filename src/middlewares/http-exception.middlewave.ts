@@ -1,11 +1,4 @@
-import {
-  ArgumentsHost,
-  Catch,
-  ExceptionFilter,
-  HttpException,
-  HttpStatus,
-  Logger,
-} from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { Response } from 'express';
 
 @Catch(HttpException)
@@ -16,10 +9,7 @@ export class HttpExceptionMiddleware implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
-    const message = this.getErrorMessage(
-      exception.getStatus(),
-      exception.getResponse(),
-    );
+    const message = this.getErrorMessage(exception.getStatus(), exception.getResponse());
     const name: string = exception.name || 'HttpException';
     const statusCode = exception.getStatus();
 
@@ -47,15 +37,8 @@ export class HttpExceptionMiddleware implements ExceptionFilter {
     });
   }
 
-  private getErrorMessage(
-    httpStatus: number,
-    errorResponse: string | object,
-  ): string | { [key: string]: any } {
-    if (
-      httpStatus === HttpStatus.UNPROCESSABLE_ENTITY &&
-      typeof errorResponse === 'object' &&
-      'message' in errorResponse
-    )
+  private getErrorMessage(httpStatus: number, errorResponse: string | object): string | { [key: string]: any } {
+    if (httpStatus === HttpStatus.UNPROCESSABLE_ENTITY && typeof errorResponse === 'object' && 'message' in errorResponse)
       return errorResponse.message;
     else if (typeof errorResponse === 'string') return errorResponse;
     else if ('message' in errorResponse) return errorResponse.message;

@@ -7,14 +7,7 @@ import * as cookieParser from 'cookie-parser';
 import { cleanEnv, port, str } from 'envalid';
 import helmet from 'helmet';
 
-import {
-  APP_SECRET,
-  CREDENTIALS,
-  HOST,
-  NODE_ENV,
-  ORIGIN,
-  PORT,
-} from './app.config';
+import { APP_SECRET, CREDENTIALS, HOST, NODE_ENV, ORIGIN, PORT } from './app.config';
 import { AppModule } from './app.module';
 import { SocketIoAdapter } from './domains/conversations/conversation.adapter';
 import { HttpExceptionMiddleware } from './middlewares/http-exception.middlewave';
@@ -53,12 +46,8 @@ async function bootstrap() {
     await app.listen(PORT || 5000);
 
     NODE_ENV !== 'production'
-      ? Logger.log(
-          `🪭  Server ready at http://${chalk.hex('#e5ff00').bold(`${HOST}`)}:${chalk.hex('#ff6e26').bold(`${PORT}`)}`,
-        )
-      : Logger.log(
-          `🪽 Server is listening on port ${chalk.hex('#87e8de').bold(`${PORT}`)}`,
-        );
+      ? Logger.log(`🪭  Server ready at http://${chalk.hex('#e5ff00').bold(`${HOST}`)}:${chalk.hex('#ff6e26').bold(`${PORT}`)}`)
+      : Logger.log(`🪽 Server is listening on port ${chalk.hex('#87e8de').bold(`${PORT}`)}`);
   } catch (error) {
     Logger.error(`❌  Error starting server, ${error}`);
     process.exit();

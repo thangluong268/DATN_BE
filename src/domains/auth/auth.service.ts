@@ -1,9 +1,4 @@
-import {
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
@@ -43,11 +38,7 @@ export class AuthService {
       return `No user from ${req.user.socialApp}`;
     }
     const { email, socialId, socialApp } = req.user;
-    const user = await this.userService.findOneBySocial(
-      email,
-      socialId,
-      socialApp,
-    );
+    const user = await this.userService.findOneBySocial(email, socialId, socialApp);
     if (!user) {
       const newUser = await this.userService.createUserSocial(req.user);
       return await this.login(newUser);
@@ -59,10 +50,7 @@ export class AuthService {
     const payload = { userId: user._id };
     const tokens = await this.getTokens(payload);
     await this.userTokenService.upsert(user._id, tokens.refreshToken);
-    return BaseResponse.withMessage<AuthLoginRESP>(
-      AuthLoginRESP.of(user, tokens),
-      'Đăng nhập thành công!',
-    );
+    return BaseResponse.withMessage<AuthLoginRESP>(AuthLoginRESP.of(user, tokens), 'Đăng nhập thành công!');
   }
 
   async signup(body: AuthSignUpREQ) {
@@ -72,18 +60,12 @@ export class AuthService {
     const payload = { userId: newUser._id };
     const tokens = await this.getTokens(payload);
     await this.userTokenService.upsert(newUser._id, tokens.refreshToken);
-    return BaseResponse.withMessage<AuthSignUpRESP>(
-      AuthSignUpRESP.of(newUser),
-      'Đăng ký thành công!',
-    );
+    return BaseResponse.withMessage<AuthSignUpRESP>(AuthSignUpRESP.of(newUser), 'Đăng ký thành công!');
   }
 
   async forgetPassword(body: ForgetPassREQ) {
     const user = await this.userService.updatePassword(body);
-    return BaseResponse.withMessage<string>(
-      user.email,
-      'Lấy lại mật khẩu thành công!',
-    );
+    return BaseResponse.withMessage<string>(user.email, 'Lấy lại mật khẩu thành công!');
   }
 
   async logout(user: User) {
@@ -95,18 +77,12 @@ export class AuthService {
   async refreshToken(userId: string, refreshToken: string) {
     const userToken = await this.userTokenService.findByUserId(userId);
     if (!userToken) return new ForbiddenException('Không tìm thấy token!');
-    const isMatched = await bcrypt.compare(
-      refreshToken,
-      userToken.hashedRefreshToken,
-    );
+    const isMatched = await bcrypt.compare(refreshToken, userToken.hashedRefreshToken);
     if (!isMatched) return new ForbiddenException('Token không hợp lệ!');
     const payload = { userId };
     const tokens = await this.getTokens(payload);
     await this.userTokenService.upsert(userToken.userId, tokens.refreshToken);
-    return BaseResponse.withMessage<TokenRESP>(
-      tokens,
-      'Lấy token mới thành công!',
-    );
+    return BaseResponse.withMessage<TokenRESP>(tokens, 'Lấy token mới thành công!');
   }
 
   async changeRole(userId: string, query: AuthSetRoleUserREQ) {
@@ -117,15 +93,8 @@ export class AuthService {
     if (!user) {
       throw new NotFoundException('Không tìm thấy người dùng!');
     }
-    await this.userModel.findByIdAndUpdate(
-      { _id: userId },
-      { role: [query.role] },
-      { new: true, lean: true },
-    );
-    return BaseResponse.withMessage<string>(
-      query.role,
-      'Cập nhật quyền thành công!',
-    );
+    await this.userModel.findByIdAndUpdate({ _id: userId }, { role: [query.role] }, { new: true, lean: true });
+    return BaseResponse.withMessage<string>(query.role, 'Cập nhật quyền thành công!');
   }
 
   async getTokens(payload: JwtPayload): Promise<TokenRESP> {

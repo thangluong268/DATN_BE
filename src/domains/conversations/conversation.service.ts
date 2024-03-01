@@ -27,10 +27,7 @@ export class ConversationService {
   }
 
   async createIfIsFirstConversation(senderId: string, receiverId: string) {
-    const isFirstConversation = await this.isFirstConversation(
-      senderId,
-      receiverId,
-    );
+    const isFirstConversation = await this.isFirstConversation(senderId, receiverId);
 
     if (isFirstConversation) {
       return await this.create(senderId, receiverId);

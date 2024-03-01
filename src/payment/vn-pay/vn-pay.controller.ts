@@ -1,10 +1,5 @@
 import { Controller, Get, Post, Req, Res } from '@nestjs/common';
-import {
-  HOST_URL,
-  VN_PAY_MERCHANT,
-  VN_PAY_PAYMENT_URL,
-  VN_PAY_SECRET,
-} from 'app.config';
+import { HOST_URL, VN_PAY_MERCHANT, VN_PAY_PAYMENT_URL, VN_PAY_SECRET } from 'app.config';
 import * as crypto from 'crypto';
 import * as dayjs from 'dayjs';
 import * as querystring from 'qs';
@@ -41,8 +36,7 @@ export class VNPayController {
     vnp_Params['vnp_OrderInfo'] = 'Thanh toan cho ma GD:' + orderId;
     vnp_Params['vnp_OrderType'] = 'other';
     vnp_Params['vnp_Amount'] = amount * 100;
-    vnp_Params['vnp_ReturnUrl'] =
-      `${HOST_URL}/api/vn-pay/payment/vn-pay/callback`;
+    vnp_Params['vnp_ReturnUrl'] = `${HOST_URL}/api/vn-pay/payment/vn-pay/callback`;
     vnp_Params['vnp_IpAddr'] = ipAddr;
     vnp_Params['vnp_CreateDate'] = createDate;
     if (bankCode !== null && bankCode !== '') {
@@ -92,8 +86,7 @@ export class VNPayController {
       console.log(message);
       res.set({
         'Content-Type': 'application/json',
-        'Cache-Control':
-          'no-store, no-cache, must-revalidate, post-check=0, pre-check=0',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0',
       });
       res.send({ success: message });
     } else {

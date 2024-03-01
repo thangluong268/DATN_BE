@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { PaginationREQ } from 'shared/generics/pagination.request';
 import { Roles } from '../auth/decorators/auth-role.decorator';

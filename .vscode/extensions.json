@@ -1,0 +1,14 @@
+{
+  "recommendations": [
+    "msjsdiag.vscode-react-native",
+    "mgmcdermott.vscode-language-babel",
+    "naumovs.color-highlight",
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "bradlc.vscode-tailwindcss",
+    "formulahendry.auto-close-tag",
+    "formulahendry.auto-rename-tag",
+    "dsznajder.es7-react-js-snippets",
+    "Prisma.prisma"
+  ]
+}

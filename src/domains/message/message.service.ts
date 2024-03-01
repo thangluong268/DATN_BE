@@ -25,27 +25,17 @@ export class MessageService {
     });
   }
 
-  async findByConversation(
-    userId: string,
-    conversationId: string,
-    query: PaginationREQ,
-  ) {
+  async findByConversation(userId: string, conversationId: string, query: PaginationREQ) {
     const condition = { conversationId };
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.messageModel.countDocuments(condition);
-    const messages = await this.messageModel
-      .find(condition, {}, { lean: true })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    const messages = await this.messageModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).skip(skip).limit(limit);
 
     const messagesRes: MessageGetAllByConversationRES[] = [];
 
     for (const message of messages) {
       const sender = await this.userService.findById(message.senderId);
-      messagesRes.push(
-        MessageGetAllByConversationRES.of(userId, message, sender),
-      );
+      messagesRes.push(MessageGetAllByConversationRES.of(userId, message, sender));
     }
 
     return PaginationResponse.ofWithTotal(messagesRes, total);

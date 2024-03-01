@@ -5,10 +5,7 @@ import { MessageService } from './message.service';
 import { Message, MessageSchema } from './schema/message.schema';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }]),
-    UserModule,
-  ],
+  imports: [MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }]), UserModule],
   controllers: [],
   providers: [MessageService],
   exports: [MessageService, MongooseModule],

@@ -13,11 +13,7 @@ export class UserTokenService {
   ) {}
 
   async upsert(userId: string, refreshToken: string) {
-    const userToken = await this.userTokenModel.findOne(
-      { userId: userId },
-      {},
-      { lean: true },
-    );
+    const userToken = await this.userTokenModel.findOne({ userId: userId }, {}, { lean: true });
     const hashedRT = await bcrypt.hash(refreshToken, SALT_ROUNDS);
 
     userToken
@@ -33,10 +29,7 @@ export class UserTokenService {
   }
 
   async delete(userId: string) {
-    return await this.userTokenModel.findOneAndDelete(
-      { userId },
-      { lean: true },
-    );
+    return await this.userTokenModel.findOneAndDelete({ userId }, { lean: true });
   }
 
   async findByUserId(userId: string) {

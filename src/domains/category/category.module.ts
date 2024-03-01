@@ -5,11 +5,7 @@ import { CategoryService } from './category.service';
 import { Category, CategorySchema } from './schema/category.schema';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([
-      { name: Category.name, schema: CategorySchema },
-    ]),
-  ],
+  imports: [MongooseModule.forFeature([{ name: Category.name, schema: CategorySchema }])],
   controllers: [CategoryController],
   providers: [CategoryService],
   exports: [CategoryService, MongooseModule],

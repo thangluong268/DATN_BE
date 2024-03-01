@@ -16,10 +16,7 @@ export class PolicyService {
 
   async create(body: PolicyCreateREQ) {
     const newPolicy = await this.policyModel.create(body);
-    return BaseResponse.withMessage<Policy>(
-      Policy.toDocModel(newPolicy),
-      'Tạo chính sách thành công!',
-    );
+    return BaseResponse.withMessage<Policy>(Policy.toDocModel(newPolicy), 'Tạo chính sách thành công!');
   }
 
   async findAllByObject(query: PolicyFindAllByObjectREQ) {
@@ -28,22 +25,12 @@ export class PolicyService {
       { _id: 1, name: 1, content: 1, policyObject: 1 },
       { lean: true },
     );
-    return BaseResponse.withMessage<Policy[]>(
-      policies,
-      'Lấy danh sách chính sách thành công!',
-    );
+    return BaseResponse.withMessage<Policy[]>(policies, 'Lấy danh sách chính sách thành công!');
   }
 
   async update(id: string, body: PolicyUpdateREQ) {
-    const updatedPolicy = await this.policyModel.findByIdAndUpdate(
-      { _id: id },
-      { ...body },
-      { new: true, lean: true },
-    );
-    return BaseResponse.withMessage<Policy>(
-      updatedPolicy,
-      'Cập nhật chính sách thành công!',
-    );
+    const updatedPolicy = await this.policyModel.findByIdAndUpdate({ _id: id }, { ...body }, { new: true, lean: true });
+    return BaseResponse.withMessage<Policy>(updatedPolicy, 'Cập nhật chính sách thành công!');
   }
 
   async delete(id: string) {

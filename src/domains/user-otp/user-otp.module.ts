@@ -7,11 +7,7 @@ import { UserOTPController } from './user-otp.controller';
 import { UserOTPService } from './user-otp.service';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([{ name: UserOTP.name, schema: UserOTPSchema }]),
-    MailModule,
-    UserModule,
-  ],
+  imports: [MongooseModule.forFeature([{ name: UserOTP.name, schema: UserOTPSchema }]), MailModule, UserModule],
   controllers: [UserOTPController],
   providers: [UserOTPService],
   exports: [],

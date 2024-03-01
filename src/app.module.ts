@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { CartModule } from 'domains/cart/cart.module';
 import { PolicyModule } from 'domains/policy/policy.module';
 import { PaymentModule } from 'payment/paymen.module';
 import { DatabaseModule } from './database/database.module';
@@ -27,6 +28,7 @@ import { SeederService } from './services/seeder.service';
     MessageModule,
     PolicyModule,
     PaymentModule,
+    CartModule,
   ],
   controllers: [],
   providers: [SeederService],

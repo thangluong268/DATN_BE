@@ -12,18 +12,11 @@ export class PaginationResponse<T> {
     return new PaginationResponse(data, data.length);
   }
 
-  public static ofWithTotal<T>(
-    data: T[],
-    total: number,
-  ): PaginationResponse<T[]> {
+  public static ofWithTotal<T>(data: T[], total: number): PaginationResponse<T[]> {
     return new PaginationResponse(data, total);
   }
 
-  public static ofWithTotalAndMessage<T>(
-    data: T[],
-    total: number,
-    message: string,
-  ): PaginationResponse<T[]> {
+  public static ofWithTotalAndMessage<T>(data: T[], total: number, message: string): PaginationResponse<T[]> {
     return new PaginationResponse(data, total, message);
   }
 

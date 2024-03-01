@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { MailService } from 'services/mail/mail.service';
@@ -36,11 +31,7 @@ export class UserOTPService {
 
   async checkOTP(body: CheckOTPREQ) {
     const { email, otp } = body;
-    const userOTP = await this.userOTPModel.findOne(
-      { email, otp },
-      {},
-      { lean: true },
-    );
+    const userOTP = await this.userOTPModel.findOne({ email, otp }, {}, { lean: true });
     if (!userOTP) {
       throw new BadRequestException('Mã OTP không chính xác');
     }
@@ -60,11 +51,7 @@ export class UserOTPService {
   }
 
   async upsert(email: string, otp: string) {
-    const userOTP = await this.userOTPModel.findOne(
-      { email },
-      {},
-      { lean: true },
-    );
+    const userOTP = await this.userOTPModel.findOne({ email }, {}, { lean: true });
     if (userOTP) {
       return await this.userOTPModel.updateOne({ email }, { otp });
     } else {
