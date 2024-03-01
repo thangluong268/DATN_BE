@@ -23,7 +23,7 @@ export class ProductController {
   @UseGuards(AuthJwtATGuard)
   @Post('product/seller')
   create(@Req() req, @Body() body: ProductCreateREQ) {
-    return this.productService.create(req.user, body);
+    return this.productService.create(req.user._id, body);
   }
 
   @Get('product-give')

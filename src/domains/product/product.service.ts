@@ -8,7 +8,6 @@ import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import sortByConditions from 'shared/helpers/sort-by-condition.helper';
 import { CategoryService } from '../category/category.service';
 import { StoreService } from '../store/store.service';
-import { User } from '../user/schema/user.schema';
 import { ProductCreateREQ } from './request/product-create.request';
 import { GetProductsREQ } from './request/product-get-public.request';
 import { Product } from './schema/product.schema';
@@ -23,8 +22,8 @@ export class ProductService {
     private readonly categoryService: CategoryService,
   ) {}
 
-  async create(user: User, body: ProductCreateREQ) {
-    const store = await this.storeService.findByUserId(user._id);
+  async create(userId: string, body: ProductCreateREQ) {
+    const store = await this.storeService.findByUserId(userId);
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
 
     const category = await this.categoryService.findById(body.categoryId);
