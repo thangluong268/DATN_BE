@@ -1,11 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 
 export class PaginationValidationService {
-  public static validate<T>(
-    data: T[],
-    pageNumber: number,
-    pageSize: number,
-  ): void {
+  public static validate<T>(data: T[], pageNumber: number, pageSize: number): void {
     if (!Array.isArray(data)) {
       throw new BadRequestException('Invalid data format');
     }

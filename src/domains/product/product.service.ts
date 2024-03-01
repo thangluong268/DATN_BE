@@ -6,6 +6,7 @@ import { PaginationREQ } from 'shared/generics/pagination.request';
 import { PaginationResponse } from 'shared/generics/pagination.response';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import sortByConditions from 'shared/helpers/sort-by-condition.helper';
+import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 import { CategoryService } from '../category/category.service';
 import { StoreService } from '../store/store.service';
 import { ProductCreateREQ } from './request/product-create.request';
@@ -34,51 +35,35 @@ export class ProductService {
       storeId: store._id,
     });
 
-    return BaseResponse.withMessage<Product>(
-      Product.toDocModel(newProduct),
-      'Tạo sản phẩm thành công!',
-    );
+    return BaseResponse.withMessage<Product>(toDocModel(newProduct), 'Tạo sản phẩm thành công!');
   }
 
   async getProductGives(query: PaginationREQ) {
     const condition = { newPrice: 0, status: true };
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.productModel.countDocuments(condition);
-    const products = await this.productModel
-      .find(condition, {}, { lean: true })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    const products = await this.productModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).skip(skip).limit(limit);
 
     const sortTypeQuery = 'desc';
     const sortValueQuery = 'productName';
     sortByConditions(products, sortTypeQuery, sortValueQuery);
 
-    return PaginationResponse.ofWithTotalAndMessage(
-      products,
-      total,
-      'Lấy sản phẩm thành công!',
-    );
+    return PaginationResponse.ofWithTotalAndMessage(products, total, 'Lấy sản phẩm thành công!');
   }
 
   async getProducts(query: GetProductsREQ, status: any) {
     const condition = GetProductsREQ.toQueryCondition(query, status);
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.productModel.countDocuments(condition);
-    const products = await this.productModel
-      .find(condition, {}, { lean: true })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    const products = await this.productModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).skip(skip).limit(limit);
 
-    const { sortTypeQuery, sortValueQuery } =
-      GetProductsREQ.toSortCondition(query);
+    const { sortTypeQuery, sortValueQuery } = GetProductsREQ.toSortCondition(query);
     sortByConditions(products, sortTypeQuery, sortValueQuery);
 
-    return PaginationResponse.ofWithTotalAndMessage(
-      products,
-      total,
-      'Lấy sản phẩm thành công!',
-    );
+    return PaginationResponse.ofWithTotalAndMessage(products, total, 'Lấy sản phẩm thành công!');
+  }
+
+  async findById(id: string) {
+    return await this.productModel.findById(id, {}, { lean: true });
   }
 }

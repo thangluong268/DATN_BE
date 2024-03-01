@@ -11,11 +11,7 @@ export class MessageGetAllByConversationRES {
   isRead: boolean;
   isMine: boolean;
 
-  static of(
-    currentUserId: string,
-    message: Message,
-    sender: User,
-  ): MessageGetAllByConversationRES {
+  static of(currentUserId: string, message: Message, sender: User): MessageGetAllByConversationRES {
     return {
       id: message._id,
       conversationId: message.conversationId,

@@ -26,10 +26,7 @@ export class GetProductsREQ extends PaginationREQ {
       ? {
           $or: [
             {
-              _id:
-                Types.ObjectId.isValid(search) === true
-                  ? search.toString()
-                  : new Types.ObjectId(),
+              _id: Types.ObjectId.isValid(search) === true ? search.toString() : new Types.ObjectId(),
             },
             { name: { $regex: search, $options: 'i' } },
             { description: { $regex: search, $options: 'i' } },
@@ -37,10 +34,7 @@ export class GetProductsREQ extends PaginationREQ {
             { type: { $regex: search, $options: 'i' } },
             { storeName: { $regex: search, $options: 'i' } },
             {
-              categoryId:
-                Types.ObjectId.isValid(search) === true
-                  ? search.toString()
-                  : new Types.ObjectId(),
+              categoryId: Types.ObjectId.isValid(search) === true ? search.toString() : new Types.ObjectId(),
             },
           ],
         }

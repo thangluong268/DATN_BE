@@ -25,8 +25,7 @@ export const PaypalErrorsConstants = {
   },
   ADD_CARD_INFORMATION_FAILED: {
     code: 'add_card_information_failed',
-    message:
-      'Could not supply your card, kindly check if you entered correct information',
+    message: 'Could not supply your card, kindly check if you entered correct information',
   },
   CREATE_INVOICE_FAILED: {
     code: 'create_invoice_failed',

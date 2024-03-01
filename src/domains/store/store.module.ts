@@ -6,10 +6,7 @@ import { StoreController } from './store.controller';
 import { StoreService } from './store.service';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([{ name: Store.name, schema: StoreSchema }]),
-    UserModule,
-  ],
+  imports: [MongooseModule.forFeature([{ name: Store.name, schema: StoreSchema }]), UserModule],
   controllers: [StoreController],
   providers: [StoreService],
   exports: [StoreService, MongooseModule],

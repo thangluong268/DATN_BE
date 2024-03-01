@@ -1,10 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import {
-  FACEBOOK_CLIENT_ID,
-  FACEBOOK_CLIENT_SECRET,
-  HOST_URL,
-} from 'app.config';
+import { FACEBOOK_CLIENT_ID, FACEBOOK_CLIENT_SECRET, HOST_URL } from 'app.config';
 import { Strategy } from 'passport-facebook';
 import { SOCIAL_APP } from 'shared/constants/user.constant';
 
@@ -16,23 +12,11 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
       clientSecret: FACEBOOK_CLIENT_SECRET,
       callbackURL: `${HOST_URL}/api/auth/login/facebook/redirect`,
       scope: ['email'],
-      profileFields: [
-        'emails',
-        'name',
-        'picture.type(large)',
-        'birthday',
-        'displayName',
-        'gender',
-      ],
+      profileFields: ['emails', 'name', 'picture.type(large)', 'birthday', 'displayName', 'gender'],
     });
   }
 
-  async validate(
-    accessToken: string,
-    refreshToken: string,
-    profile: any,
-    done: any,
-  ): Promise<any> {
+  async validate(accessToken: string, refreshToken: string, profile: any, done: any): Promise<any> {
     if (!profile || !accessToken) {
       return done('No user from facebook', null);
     }

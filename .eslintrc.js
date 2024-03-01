@@ -6,10 +6,7 @@ module.exports = {
     sourceType: 'module',
   },
   plugins: ['@typescript-eslint/eslint-plugin'],
-  extends: [
-    'plugin:@typescript-eslint/recommended',
-    'plugin:prettier/recommended',
-  ],
+  extends: ['plugin:@typescript-eslint/recommended', 'plugin:prettier/recommended'],
   root: true,
   env: {
     node: true,
@@ -17,9 +14,29 @@ module.exports = {
   },
   ignorePatterns: ['.eslintrc.js'],
   rules: {
+    'no-trailing-spaces': 'warn',
+    'no-unreachable': 'warn',
+    'arrow-spacing': ['warn', { before: true, after: true }],
+    'block-spacing': ['warn', 'always'],
+    'comma-spacing': ['warn', { before: false, after: true }],
+    'eol-last': ['warn', 'always'],
     '@typescript-eslint/interface-name-prefix': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-unused-vars': 'warn',
+    'prettier/prettier': [
+      'warn',
+      {
+        endOfLine: 'auto',
+        singleQuote: true,
+        trailingComma: 'all',
+        tabWidth: 2,
+        useTabs: false,
+        endOfLine: 'auto',
+        semi: true,
+        printWidth: 130,
+      },
+    ],
   },
 };

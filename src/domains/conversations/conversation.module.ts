@@ -11,9 +11,7 @@ import { Conversation, ConversationSchema } from './schema/conversation.schema';
 @Module({
   imports: [
     JwtModule.register({}),
-    MongooseModule.forFeature([
-      { name: Conversation.name, schema: ConversationSchema },
-    ]),
+    MongooseModule.forFeature([{ name: Conversation.name, schema: ConversationSchema }]),
     MessageModule,
     AuthModule,
     UserModule,

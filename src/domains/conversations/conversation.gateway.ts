@@ -28,9 +28,7 @@ import { ConversationGetREQ } from './request/conversation-get.request';
 })
 @UseFilters(new AllExceptionsSocketFilter())
 @UseGuards(WsGuard)
-export class ConversationGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(ConversationGateway.name);
   constructor(
     private readonly conversationService: ConversationService,
@@ -46,72 +44,39 @@ export class ConversationGateway
   }
 
   @SubscribeMessage(WS_EVENT.SEND_MESSAGE)
-  async sendMessage(
-    @ConnectedSocket() client: AuthSocket,
-    @MessageBody() body: MessageCreateREQ,
-  ) {
+  async sendMessage(@ConnectedSocket() client: AuthSocket, @MessageBody() body: MessageCreateREQ) {
     const { text, receiverId } = body;
     const userId = client.userId;
-    await this.conversationService.createIfIsFirstConversation(
-      userId,
-      receiverId,
-    );
-    const conversation = await this.conversationService.findOneByParticipants(
-      userId,
-      receiverId,
-    );
+    await this.conversationService.createIfIsFirstConversation(userId, receiverId);
+    const conversation = await this.conversationService.findOneByParticipants(userId, receiverId);
     await this.messageService.create(conversation._id, userId, text);
     this.io.to(conversation._id).emit(WS_EVENT.SEND_MESSAGE, text);
   }
 
   @SubscribeMessage(WS_EVENT.GET_CONVERSATION)
-  async getConversation(
-    @ConnectedSocket() client: AuthSocket,
-    @MessageBody() body: ConversationGetREQ,
-  ): Promise<WsResponse> {
+  async getConversation(@ConnectedSocket() client: AuthSocket, @MessageBody() body: ConversationGetREQ): Promise<WsResponse> {
     const userId = client.userId;
     const { receiverId, ...query } = body;
 
-    const conversation = await this.conversationService.findOneByParticipants(
-      userId,
-      receiverId,
-    );
-    const data = await this.messageService.findByConversation(
-      userId,
-      conversation._id,
-      query,
-    );
+    const conversation = await this.conversationService.findOneByParticipants(userId, receiverId);
+    const data = await this.messageService.findByConversation(userId, conversation._id, query);
 
     return { event: WS_EVENT.GET_CONVERSATION, data };
   }
 
   @SubscribeMessage(WS_EVENT.DELETE_MESSAGE)
-  async deleteMessage(
-    @ConnectedSocket() client: AuthSocket,
-    @MessageBody() body: MessageDeleteREQ,
-  ) {
+  async deleteMessage(@ConnectedSocket() client: AuthSocket, @MessageBody() body: MessageDeleteREQ) {
     const userId = client.userId;
-    const deletedMessage = await this.messageService.delete(
-      userId,
-      body.messageId,
-    );
+    const deletedMessage = await this.messageService.delete(userId, body.messageId);
 
-    this.io
-      .to(deletedMessage.conversationId)
-      .emit(WS_EVENT.DELETE_MESSAGE, deletedMessage.id);
+    this.io.to(deletedMessage.conversationId).emit(WS_EVENT.DELETE_MESSAGE, deletedMessage.id);
   }
 
   @SubscribeMessage(WS_EVENT.IS_TYPING)
-  async isTyping(
-    @ConnectedSocket() client: AuthSocket,
-    @MessageBody() body: MessageIsTypingREQ,
-  ) {
+  async isTyping(@ConnectedSocket() client: AuthSocket, @MessageBody() body: MessageIsTypingREQ) {
     const userId = client.userId;
     const user = await this.userService.findById(userId);
-    const conversation = await this.conversationService.findOneByParticipants(
-      userId,
-      body.receiverId,
-    );
+    const conversation = await this.conversationService.findOneByParticipants(userId, body.receiverId);
     client.broadcast.to(conversation._id).emit(WS_EVENT.IS_TYPING, {
       userName: user.fullName,
       isTyping: body.isTyping,

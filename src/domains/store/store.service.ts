@@ -32,36 +32,23 @@ export class StoreService {
 
     const newStore = await this.storeModel.create({ userId, ...body });
 
-    await this.userModel.updateOne(
-      { _id: userId },
-      { role: [...user.role, ROLE_NAME.SELLER] },
-    );
+    await this.userModel.updateOne({ _id: userId }, { role: [...user.role, ROLE_NAME.SELLER] });
 
-    return BaseResponse.withMessage<Store>(
-      newStore,
-      'Tạo cửa hàng thành công!',
-    );
+    return BaseResponse.withMessage<Store>(newStore, 'Tạo cửa hàng thành công!');
   }
 
   async getMyStore(userId: string) {
     const store = await this.storeModel.findOne({ userId }, {}, { lean: true });
     if (!store) return new NotFoundException('Không tìm thấy cửa hàng!');
 
-    return BaseResponse.withMessage<Store>(
-      store,
-      'Lấy thông tin cửa hàng thành công!',
-    );
+    return BaseResponse.withMessage<Store>(store, 'Lấy thông tin cửa hàng thành công!');
   }
 
   async getStores(query: GetStoresByAdminREQ) {
     const condition = GetStoresByAdminREQ.toQueryCondition(query);
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.storeModel.countDocuments(condition);
-    const stores = await this.storeModel
-      .find(condition)
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .skip(skip);
+    const stores = await this.storeModel.find(condition).sort({ createdAt: -1 }).limit(limit).skip(skip);
 
     return PaginationResponse.ofWithTotalAndMessage(
       stores.map((store) => Store.toDocModel(store)),
@@ -73,18 +60,15 @@ export class StoreService {
   async update(userId: string, body: StoreUpdateREQ) {
     const store = await this.storeModel.findOne({ userId }, {}, { lean: true });
     if (!store) return new NotFoundException('Không tìm thấy cửa hàng!');
-    const updatedStore = await this.storeModel.findOneAndUpdate(
-      { userId },
-      { ...body },
-      { lean: true, new: true },
-    );
-    return BaseResponse.withMessage<Store>(
-      updatedStore,
-      'Cập nhật thông tin cửa hàng thành công!',
-    );
+    const updatedStore = await this.storeModel.findOneAndUpdate({ userId }, { ...body }, { lean: true, new: true });
+    return BaseResponse.withMessage<Store>(updatedStore, 'Cập nhật thông tin cửa hàng thành công!');
   }
 
   async findByUserId(userId: string) {
     return await this.storeModel.findOne({ userId }, {}, { lean: true });
+  }
+
+  async findById(id: string) {
+    return await this.storeModel.findById(id, {}, { lean: true });
   }
 }

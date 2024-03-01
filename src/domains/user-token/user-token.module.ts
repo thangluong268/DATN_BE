@@ -5,11 +5,7 @@ import { UserTokenController } from './user-token.controller';
 import { UserTokenService } from './user-token.service';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([
-      { name: UserToken.name, schema: UserTokenSchema },
-    ]),
-  ],
+  imports: [MongooseModule.forFeature([{ name: UserToken.name, schema: UserTokenSchema }])],
   controllers: [UserTokenController],
   providers: [UserTokenService],
   exports: [UserTokenService],

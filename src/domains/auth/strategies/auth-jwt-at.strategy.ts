@@ -12,10 +12,7 @@ export interface JwtPayload {
 export class JwtATStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(private readonly userService: UserService) {
     super({
-      jwtFromRequest: ExtractJwt.fromExtractors([
-        extractJwtFromCookie,
-        ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ]),
+      jwtFromRequest: ExtractJwt.fromExtractors([extractJwtFromCookie, ExtractJwt.fromAuthHeaderAsBearerToken()]),
       secretOrKey: JWT_ACCESS_TOKEN_SECRET,
       ignoreExpiration: false,
       passReqToCallback: false,

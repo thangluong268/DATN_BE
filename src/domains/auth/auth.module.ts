@@ -14,15 +14,7 @@ import { LocalStrategy } from './strategies/local.strategy';
 @Module({
   imports: [JwtModule.register({}), UserModule, UserTokenModule],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    JwtATStrategy,
-    JwtRTStrategy,
-    LocalStrategy,
-    JwtHelper,
-    GoogleStrategy,
-    FacebookStrategy,
-  ],
+  providers: [AuthService, JwtATStrategy, JwtRTStrategy, LocalStrategy, JwtHelper, GoogleStrategy, FacebookStrategy],
   exports: [JwtHelper],
 })
 export class AuthModule {}

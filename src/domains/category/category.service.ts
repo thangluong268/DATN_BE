@@ -17,23 +17,13 @@ export class CategoryService {
 
   async create(body: CategoryCreateREQ) {
     const newCategory = await this.categoryModel.create(body);
-    return BaseResponse.withMessage<Category>(
-      toDocModel(newCategory),
-      'Tạo danh mục thành công!',
-    );
+    return BaseResponse.withMessage<Category>(toDocModel(newCategory), 'Tạo danh mục thành công!');
   }
 
   async getCategories(query: GetCategoryREQ) {
     const condition = GetCategoryREQ.toQueryCondition(query);
-    const categories = await this.categoryModel.find(
-      { ...condition },
-      { name: 1, url: 1, status: 1 },
-      { lean: true },
-    );
-    return BaseResponse.withMessage<Category[]>(
-      categories,
-      'Lấy danh sách danh mục thành công!',
-    );
+    const categories = await this.categoryModel.find({ ...condition }, { name: 1, url: 1, status: 1 }, { lean: true });
+    return BaseResponse.withMessage<Category[]>(categories, 'Lấy danh sách danh mục thành công!');
   }
 
   async findById(id: string) {
@@ -46,21 +36,11 @@ export class CategoryService {
       },
       { lean: true },
     );
-    return BaseResponse.withMessage<Category>(
-      category,
-      'Lấy thông tin danh mục thành công!',
-    );
+    return BaseResponse.withMessage<Category>(category, 'Lấy thông tin danh mục thành công!');
   }
 
   async update(id: string, body: CategoryUpdateREQ) {
-    const updatedPolicy = await this.categoryModel.findByIdAndUpdate(
-      { _id: id },
-      { ...body },
-      { new: true, lean: true },
-    );
-    return BaseResponse.withMessage<Category>(
-      updatedPolicy,
-      'Cập nhật danh mục thành công!',
-    );
+    const updatedPolicy = await this.categoryModel.findByIdAndUpdate({ _id: id }, { ...body }, { new: true, lean: true });
+    return BaseResponse.withMessage<Category>(updatedPolicy, 'Cập nhật danh mục thành công!');
   }
 }

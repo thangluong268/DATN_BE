@@ -21,11 +21,7 @@ export class PaypalPaymentService {
     headers.set('Content-Type', 'application/x-www-form-urlencoded');
     headers.set('Authorization', `Basic ${this.basicAuth}`);
 
-    const { data } = await this.axios.post(
-      url,
-      new URLSearchParams({ grant_type: 'client_credentials' }),
-      { headers },
-    );
+    const { data } = await this.axios.post(url, new URLSearchParams({ grant_type: 'client_credentials' }), { headers });
 
     return data.access_token;
   }

@@ -1,10 +1,6 @@
 import removeVietnameseTones from './remove-vietnamese-tones.helper';
 
-function sortByConditions(
-  entire: any,
-  sortTypeQuery: string,
-  sortValueQuery: string,
-) {
+function sortByConditions(entire: any, sortTypeQuery: string, sortValueQuery: string) {
   sortTypeQuery === 'asc' &&
     entire.sort((a: any, b: any) => {
       if (

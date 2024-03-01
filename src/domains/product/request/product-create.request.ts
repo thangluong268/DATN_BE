@@ -3,7 +3,8 @@ import { IsArray, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class ProductCreateREQ {
   @IsNotEmpty()
-  @IsString()
+  @IsArray()
+  @Type(() => String)
   avatar: string[];
 
   @IsNotEmpty()

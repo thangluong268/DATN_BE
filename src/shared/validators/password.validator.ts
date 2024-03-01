@@ -7,8 +7,7 @@ export function PasswordValidator() {
       message: 'Mật khẩu phải từ 6 đến 20 ký tự',
     })(object, propertyName);
     Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z])/, {
-      message:
-        'Mật khẩu chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt',
+      message: 'Mật khẩu chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt',
       each: true,
     })(object, propertyName);
   };

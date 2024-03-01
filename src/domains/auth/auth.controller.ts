@@ -1,16 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpStatus,
-  Param,
-  Patch,
-  Post,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpStatus, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ROLE_NAME } from '../../shared/enums/role-name.enum';
 import { User } from '../user/schema/user.schema';
@@ -81,20 +69,11 @@ export class AuthController {
   @Roles(ROLE_NAME.ADMIN)
   @Patch(':userId/role')
   @UseGuards(AuthJwtATGuard)
-  changeRole(
-    @Param('userId') userId: string,
-    @Query() query: AuthSetRoleUserREQ,
-  ) {
+  changeRole(@Param('userId') userId: string, @Query() query: AuthSetRoleUserREQ) {
     return this.authService.changeRole(userId, query);
   }
 
-  @Roles(
-    ROLE_NAME.ADMIN,
-    ROLE_NAME.USER,
-    ROLE_NAME.SELLER,
-    ROLE_NAME.MANAGER,
-    ROLE_NAME.SHIPPER,
-  )
+  @Roles(ROLE_NAME.ADMIN, ROLE_NAME.USER, ROLE_NAME.SELLER, ROLE_NAME.MANAGER, ROLE_NAME.SHIPPER)
   @UseGuards(AuthJwtATGuard)
   @Delete('logout')
   logout(@Req() req) {
