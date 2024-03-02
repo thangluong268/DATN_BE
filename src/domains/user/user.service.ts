@@ -30,7 +30,6 @@ export class UserService {
     const newUser = await this.userModel.create(body);
     AuthSignUpREQ.setDefault(newUser);
     await newUser.save();
-
     return UserCreateRESP.of(User.toDocModel(newUser));
   }
 
@@ -44,16 +43,11 @@ export class UserService {
     const newUser = await this.userModel.create(body);
     UserCreateREQ.setDefault(newUser);
     await newUser.save();
-
     return UserCreateRESP.of(User.toDocModel(newUser));
   }
 
   async createUserSocial(body: any) {
-    const newUser = await this.userModel.create({
-      ...body,
-      role: [ROLE_NAME.USER],
-    });
-
+    const newUser = await this.userModel.create({ ...body, role: [ROLE_NAME.USER] });
     return User.toDocModel(newUser);
   }
 
@@ -92,5 +86,12 @@ export class UserService {
   async getDetail(id: string) {
     const user = await this.findById(id);
     return BaseResponse.withMessage<User>(user, 'Lấy thông tin thành công!');
+  }
+
+  async updateWallet(id: string, money: number, type: string) {
+    const user = await this.userModel.findById(id, {}, { lean: true });
+    const bonus = (money * 0.2) / 1000;
+    const updatedWallet = type == 'plus' ? user.wallet + bonus : user.wallet - bonus;
+    await this.userModel.findByIdAndUpdate(id, { wallet: updatedWallet }, { lean: true, new: true });
   }
 }

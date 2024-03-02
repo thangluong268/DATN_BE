@@ -52,7 +52,8 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const conversation = await this.conversationService.findOneByParticipants(userId, receiverId);
     await this.messageService.create(conversation._id, userId, text);
     await this.conversationService.updateLastMessage(conversation._id, userId, text);
-    this.io.to(conversation._id).emit(WS_EVENT.SEND_MESSAGE, text);
+    // this.io.to(conversation._id).emit(WS_EVENT.SEND_MESSAGE, text);
+    this.io.emit(WS_EVENT.SEND_MESSAGE, text);
   }
 
   @SubscribeMessage(WS_EVENT.GET_CONVERSATION)
@@ -75,15 +76,20 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
   async deleteMessage(@ConnectedSocket() client: AuthSocket, @MessageBody() body: MessageDeleteREQ) {
     const userId = client.userId;
     const deletedMessage = await this.messageService.delete(userId, body.messageId);
-    this.io.to(deletedMessage.conversationId).emit(WS_EVENT.DELETE_MESSAGE, deletedMessage.id);
+    // this.io.to(deletedMessage.conversationId).emit(WS_EVENT.DELETE_MESSAGE, deletedMessage.id);
+    this.io.emit(WS_EVENT.DELETE_MESSAGE, deletedMessage.id);
   }
 
   @SubscribeMessage(WS_EVENT.IS_TYPING)
   async isTyping(@ConnectedSocket() client: AuthSocket, @MessageBody() body: MessageIsTypingREQ) {
     const userId = client.userId;
     const user = await this.userService.findById(userId);
-    const conversation = await this.conversationService.findOneByParticipants(userId, body.receiverId);
-    client.broadcast.to(conversation._id).emit(WS_EVENT.IS_TYPING, {
+    // const conversation = await this.conversationService.findOneByParticipants(userId, body.receiverId);
+    // client.broadcast.to(conversation._id).emit(WS_EVENT.IS_TYPING, {
+    //   userName: user.fullName,
+    //   isTyping: body.isTyping,
+    // });
+    client.broadcast.emit(WS_EVENT.IS_TYPING, {
       userName: user.fullName,
       isTyping: body.isTyping,
     });
