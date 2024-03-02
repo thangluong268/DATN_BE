@@ -28,11 +28,7 @@ export class ProductService {
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const category = await this.categoryService.findById(body.categoryId);
     if (!category) throw new NotFoundException('Không tìm thấy danh mục này!');
-
-    const newProduct = await this.productModel.create({
-      ...body,
-      storeId: store._id,
-    });
+    const newProduct = await this.productModel.create({ ...body, storeId: store._id });
     return BaseResponse.withMessage<Product>(toDocModel(newProduct), 'Tạo sản phẩm thành công!');
   }
 
@@ -59,5 +55,12 @@ export class ProductService {
 
   async findById(id: string) {
     return await this.productModel.findById(id, {}, { lean: true });
+  }
+
+  async checkExceedQuantityInStock(id: string, quantity: number) {
+    const product = await this.findById(id);
+    if (quantity > product.quantity) {
+      throw new NotFoundException('Số lượng sản phẩm trong kho không đủ!');
+    }
   }
 }

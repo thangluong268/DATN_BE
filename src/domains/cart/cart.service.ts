@@ -80,20 +80,15 @@ export class CartService {
   async addNewProductIntoCartOfStore(cart: Cart, product: ProductDTO) {
     cart.products.push(product);
     cart.totalPrice = this.getToTalPrice(cart.products);
-    return await this.cartModel.findByIdAndUpdate(cart._id, cart, {
-      lean: true,
-      new: true,
-    });
+    return await this.cartModel.findByIdAndUpdate(cart._id, cart, { lean: true, new: true });
   }
 
   async increaseProductQuantity(cart: Cart, productId: string) {
     const product = cart.products.find((product) => product.id.toString() === productId.toString());
     product.quantity += 1;
+    await this.productService.checkExceedQuantityInStock(product.id, product.quantity);
     cart.totalPrice = this.getToTalPrice(cart.products);
-    return await this.cartModel.findByIdAndUpdate(cart._id, cart, {
-      lean: true,
-      new: true,
-    });
+    return await this.cartModel.findByIdAndUpdate(cart._id, cart, { lean: true, new: true });
   }
 
   private getToTalPrice(products: ProductDTO[]) {
