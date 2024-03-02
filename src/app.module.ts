@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { BillModule } from 'domains/bill/bill.module';
 import { CartModule } from 'domains/cart/cart.module';
 import { PolicyModule } from 'domains/policy/policy.module';
 import { PaymentModule } from 'payment/paymen.module';
@@ -29,6 +30,7 @@ import { SeederService } from './services/seeder.service';
     PolicyModule,
     PaymentModule,
     CartModule,
+    BillModule,
   ],
   controllers: [],
   providers: [SeederService],
