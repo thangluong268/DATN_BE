@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { ProductInfoDTO } from 'domains/bill/dto/product-info.dto';
 import { ProductDTO } from 'domains/product/dto/product.dto';
 import { ProductService } from 'domains/product/product.service';
 import { Product } from 'domains/product/schema/product.schema';
@@ -133,5 +134,19 @@ export class CartService {
     cart.totalPrice = this.getTotalPrice(cart.products);
     await cart.save();
     return BaseResponse.withMessage({}, 'Xóa sản phẩm khỏi giỏ hàng thành công!');
+  }
+
+  async removeMultiProductInCart(userId: string, storeId: string, products: ProductInfoDTO[]) {
+    const cart = await this.cartModel.findOne({ userId, storeId });
+    products.forEach((product) => {
+      const index = cart.products.findIndex((p) => p.id.toString() === product.id.toString());
+      cart.products.splice(index, 1);
+    });
+    if (cart.products.length === 0) {
+      await this.cartModel.findByIdAndDelete(cart._id);
+      return;
+    }
+    cart.totalPrice = this.getTotalPrice(cart.products);
+    await cart.save();
   }
 }
