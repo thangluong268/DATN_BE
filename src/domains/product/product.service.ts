@@ -26,7 +26,6 @@ export class ProductService {
   async create(userId: string, body: ProductCreateREQ) {
     const store = await this.storeService.findByUserId(userId);
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
-
     const category = await this.categoryService.findById(body.categoryId);
     if (!category) throw new NotFoundException('Không tìm thấy danh mục này!');
 
@@ -34,7 +33,6 @@ export class ProductService {
       ...body,
       storeId: store._id,
     });
-
     return BaseResponse.withMessage<Product>(toDocModel(newProduct), 'Tạo sản phẩm thành công!');
   }
 
@@ -43,11 +41,9 @@ export class ProductService {
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.productModel.countDocuments(condition);
     const products = await this.productModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).skip(skip).limit(limit);
-
     const sortTypeQuery = 'desc';
     const sortValueQuery = 'productName';
     sortByConditions(products, sortTypeQuery, sortValueQuery);
-
     return PaginationResponse.ofWithTotalAndMessage(products, total, 'Lấy sản phẩm thành công!');
   }
 
@@ -56,10 +52,8 @@ export class ProductService {
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.productModel.countDocuments(condition);
     const products = await this.productModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).skip(skip).limit(limit);
-
     const { sortTypeQuery, sortValueQuery } = GetProductsREQ.toSortCondition(query);
     sortByConditions(products, sortTypeQuery, sortValueQuery);
-
     return PaginationResponse.ofWithTotalAndMessage(products, total, 'Lấy sản phẩm thành công!');
   }
 

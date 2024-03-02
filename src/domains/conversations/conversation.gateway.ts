@@ -13,6 +13,7 @@ import {
 
 import { AllExceptionsSocketFilter } from 'filter/ws-exception.filter';
 import { WS_EVENT } from 'shared/constants/ws-event.constant';
+import { PaginationREQ } from 'shared/generics/pagination.request';
 import { Namespace, Socket } from 'socket.io';
 import { AuthSocket, WsGuard } from '../auth/guards/ws-jwt-auth.guard';
 import { MessageService } from '../message/message.service';
@@ -50,6 +51,7 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     await this.conversationService.createIfIsFirstConversation(userId, receiverId);
     const conversation = await this.conversationService.findOneByParticipants(userId, receiverId);
     await this.messageService.create(conversation._id, userId, text);
+    await this.conversationService.updateLastMessage(conversation._id, userId, text);
     this.io.to(conversation._id).emit(WS_EVENT.SEND_MESSAGE, text);
   }
 
@@ -57,18 +59,22 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
   async getConversation(@ConnectedSocket() client: AuthSocket, @MessageBody() body: ConversationGetREQ): Promise<WsResponse> {
     const userId = client.userId;
     const { receiverId, ...query } = body;
-
     const conversation = await this.conversationService.findOneByParticipants(userId, receiverId);
     const data = await this.messageService.findByConversation(userId, conversation._id, query);
-
     return { event: WS_EVENT.GET_CONVERSATION, data };
+  }
+
+  @SubscribeMessage(WS_EVENT.GET_PREVIEW_CONVERSATIONS)
+  async getPreviewConversation(@ConnectedSocket() client: AuthSocket, @MessageBody() body: PaginationREQ): Promise<WsResponse> {
+    const userId = client.userId;
+    const data = await this.conversationService.findPreviews(userId, body);
+    return { event: WS_EVENT.GET_PREVIEW_CONVERSATIONS, data };
   }
 
   @SubscribeMessage(WS_EVENT.DELETE_MESSAGE)
   async deleteMessage(@ConnectedSocket() client: AuthSocket, @MessageBody() body: MessageDeleteREQ) {
     const userId = client.userId;
     const deletedMessage = await this.messageService.delete(userId, body.messageId);
-
     this.io.to(deletedMessage.conversationId).emit(WS_EVENT.DELETE_MESSAGE, deletedMessage.id);
   }
 

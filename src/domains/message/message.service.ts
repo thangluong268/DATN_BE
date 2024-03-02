@@ -38,6 +38,11 @@ export class MessageService {
       messagesRes.push(MessageGetAllByConversationRES.of(userId, message, sender));
     }
 
+    const messageIdsToRead = messages
+      .filter((message) => message.senderId !== userId && !message.isRead)
+      .map((message) => message._id);
+    await this.updateReadStatus(messageIdsToRead);
+
     return PaginationResponse.ofWithTotal(messagesRes, total);
   }
 
@@ -52,5 +57,9 @@ export class MessageService {
     }
     await this.messageModel.findByIdAndDelete(messageId, { lean: true });
     return message;
+  }
+
+  async updateReadStatus(messageIdsToRead: string[]) {
+    await this.messageModel.updateMany({ _id: { $in: messageIdsToRead } }, { isRead: true });
   }
 }

@@ -10,7 +10,7 @@ export class PaginationREQ {
 
   @IsNumber()
   @IsOptional()
-  @Transform(({ value }) => (value ? parseInt(value) : 5))
+  @Transform(({ value }) => (value ? parseInt(value) : 10))
   @Min(1)
   limit: number;
 }
