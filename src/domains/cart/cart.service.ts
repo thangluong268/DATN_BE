@@ -7,7 +7,10 @@ import { Store } from 'domains/store/schema/store.schema';
 import { StoreService } from 'domains/store/store.service';
 import { Model } from 'mongoose';
 import { BaseResponse } from 'shared/generics/base.response';
+import { PaginationResponse } from 'shared/generics/pagination.response';
+import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { toDocModel } from 'shared/helpers/to-doc-model.helper';
+import { CartGetPagingByUserREQ } from './request/cart-get-paging-by-user.request';
 import { Cart } from './schema/cart.schema';
 
 @Injectable()
@@ -72,14 +75,14 @@ export class CartService {
       storeName: store.name,
       products: [productIntoCart],
     });
-    newCart.totalPrice = this.getToTalPrice(newCart.products);
+    newCart.totalPrice = this.getTotalPrice(newCart.products);
     await newCart.save();
     return toDocModel(newCart);
   }
 
   async addNewProductIntoCartOfStore(cart: Cart, product: ProductDTO) {
     cart.products.push(product);
-    cart.totalPrice = this.getToTalPrice(cart.products);
+    cart.totalPrice = this.getTotalPrice(cart.products);
     return await this.cartModel.findByIdAndUpdate(cart._id, cart, { lean: true, new: true });
   }
 
@@ -87,13 +90,48 @@ export class CartService {
     const product = cart.products.find((product) => product.id.toString() === productId.toString());
     product.quantity += 1;
     await this.productService.checkExceedQuantityInStock(product.id, product.quantity);
-    cart.totalPrice = this.getToTalPrice(cart.products);
+    cart.totalPrice = this.getTotalPrice(cart.products);
     return await this.cartModel.findByIdAndUpdate(cart._id, cart, { lean: true, new: true });
   }
 
-  private getToTalPrice(products: ProductDTO[]) {
+  private getTotalPrice(products: ProductDTO[]) {
     return products.reduce((total, product) => {
       return total + product.newPrice * product.quantity;
     }, 0);
+  }
+
+  async getPagingByUserId(userId: string, query: CartGetPagingByUserREQ) {
+    const condition = CartGetPagingByUserREQ.toQueryCondition(userId, query);
+    const { skip, limit } = QueryPagingHelper.queryPaging(query);
+    const total = await this.cartModel.countDocuments(condition);
+    const carts = await this.cartModel.find(condition, {}, { lean: true }).sort({ updatedAt: -1 }).skip(skip).limit(limit);
+    return PaginationResponse.ofWithTotalAndMessage(carts, total, 'Lấy giỏ hàng thành công!');
+  }
+
+  async getWithoutPagingByUserId(userId: string) {
+    const carts = await this.cartModel.find({ userId }, {}, { lean: true }).sort({ createdAt: -1 });
+    return BaseResponse.withMessage<Cart[]>(carts, 'Lấy giỏ hàng thành công!');
+  }
+
+  async getNewCartByUserId(userId: string) {
+    const cart = await this.cartModel.find({ userId }).sort({ createdAt: -1 }).limit(1).lean();
+    return BaseResponse.withMessage<Cart>(cart[0], 'Lấy giỏ hàng mới nhất thành công!');
+  }
+
+  async removeProductFromCart(userId: string, productId: string) {
+    const product = await this.productService.findById(productId);
+    if (!product) return new NotFoundException('Không tìm thấy sản phẩm này!');
+    const store = await this.storeService.findById(product.storeId);
+    if (!store) return new NotFoundException('Không tìm thấy cửa hàng này!');
+    const cart = await this.cartModel.findOne({ userId, storeId: store._id });
+    if (cart.products.length === 1) {
+      await this.cartModel.findByIdAndDelete(cart._id);
+      return BaseResponse.withMessage({}, 'Xóa sản phẩm khỏi giỏ hàng thành công!');
+    }
+    const index = cart.products.findIndex((product) => product.id.toString() === productId.toString());
+    cart.products.splice(index, 1);
+    cart.totalPrice = this.getTotalPrice(cart.products);
+    await cart.save();
+    return BaseResponse.withMessage({}, 'Xóa sản phẩm khỏi giỏ hàng thành công!');
   }
 }
