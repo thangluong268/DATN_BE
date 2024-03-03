@@ -71,4 +71,8 @@ export class StoreService {
   async findById(id: string) {
     return await this.storeModel.findById(id, {}, { lean: true });
   }
+
+  async countTotal() {
+    return await this.storeModel.countDocuments();
+  }
 }

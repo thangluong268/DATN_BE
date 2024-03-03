@@ -94,4 +94,8 @@ export class UserService {
     const updatedWallet = type == 'plus' ? user.wallet + bonus : user.wallet - bonus;
     await this.userModel.findByIdAndUpdate(id, { wallet: updatedWallet }, { lean: true, new: true });
   }
+
+  async countTotal() {
+    return await this.userModel.countDocuments();
+  }
 }

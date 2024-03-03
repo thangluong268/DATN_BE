@@ -72,4 +72,8 @@ export class ProductService {
     }
     await product.save();
   }
+
+  async countTotal() {
+    return await this.productModel.countDocuments();
+  }
 }
