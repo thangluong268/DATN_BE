@@ -3,6 +3,7 @@ import { PAYMENT_METHOD } from 'shared/enums/bill.enum';
 import { CartInfoDTO } from '../dto/cart-info.dto';
 import { GiveInfoDTO } from '../dto/give-info.dto';
 import { ReceiverInfoDTO } from '../dto/receiver-info.dto';
+import { Bill } from '../schema/bill.schema';
 
 export class BillCreateREQ {
   @IsNotEmpty()
@@ -23,5 +24,14 @@ export class BillCreateREQ {
   @IsNotEmpty()
   deliveryFee: number;
 
-  // static create(userId: string);
+  static saveData(newBill: Bill, userId: string, body: BillCreateREQ) {
+    newBill.userId = userId;
+    newBill.deliveryMethod = body.deliveryMethod;
+    newBill.paymentMethod = body.paymentMethod;
+    newBill.receiverInfo = body.receiverInfo;
+    if (body.giveInfo) newBill.giveInfo = body.giveInfo;
+    newBill.deliveryFee = body.deliveryFee;
+    body.paymentMethod === PAYMENT_METHOD.CASH ? (newBill.isPaid = false) : (newBill.isPaid = true);
+    newBill.save();
+  }
 }

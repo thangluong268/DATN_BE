@@ -6,5 +6,6 @@ export enum PRODUCT_TYPE {
 export enum PAYMENT_METHOD {
   VNPAY = 'VNPAY',
   MOMO = 'MOMO',
+  CASH = 'CASH',
   GIVE = 'GIVE',
 }
