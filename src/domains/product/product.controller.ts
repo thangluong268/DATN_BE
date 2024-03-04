@@ -9,8 +9,10 @@ import { ProductCreateREQ } from './request/product-create.request';
 import { ProductGetInStoreREQ } from './request/product-get-in-store.request';
 import { ProductGetMostInStoreREQ } from './request/product-get-most-in-store.request';
 import { ProductGetOtherInStoreREQ } from './request/product-get-orther-in-store.request';
+import { ProductGetRandomREQ } from './request/product-get-random.request';
 import { ProductsGetREQ } from './request/product-get.request';
 import { ProductUpdateREQ } from './request/product-update.request';
+import { ProductGetFilterREQ } from './request/product-get-filter.request';
 
 @Controller()
 export class ProductController {
@@ -44,6 +46,16 @@ export class ProductController {
   @Get('product/mostProductsInStore')
   getProductsMostInStore(@Query() query: ProductGetMostInStoreREQ) {
     return this.productService.getProductsMostInStore(Number(query.limit));
+  }
+
+  @Get('product/random')
+  getProductsRandom(@Query() query: ProductGetRandomREQ, @Body() body: string[]) {
+    return this.productService.getProductsRandom(query, body);
+  }
+
+  @Get('product-filter')
+  getProductsFilter(@Query() query: ProductGetFilterREQ) {
+    return this.productService.getProductsFilter(query);
   }
 
   @Roles(ROLE_NAME.SELLER)

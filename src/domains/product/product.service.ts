@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { BillService } from 'domains/bill/bill.service';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { PRODUCT_TYPE } from 'shared/enums/bill.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationREQ } from 'shared/generics/pagination.request';
@@ -12,9 +12,11 @@ import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 import { CategoryService } from '../category/category.service';
 import { StoreService } from '../store/store.service';
 import { ProductCreateREQ } from './request/product-create.request';
+import { ProductGetFilterREQ } from './request/product-get-filter.request';
 import { ProductGetInStoreREQ } from './request/product-get-in-store.request';
 import { ProductGetMostInStoreREQ } from './request/product-get-most-in-store.request';
 import { ProductGetOtherInStoreREQ } from './request/product-get-orther-in-store.request';
+import { ProductGetRandomREQ } from './request/product-get-random.request';
 import { ProductsGetREQ } from './request/product-get.request';
 import { ProductUpdateREQ } from './request/product-update.request';
 import { Product } from './schema/product.schema';
@@ -97,7 +99,6 @@ export class ProductService {
     const products = await this.productModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).skip(skip).limit(limit);
     const { sortTypeQuery, sortValueQuery } = ProductsGetREQ.toSortCondition(query);
     sortByConditions(products, sortTypeQuery, sortValueQuery);
-
     const productsFullInfo = await Promise.all(
       products.map(async (product) => {
         const category = await this.categoryService.findOne(product.categoryId);
@@ -172,6 +173,43 @@ export class ProductService {
       }),
     );
     return BaseResponse.withMessage(data, 'Lấy danh sách sản phẩm bán chạy nhất thành công!');
+  }
+
+  async getProductsRandom(query: ProductGetRandomREQ, body: string[]) {
+    const limit = query.limit || 10;
+    const excludeIds = body.map((id) => new Types.ObjectId(id));
+    const products = await this.productModel.aggregate(ProductGetRandomREQ.toQueryCondition(query, excludeIds));
+    const remainingLimit = limit - products.length;
+    if (remainingLimit < limit) {
+      const currentExcludeIds = products.map((product) => product._id);
+      excludeIds.push(...currentExcludeIds);
+      const otherProducts = await this.productModel.aggregate(
+        ProductGetRandomREQ.toQueryConditionRemain(remainingLimit, excludeIds),
+      );
+      products.push(...otherProducts);
+    }
+    const nextCursor = products.length > 0 ? products[products.length - 1]['createdAt'] : null;
+    return BaseResponse.withMessage({ products, nextCursor }, 'Lấy danh sách sản phẩm ngẫu nhiên thành công!');
+  }
+
+  async getProductsFilter(query: ProductGetFilterREQ) {
+    const category = await this.categoryService.findOne(query.search);
+    const condition = ProductGetFilterREQ.toQueryCondition(query);
+    const { skip, limit } = QueryPagingHelper.queryPaging(query);
+    const total = await this.productModel.countDocuments(condition);
+    const products = await this.productModel
+      .find(condition, {}, { lean: true })
+      .sort({ price: 1, quantity: 1, createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+    return BaseResponse.withMessage(
+      {
+        total,
+        products,
+        categoryName: category.name,
+      },
+      'Lấy danh sách sản phẩm theo điều kiện thành công!',
+    );
   }
 
   async findById(id: string) {
