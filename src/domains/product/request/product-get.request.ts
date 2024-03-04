@@ -2,14 +2,10 @@ import { IsOptional, IsString } from 'class-validator';
 import { Types } from 'mongoose';
 import { PaginationREQ } from 'shared/generics/pagination.request';
 
-export class GetProductsREQ extends PaginationREQ {
+export class ProductsGetREQ extends PaginationREQ {
   @IsOptional()
   @IsString()
   search: string;
-
-  @IsOptional()
-  @IsString()
-  storeId: string;
 
   @IsOptional()
   @IsString()
@@ -19,8 +15,8 @@ export class GetProductsREQ extends PaginationREQ {
   @IsString()
   sortValue: string;
 
-  static toQueryCondition(query: GetProductsREQ, status: any) {
-    const { search, storeId } = query;
+  static toQueryCondition(storeId: string, query: ProductsGetREQ, status: any) {
+    const { search } = query;
     const storeIdQuery = storeId ? { storeId: storeId } : {};
     const searchQuery = search
       ? {
@@ -44,10 +40,10 @@ export class GetProductsREQ extends PaginationREQ {
     return condition;
   }
 
-  static toSortCondition(query: GetProductsREQ) {
+  static toSortCondition(query: ProductsGetREQ) {
     const { sortType, sortValue } = query;
     const sortTypeQuery = sortType ? sortType : 'desc';
-    const sortValueQuery = sortValue ? sortValue : 'productName';
+    const sortValueQuery = sortValue ? sortValue : 'name';
     return { sortTypeQuery, sortValueQuery };
   }
 }

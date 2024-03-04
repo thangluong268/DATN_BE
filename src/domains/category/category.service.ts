@@ -39,6 +39,10 @@ export class CategoryService {
     return BaseResponse.withMessage<Category>(category, 'Lấy thông tin danh mục thành công!');
   }
 
+  async findOne(id: string) {
+    return await this.categoryModel.findById(id, {}, { lean: true });
+  }
+
   async update(id: string, body: CategoryUpdateREQ) {
     const updatedPolicy = await this.categoryModel.findByIdAndUpdate({ _id: id }, { ...body }, { new: true, lean: true });
     return BaseResponse.withMessage<Category>(updatedPolicy, 'Cập nhật danh mục thành công!');
