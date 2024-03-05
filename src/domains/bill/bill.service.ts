@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { CartService } from 'domains/cart/cart.service';
 import { ProductService } from 'domains/product/product.service';
@@ -32,9 +32,12 @@ export class BillService {
     private readonly connection: Connection,
 
     private readonly userService: UserService,
+
+    @Inject(forwardRef(() => ProductService))
     private readonly productService: ProductService,
-    private readonly cartService: CartService,
+
     private readonly storeService: StoreService,
+    private readonly cartService: CartService,
   ) {}
 
   async create(userId: string, body: BillCreateREQ) {
@@ -365,5 +368,28 @@ export class BillService {
     }
     if (status === 'CANCELLED') await this.userService.updateWallet(bill.userId, bill.totalPrice, 'sub');
     return BaseResponse.withMessage({}, 'Cập nhật trạng thái đơn hàng thành công!');
+  }
+
+  async countProductDelivered(productId: string, type: string, status: string) {
+    return await this.billModel.countDocuments({
+      products: {
+        $elemMatch: {
+          id: productId.toString(),
+          type: type.toUpperCase(),
+        },
+      },
+      status: status.toUpperCase(),
+    });
+  }
+
+  async checkProductPurchased(productId: string) {
+    const bill = await this.billModel.findOne({
+      products: {
+        $elemMatch: {
+          id: productId.toString(),
+        },
+      },
+    });
+    return bill ? true : false;
   }
 }

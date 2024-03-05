@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ProductInfoDTO } from 'domains/bill/dto/product-info.dto';
 import { ProductDTO } from 'domains/product/dto/product.dto';
@@ -20,6 +20,7 @@ export class CartService {
     @InjectModel(Cart.name)
     private readonly cartModel: Model<Cart>,
 
+    @Inject(forwardRef(() => ProductService))
     private readonly productService: ProductService,
     private readonly storeService: StoreService,
   ) {}

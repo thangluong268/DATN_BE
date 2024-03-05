@@ -1,7 +1,11 @@
 import { Module } from '@nestjs/common';
 import { BillModule } from 'domains/bill/bill.module';
 import { CartModule } from 'domains/cart/cart.module';
+import { EvaluationModule } from 'domains/evaluation/evaluation.module';
+import { FeedbackModule } from 'domains/feedback/feedback.module';
+import { NotificationModule } from 'domains/notification/notification.module';
 import { PolicyModule } from 'domains/policy/policy.module';
+import { ReportModule } from 'domains/report/report.module';
 import { PaymentModule } from 'payment/paymen.module';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './domains/auth/auth.module';
@@ -18,8 +22,8 @@ import { SeederService } from './services/seeder.service';
 @Module({
   imports: [
     DatabaseModule,
-    AuthModule,
     UserModule,
+    AuthModule,
     UserOTPModule,
     UserTokenModule,
     StoreModule,
@@ -31,8 +35,11 @@ import { SeederService } from './services/seeder.service';
     PaymentModule,
     CartModule,
     BillModule,
+    NotificationModule,
+    EvaluationModule,
+    FeedbackModule,
+    ReportModule,
   ],
-  controllers: [],
   providers: [SeederService],
 })
 export class AppModule {}

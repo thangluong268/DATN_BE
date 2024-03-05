@@ -20,6 +20,7 @@ export class StoreService {
 
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
+
     private readonly userService: UserService,
   ) {}
 

@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
+import { MongooseModule } from '@nestjs/mongoose';
+import { User, UserSchema } from 'domains/user/schema/user.schema';
 import { JwtHelper } from 'shared/helpers/jwt.helper';
 import { UserTokenModule } from '../user-token/user-token.module';
 import { UserModule } from '../user/user.module';
@@ -12,7 +14,12 @@ import { GoogleStrategy } from './strategies/google.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 
 @Module({
-  imports: [JwtModule.register({}), UserModule, UserTokenModule],
+  imports: [
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    JwtModule.register({}),
+    UserModule,
+    UserTokenModule,
+  ],
   controllers: [AuthController],
   providers: [AuthService, JwtATStrategy, JwtRTStrategy, LocalStrategy, JwtHelper, GoogleStrategy, FacebookStrategy],
   exports: [JwtHelper],

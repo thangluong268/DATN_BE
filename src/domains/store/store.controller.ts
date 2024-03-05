@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { AuthRoleGuard } from 'domains/auth/guards/auth-role.guard';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { Roles } from '../auth/decorators/auth-role.decorator';
 import { AuthJwtATGuard } from '../auth/guards/auth-jwt-at.guard';
@@ -12,7 +13,7 @@ export class StoreController {
   constructor(private readonly storeService: StoreService) {}
 
   @Roles(ROLE_NAME.USER)
-  @UseGuards(AuthJwtATGuard)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Post('store/user')
   createStore(@Req() req, @Body() body: StoreCreateREQ) {
     const userId = req.user._id;
@@ -20,7 +21,7 @@ export class StoreController {
   }
 
   @Roles(ROLE_NAME.SELLER)
-  @UseGuards(AuthJwtATGuard)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Get('store/seller')
   getMyStore(@Req() req) {
     const userId = req.user._id;
@@ -28,14 +29,14 @@ export class StoreController {
   }
 
   @Roles(ROLE_NAME.MANAGER)
-  @UseGuards(AuthJwtATGuard)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Get('store/admin')
   getStores(@Query() query: GetStoresByAdminREQ) {
     return this.storeService.getStores(query);
   }
 
   @Roles(ROLE_NAME.SELLER)
-  @UseGuards(AuthJwtATGuard)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Put('store/seller')
   updateStore(@Req() req, @Body() body: StoreUpdateREQ) {
     const userId = req.user._id;

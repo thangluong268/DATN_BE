@@ -11,6 +11,7 @@ import { GoogleOAuthGuard } from './guards/google-oauth.guard';
 import { AuthSetRoleUserREQ } from './request/auth-set-role-user.request';
 import { ForgetPassREQ } from './request/forget-password.request';
 import { AuthSignUpREQ } from './request/sign-up.request';
+import { AuthRoleGuard } from './guards/auth-role.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -68,13 +69,13 @@ export class AuthController {
 
   @Roles(ROLE_NAME.ADMIN)
   @Patch(':userId/role')
-  @UseGuards(AuthJwtATGuard)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   changeRole(@Param('userId') userId: string, @Query() query: AuthSetRoleUserREQ) {
     return this.authService.changeRole(userId, query);
   }
 
   @Roles(ROLE_NAME.ADMIN, ROLE_NAME.USER, ROLE_NAME.SELLER, ROLE_NAME.MANAGER, ROLE_NAME.SHIPPER)
-  @UseGuards(AuthJwtATGuard)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Delete('logout')
   logout(@Req() req) {
     const user = req.user;
