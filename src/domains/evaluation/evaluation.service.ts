@@ -1,8 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { BillService } from 'domains/bill/bill.service';
+import { ProductService } from 'domains/product/product.service';
+import { StoreService } from 'domains/store/store.service';
 import { Model } from 'mongoose';
+import { BaseResponse } from 'shared/generics/base.response';
 import { Product } from '../product/schema/product.schema';
-import { EmojiDto, HadEvaluation } from './dto/evaluation.dto';
+import { EmojiDTO } from './dto/evaluation.dto';
+import { EvaluationGetByUserRESP } from './response/evaluation-get-by-user.response';
 import { Evaluation } from './schema/evaluation.schema';
 
 @Injectable()
@@ -13,105 +18,91 @@ export class EvaluationService {
 
     @InjectModel(Product.name)
     private readonly productModel: Model<Product>,
+    private readonly productService: ProductService,
+
+    private readonly storeService: StoreService,
+    private readonly billService: BillService,
   ) {}
 
-  async create(productId: string): Promise<Evaluation> {
-    const newEvaluation = await this.evaluationModel.create({ productId });
-    return newEvaluation;
+  async create(productId: string) {
+    return await this.evaluationModel.create({ productId });
   }
 
-  async update(userId: string, productId: string, name: string): Promise<boolean> {
+  async expressedEmoji(userId: string, productId: string, name: string) {
+    const product = await this.productService.findById(productId);
+    if (!product) throw new NotFoundException('Không tìm thấy sản phẩm này!');
+    const store = await this.storeService.findById(product.storeId);
+    if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
+    // const isEvaluation = await this.evaluationModel.findOne({
+    //   productId,
+    //   'hadEvaluation.userId': userId,
+    //   'hadEvaluation.isHad': true,
+    // });
     const evaluation = await this.evaluationModel.findOne({ productId });
     if (!evaluation) {
-      return false;
+      throw new NotFoundException('Không tìm thấy đánh giá cho sản phẩm này!');
     }
-
     const index = evaluation.hadEvaluation.findIndex((had) => had.userId.toString() === userId.toString());
-    const newHadEvaluation = new HadEvaluation();
-    newHadEvaluation.userId = userId;
-    newHadEvaluation.isHad = true;
     if (index == -1) {
-      evaluation.hadEvaluation.push(newHadEvaluation);
+      evaluation.hadEvaluation.push({ userId, isHad: true });
     }
-
-    return await this.updateEmoji(userId, name, evaluation);
+    await this.updateEmoji(userId, name, evaluation);
+    return BaseResponse.withMessage(true, 'Đánh giá thành công!');
   }
 
-  async updateEmoji(userId: string, name: string, evaluation: Evaluation): Promise<boolean> {
+  async updateEmoji(userId: string, name: string, evaluation: Evaluation) {
     const index = evaluation.emojis.findIndex((emoji) => emoji.userId.toString() === userId.toString());
-    const newEmoji = new EmojiDto();
-    newEmoji.userId = userId;
-    newEmoji.name = name;
+    const newEmoji = { userId, name } as EmojiDTO;
     if (index == -1) {
       evaluation.emojis.push(newEmoji);
     } else {
-      if (evaluation.emojis[index].name == name) {
+      if (evaluation.emojis[index].name === name) {
         evaluation.emojis.splice(index, 1);
       } else {
         evaluation.emojis[index] = newEmoji;
       }
     }
     await evaluation.save();
-    return true;
   }
 
-  async getByProductId(productId: string): Promise<Evaluation> {
+  async getByProductId(user: any, productId: string) {
     const evaluation = await this.evaluationModel.findOne({ productId });
-    if (!evaluation) {
-      return null;
-    }
-    return evaluation;
-  }
-
-  async checkEvaluationByUserIdAndProductId(userId: string, productId: string): Promise<boolean> {
-    const evaluation = await this.evaluationModel.findOne({
-      productId,
-      'hadEvaluation.userId': userId,
-      'hadEvaluation.isHad': true,
+    if (!evaluation) throw new NotFoundException('Không tìm thấy sản phẩm này!');
+    const total = evaluation.emojis.length;
+    const emoji = { Haha: 0, Love: 0, Wow: 0, Sad: 0, Angry: 0, like: 0 };
+    evaluation.emojis.forEach((e) => {
+      switch (e.name) {
+        case 'Haha':
+          emoji.Haha++;
+          break;
+        case 'Love':
+          emoji.Love++;
+          break;
+        case 'Wow':
+          emoji.Wow++;
+          break;
+        case 'Sad':
+          emoji.Sad++;
+          break;
+        case 'Angry':
+          emoji.Angry++;
+          break;
+        case 'like':
+          emoji.like++;
+          break;
+      }
     });
-    return evaluation ? true : false;
-  }
-
-  async getProductsLoveByUserId(
-    page: number = 1,
-    limit: number = 5,
-    search: string,
-    userId: string,
-  ): Promise<{ total: number; data: Product[] }> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const query: any = {};
-
-    if (search) {
-      query.$or = [
-        { productName: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { keywords: { $regex: search, $options: 'i' } },
-        { type: { $regex: search, $options: 'i' } },
-      ];
+    let isReaction = false;
+    let isPurchased = false;
+    if (user) {
+      const userId = user._id.toString();
+      const evaluationOfUser = evaluation.emojis.find((emoji) => emoji.userId.toString() === userId);
+      evaluationOfUser ? (isReaction = true) : (isReaction = false);
+      isPurchased = await this.billService.checkProductPurchasedByUser(userId, productId);
     }
-
-    const products = await this.productModel.find(query).select('_id');
-
-    const productIds = products.map((product) => product._id);
-
-    const total: number = await this.evaluationModel.countDocuments({
-      'emojis.userId': userId,
-      productId: { $in: productIds },
-    });
-
-    const evaluations: Evaluation[] = await this.evaluationModel
-      .find({ 'emojis.userId': userId, productId: { $in: productIds } })
-      .sort({ updatedAt: -1 })
-      .limit(Number(limit))
-      .skip((Number(page) - 1) * Number(limit));
-
-    const evaluatedProducts: Product[] = await Promise.all(
-      evaluations.map(async (evaluation) => {
-        const product = await this.productModel.findById(evaluation.productId);
-        return product;
-      }),
+    return BaseResponse.withMessage(
+      EvaluationGetByUserRESP.of(total, emoji, isReaction, isPurchased),
+      'Lấy danh sách đánh giá thành công!',
     );
-
-    return { total, data: evaluatedProducts };
   }
 }

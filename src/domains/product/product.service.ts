@@ -1,6 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { BillService } from 'domains/bill/bill.service';
+import { EvaluationService } from 'domains/evaluation/evaluation.service';
+import { Evaluation } from 'domains/evaluation/schema/evaluation.schema';
+import { UserService } from 'domains/user/user.service';
 import { Model, Types } from 'mongoose';
 import { PRODUCT_TYPE } from 'shared/enums/bill.enum';
 import { BaseResponse } from 'shared/generics/base.response';
@@ -14,6 +17,7 @@ import { StoreService } from '../store/store.service';
 import { ProductCreateREQ } from './request/product-create.request';
 import { ProductGetFilterREQ } from './request/product-get-filter.request';
 import { ProductGetInStoreREQ } from './request/product-get-in-store.request';
+import { ProductsGetLoveREQ } from './request/product-get-love.request';
 import { ProductGetMostInStoreREQ } from './request/product-get-most-in-store.request';
 import { ProductGetOtherInStoreREQ } from './request/product-get-orther-in-store.request';
 import { ProductGetRandomREQ } from './request/product-get-random.request';
@@ -27,9 +31,18 @@ export class ProductService {
     @InjectModel(Product.name)
     private readonly productModel: Model<Product>,
 
+    @InjectModel(Evaluation.name)
+    private readonly evaluationModel: Model<Evaluation>,
+
     private readonly storeService: StoreService,
-    private readonly categoryService: CategoryService,
+    private readonly userService: UserService,
+
+    @Inject(forwardRef(() => EvaluationService))
+    private readonly evaluationService: EvaluationService,
+
+    @Inject(forwardRef(() => BillService))
     private readonly billService: BillService,
+    private readonly categoryService: CategoryService,
   ) {}
 
   async create(userId: string, body: ProductCreateREQ) {
@@ -38,6 +51,7 @@ export class ProductService {
     const category = await this.categoryService.findById(body.categoryId);
     if (!category) throw new NotFoundException('Không tìm thấy danh mục này!');
     const newProduct = await this.productModel.create({ ...body, storeId: store._id });
+    await this.evaluationService.create(newProduct._id);
     return BaseResponse.withMessage<Product>(toDocModel(newProduct), 'Tạo sản phẩm thành công!');
   }
 
@@ -210,6 +224,39 @@ export class ProductService {
       },
       'Lấy danh sách sản phẩm theo điều kiện thành công!',
     );
+  }
+
+  async getProductsLoveByUser(userId: string, query: ProductsGetLoveREQ) {
+    const conditionFindProduct = ProductsGetLoveREQ.toQueryConditionFindProduct(query);
+    const { skip, limit } = QueryPagingHelper.queryPaging(query);
+    const productIds = (await this.productModel.find(conditionFindProduct).select('_id').lean()).map((product) => product._id);
+    const conditionFindEvaluation = ProductsGetLoveREQ.toQueryConditionFindEvaluation(userId, productIds);
+    const total = await this.evaluationModel.countDocuments(conditionFindEvaluation);
+    const productIdsOfEvaluations = (
+      await this.evaluationModel
+        .find(conditionFindEvaluation)
+        .sort({ updatedAt: -1 })
+        .limit(limit)
+        .skip(skip)
+        .select('productId')
+        .lean()
+    ).map((evaluation) => evaluation.productId);
+    const products = await Promise.all(
+      productIdsOfEvaluations.map(async (productId) => {
+        return await this.productModel.findById(productId, {}, { lean: true });
+      }),
+    );
+    const data = await Promise.all(
+      products.map(async (product) => {
+        const quantitySold = await this.billService.countProductDelivered(product._id, PRODUCT_TYPE.SELL, 'DELIVERED');
+        const quantityGive = await this.billService.countProductDelivered(product._id, PRODUCT_TYPE.GIVE, 'DELIVERED');
+        const revenue = quantitySold * product.newPrice;
+        const category = await this.categoryService.findOne(product.categoryId);
+        const store = await this.storeService.findById(product.storeId);
+        return { ...product, categoryName: category.name, storeName: store.name, quantitySold, quantityGive, revenue };
+      }),
+    );
+    return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách sản phẩm yêu thích thành công!');
   }
 
   async findById(id: string) {

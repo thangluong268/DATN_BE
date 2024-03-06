@@ -392,4 +392,16 @@ export class BillService {
     });
     return bill ? true : false;
   }
+
+  async checkProductPurchasedByUser(userId: string, productId: string) {
+    const bill = await this.billModel.findOne({
+      userId,
+      products: {
+        $elemMatch: {
+          id: productId.toString(),
+        },
+      },
+    });
+    return bill ? true : false;
+  }
 }
