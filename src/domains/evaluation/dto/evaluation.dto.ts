@@ -1,6 +1,6 @@
 import { IsNotEmpty } from 'class-validator';
 
-export class EmojiDto {
+export class EmojiDTO {
   @IsNotEmpty()
   userId: string;
 
@@ -8,7 +8,7 @@ export class EmojiDto {
   name: string;
 }
 
-export class HadEvaluation {
+export class HadEvaluationDTO {
   @IsNotEmpty()
   userId: string;
 

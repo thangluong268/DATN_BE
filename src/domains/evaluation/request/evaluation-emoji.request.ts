@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class EvaluationDto {
+export class EvaluationEmojiREQ {
   @IsString()
   @IsNotEmpty()
   name: string;
