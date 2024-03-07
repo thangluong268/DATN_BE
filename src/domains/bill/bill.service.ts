@@ -11,6 +11,7 @@ import { PaginationResponse } from 'shared/generics/pagination.response';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 import { ProductInfoDTO } from './dto/product-info.dto';
+import { getMonthRevenue } from './helper/get-month-revenue.helper';
 import { BillCreateREQ } from './request/bill-create.request';
 import { BillGetAllByStatusSellerREQ } from './request/bill-get-all-by-status-seller.request';
 import { BillGetAllByStatusUserREQ } from './request/bill-get-all-by-status-user.request';
@@ -31,6 +32,7 @@ export class BillService {
     @InjectConnection()
     private readonly connection: Connection,
 
+    @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
 
     @Inject(forwardRef(() => ProductService))
@@ -115,20 +117,7 @@ export class BillService {
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const data = await this.billModel.aggregate(BillGetCalculateRevenueByYearREQ.toQueryCondition(year, store._id));
     // Tạo mảng chứa 12 tháng với doanh thu mặc định là 0
-    const monthlyRevenue = {
-      'Tháng 1': 0,
-      'Tháng 2': 0,
-      'Tháng 3': 0,
-      'Tháng 4': 0,
-      'Tháng 5': 0,
-      'Tháng 6': 0,
-      'Tháng 7': 0,
-      'Tháng 8': 0,
-      'Tháng 9': 0,
-      'Tháng 10': 0,
-      'Tháng 11': 0,
-      'Tháng 12': 0,
-    };
+    const monthlyRevenue = getMonthRevenue;
     let totalRevenue = 0;
     let minRevenue: { month: string; revenue: number } | null = null;
     let maxRevenue: { month: string; revenue: number } | null = null;
@@ -163,20 +152,7 @@ export class BillService {
     const store = await this.storeService.findByUserId(userId);
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const data = await this.billModel.aggregate(BillGetCountCharityByYearREQ.toQueryCondition(store._id, year));
-    const monthlyCharity = {
-      'Tháng 1': 0,
-      'Tháng 2': 0,
-      'Tháng 3': 0,
-      'Tháng 4': 0,
-      'Tháng 5': 0,
-      'Tháng 6': 0,
-      'Tháng 7': 0,
-      'Tháng 8': 0,
-      'Tháng 9': 0,
-      'Tháng 10': 0,
-      'Tháng 11': 0,
-      'Tháng 12': 0,
-    };
+    const monthlyCharity = getMonthRevenue;
     let totalGive = 0;
     let minGive: { month: string; numOfGive: number } | null = null;
     let maxGive: { month: string; numOfGive: number } | null = null;
@@ -205,20 +181,7 @@ export class BillService {
 
   async calculateTotalRevenueByYear(year: number) {
     const data = await this.billModel.aggregate(BillGetCalculateTotalByYearREQ.toQueryCondition(year));
-    const monthlyRevenue = {
-      'Tháng 1': 0,
-      'Tháng 2': 0,
-      'Tháng 3': 0,
-      'Tháng 4': 0,
-      'Tháng 5': 0,
-      'Tháng 6': 0,
-      'Tháng 7': 0,
-      'Tháng 8': 0,
-      'Tháng 9': 0,
-      'Tháng 10': 0,
-      'Tháng 11': 0,
-      'Tháng 12': 0,
-    };
+    const monthlyRevenue = getMonthRevenue;
     let totalRevenue = 0;
     let minRevenue: { month: string; revenue: number } | null = null;
     let maxRevenue: { month: string; revenue: number } | null = null;
@@ -385,5 +348,13 @@ export class BillService {
   async checkProductPurchasedByUser(userId: string, productId: string) {
     const bill = await this.billModel.findOne({ userId, products: { $elemMatch: { id: productId.toString() } } });
     return bill ? true : false;
+  }
+
+  async getUsersHaveMostBill(limit: number) {
+    return await this.billModel.aggregate([
+      { $group: { _id: '$userId', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: Number(limit) },
+    ]);
   }
 }

@@ -1,14 +1,21 @@
-import { ConflictException, ForbiddenException, Injectable } from '@nestjs/common';
-import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
 import { SALT_ROUNDS } from 'app.config';
 import * as bcrypt from 'bcrypt';
-import { Connection, Model } from 'mongoose';
+import { BillService } from 'domains/bill/bill.service';
+import { Bill } from 'domains/bill/schema/bill.schema';
+import { Store } from 'domains/store/schema/store.schema';
+import { Model } from 'mongoose';
 import { SOCIAL_APP } from 'shared/constants/user.constant';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BaseResponse } from 'shared/generics/base.response';
+import { PaginationResponse } from 'shared/generics/pagination.response';
+import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { ForgetPassREQ } from '../auth/request/forget-password.request';
 import { AuthSignUpREQ } from '../auth/request/sign-up.request';
 import { UserCreateREQ } from './request/user-create.request';
+import { UserGetFollowStoreREQ } from './request/user-get-follow-store.request';
+import { UserGetPagingREQ } from './request/user-get-paging.resquest';
 import { UserUpdateREQ } from './request/user-update.request';
 import { UserCreateRESP } from './response/user-create.response';
 import { User } from './schema/user.schema';
@@ -16,8 +23,15 @@ import { User } from './schema/user.schema';
 @Injectable()
 export class UserService {
   constructor(
-    @InjectModel(User.name) private readonly userModel: Model<User>,
-    @InjectConnection() private readonly connection: Connection,
+    @InjectModel(User.name)
+    private readonly userModel: Model<User>,
+
+    @InjectModel(Store.name)
+    private readonly storeModel: Model<Store>,
+
+    @InjectModel(Bill.name)
+    private readonly billModel: Model<Bill>,
+    private readonly billService: BillService,
   ) {}
 
   async createUserSystem(body: AuthSignUpREQ) {
@@ -52,19 +66,23 @@ export class UserService {
   }
 
   async findById(id: string) {
-    const user = await this.userModel.findById(id, {}, { lean: true });
+    const user = await this.userModel.findById(id, { socialApp: 0, socialId: 0 }, { lean: true });
     user?.address?.sort((a, b) => (b.default ? 1 : -1) - (a.default ? 1 : -1));
     return user;
   }
 
   async findOneByEmailSystem(email: string) {
-    const user = await this.userModel.findOne({ email, socialId: null, socialApp: null }, {}, { lean: true });
+    const user = await this.userModel.findOne(
+      { email, socialId: null, socialApp: null },
+      { socialApp: 0, socialId: 0 },
+      { lean: true },
+    );
     user?.address?.sort((a, b) => (b.default ? 1 : -1) - (a.default ? 1 : -1));
     return user;
   }
 
   async findOneBySocial(email: string, socialId: string, socialApp: SOCIAL_APP) {
-    const user = await this.userModel.findOne({ email, socialId, socialApp }, {}, { lean: true });
+    const user = await this.userModel.findOne({ email, socialId, socialApp }, { socialApp: 0, socialId: 0 }, { lean: true });
     user?.address?.sort((a, b) => (b.default ? 1 : -1) - (a.default ? 1 : -1));
     return user;
   }
@@ -85,7 +103,13 @@ export class UserService {
 
   async getDetail(id: string) {
     const user = await this.findById(id);
-    return BaseResponse.withMessage<User>(user, 'Lấy thông tin thành công!');
+    if (!user) throw new NotFoundException('Không tìm thấy người dùng này!');
+    const billsOfUser = await this.billModel.find({ userId: id }).lean();
+    const totalBills = billsOfUser.length;
+    const totalPricePaid = billsOfUser.reduce((total, bill) => total + bill.totalPrice, 0);
+    const totalReceived = billsOfUser.filter((bill) => bill.totalPrice === 0).length;
+    const data = { ...user, totalBills, totalPricePaid, totalReceived };
+    return BaseResponse.withMessage(data, 'Lấy thông tin thành công!');
   }
 
   async updateWallet(id: string, money: number, type: string) {
@@ -97,5 +121,87 @@ export class UserService {
 
   async countTotal() {
     return await this.userModel.countDocuments();
+  }
+
+  async getUsersHaveMostBill(limit: number = 5) {
+    const bills = await this.billService.getUsersHaveMostBill(Number(limit));
+    const data = await Promise.all(
+      bills.map(async (item: any) => {
+        const user = await this.userModel.findById(
+          item._id,
+          { status: 0, updatedAt: 0, socialApp: 0, socialId: 0 },
+          { lean: true },
+        );
+        if (!user) return;
+        return { user, totalBills: item.count };
+      }),
+    );
+    return BaseResponse.withMessage(data, 'Lấy thông tin danh sách người dùng mua hàng nhiều nhất thành công!');
+  }
+
+  async getUsersFollowStore(userId: string, query: UserGetFollowStoreREQ) {
+    const user = await this.userModel.findById(userId).lean();
+    const condition = UserGetFollowStoreREQ.toQueryCondition(user, query.search);
+    const { skip, limit } = QueryPagingHelper.queryPaging(query);
+    const total = await this.storeModel.countDocuments(condition);
+    const stores = await this.storeModel.find(condition).limit(limit).skip(skip);
+    // Sort the stores based on the order in user.followStores
+    const orderMap = new Map(user.followStores.reverse().map((id, index) => [id.toString(), index]));
+    stores.sort((a, b) => orderMap.get(a._id.toString()) - orderMap.get(b._id.toString()));
+    return PaginationResponse.ofWithTotalAndMessage(stores, total, 'Lấy thông tin danh sách cửa hàng theo dõi thành công!');
+  }
+
+  async getUsersNoPaging(limit: number = 50) {
+    const users = await this.userModel.find({}, { socialApp: 0, socialId: 0 }, { lean: true }).limit(Number(limit));
+    const data = await Promise.all(
+      users.map(async (item) => {
+        const user = await this.userModel.findById(item._id).lean();
+        if (!user) return;
+        const billsOfUser = await this.billModel.find({ userId: user._id }).lean();
+        const totalBills = billsOfUser.length;
+        const totalPricePaid = billsOfUser.reduce((total, bill) => total + bill.totalPrice, 0);
+        const totalReceived = billsOfUser.filter((bill) => bill.totalPrice === 0).length;
+        return { ...user, totalBills, totalPricePaid, totalReceived };
+      }),
+    );
+    return BaseResponse.withMessage(data, 'Lấy danh sách người dùng thành công!');
+  }
+
+  async getUsersPaging(query: UserGetPagingREQ) {
+    const condition = UserGetPagingREQ.toQueryCondition(query.search);
+    const { skip, limit } = QueryPagingHelper.queryPaging(query);
+    const total = await this.userModel.countDocuments(condition);
+    const users = await this.userModel
+      .find(condition, { socialApp: 0, socialId: 0 }, { lean: true })
+      .sort({ createdAt: -1 })
+      .limit(Number(limit))
+      .skip(skip);
+    users.forEach((user) => {
+      user?.address.sort((a, b) => (b.default ? 1 : -1) - (a.default ? 1 : -1));
+      return user;
+    });
+    return PaginationResponse.ofWithTotalAndMessage(users, total, 'Lấy danh sách người dùng thành công!');
+  }
+
+  async followStore(userId: string, storeId: string) {
+    const store = await this.storeModel.findById(storeId).lean();
+    if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
+    if (store.userId.toString() === userId) throw new BadRequestException('Bạn không thể theo dõi cửa hàng của chính mình!');
+    const user = await this.userModel.findById(userId).lean();
+    const index = user.followStores.findIndex((id) => id.toString() === storeId.toString());
+    index == -1 ? user.followStores.push(storeId) : user.followStores.splice(index, 1);
+    await this.userModel.findByIdAndUpdate(userId, { followStores: user.followStores });
+    return BaseResponse.withMessage({}, index == -1 ? 'Follow cửa hàng thành công!' : 'Hủy follow cửa hàng thành công!');
+  }
+
+  async addFriend(userIdSend: string, userIdReceive: string) {
+    const userReceive = await this.findById(userIdReceive);
+    if (!userReceive) throw new NotFoundException('Không tìm thấy người dùng này!');
+    if (userIdReceive === userIdSend) throw new BadRequestException('Bạn không thể kết bạn với chính mình!');
+    const userSend = await this.findById(userIdSend);
+    const index = userSend.friends.findIndex((id) => id.toString() === userIdReceive.toString());
+    index == -1 ? userSend.friends.push(userIdReceive) : userSend.friends.splice(index, 1);
+    await this.userModel.findByIdAndUpdate(userIdSend, { friends: userSend.friends });
+    return BaseResponse.withMessage({}, index == -1 ? 'Kết bạn thành công!' : 'Hủy kết bạn thành công!');
   }
 }

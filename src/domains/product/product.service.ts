@@ -3,9 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { BillService } from 'domains/bill/bill.service';
 import { EvaluationService } from 'domains/evaluation/evaluation.service';
 import { Evaluation } from 'domains/evaluation/schema/evaluation.schema';
-import { FeedbackService } from 'domains/feedback/feedback.service';
 import { Feedback } from 'domains/feedback/schema/feedback.schema';
-import { UserService } from 'domains/user/user.service';
 import { Model, Types } from 'mongoose';
 import { PRODUCT_TYPE } from 'shared/enums/bill.enum';
 import { BaseResponse } from 'shared/generics/base.response';
@@ -45,9 +43,7 @@ export class ProductService {
     private readonly feedbackModel: Model<Feedback>,
 
     private readonly storeService: StoreService,
-    private readonly userService: UserService,
     private readonly categoryService: CategoryService,
-    private readonly feedbackService: FeedbackService,
   ) {}
 
   async create(userId: string, body: ProductCreateREQ) {

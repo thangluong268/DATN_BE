@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { BillService } from 'domains/bill/bill.service';
 import { ProductService } from 'domains/product/product.service';
@@ -18,9 +18,12 @@ export class EvaluationService {
 
     @InjectModel(Product.name)
     private readonly productModel: Model<Product>,
+    @Inject(forwardRef(() => ProductService))
     private readonly productService: ProductService,
 
     private readonly storeService: StoreService,
+
+    @Inject(forwardRef(() => BillService))
     private readonly billService: BillService,
   ) {}
 

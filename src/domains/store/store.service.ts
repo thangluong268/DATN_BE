@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
@@ -20,7 +20,7 @@ export class StoreService {
 
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
-
+    @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
   ) {}
 
