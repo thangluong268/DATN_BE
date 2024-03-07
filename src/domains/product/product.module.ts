@@ -5,6 +5,7 @@ import { CategoryModule } from 'domains/category/category.module';
 import { EvaluationModule } from 'domains/evaluation/evaluation.module';
 import { Evaluation, EvaluationSchema } from 'domains/evaluation/schema/evaluation.schema';
 import { FeedbackModule } from 'domains/feedback/feedback.module';
+import { Feedback, FeedbackSchema } from 'domains/feedback/schema/feedback.schema';
 import { NotificationModule } from 'domains/notification/notification.module';
 import { StoreModule } from 'domains/store/store.module';
 import { UserModule } from 'domains/user/user.module';
@@ -17,6 +18,7 @@ import { Product, ProductSchema } from './schema/product.schema';
     MongooseModule.forFeature([
       { name: Product.name, schema: ProductSchema },
       { name: Evaluation.name, schema: EvaluationSchema },
+      { name: Feedback.name, schema: FeedbackSchema },
     ]),
     forwardRef(() => NotificationModule),
     CategoryModule,

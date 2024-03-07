@@ -8,12 +8,12 @@ import { ProductService } from './product.service';
 import { ProductCreateREQ } from './request/product-create.request';
 import { ProductGetFilterREQ } from './request/product-get-filter.request';
 import { ProductGetInStoreREQ } from './request/product-get-in-store.request';
+import { ProductsGetLoveREQ } from './request/product-get-love.request';
 import { ProductGetMostInStoreREQ } from './request/product-get-most-in-store.request';
 import { ProductGetOtherInStoreREQ } from './request/product-get-orther-in-store.request';
 import { ProductGetRandomREQ } from './request/product-get-random.request';
 import { ProductsGetREQ } from './request/product-get.request';
 import { ProductUpdateREQ } from './request/product-update.request';
-import { ProductsGetLoveREQ } from './request/product-get-love.request';
 
 @Controller()
 export class ProductController {
@@ -73,18 +73,30 @@ export class ProductController {
     return this.productService.getProductsByManager(query);
   }
 
-  // @Roles(ROLE_NAME.MANAGER)
-  // @UseGuards(AuthJwtATGuard, AuthRoleGuard)
-  // @Get('product/admin')
-  // getProductsWithDetailByManager() {
-  //   return this.productService.getProductsWithDetailByManager();
-  // }
+  @Roles(ROLE_NAME.MANAGER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Get('product/admin-get-all')
+  getProductsWithDetailByManager() {
+    return this.productService.getProductsWithDetailByManager();
+  }
 
   @Roles(ROLE_NAME.USER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Get('product/user-love-list')
   getProductsLoveByUser(@Req() req, @Query() query: ProductsGetLoveREQ) {
     return this.productService.getProductsLoveByUser(req.user._id, query);
+  }
+
+  @Get('product/:id')
+  getProductById(@Param('id') id: string) {
+    return this.productService.getProductById(id);
+  }
+
+  @Roles(ROLE_NAME.MANAGER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Get('product/admin/:id')
+  getProductByManager(@Param('id') id: string) {
+    return this.productService.getProductByManager(id);
   }
 
   @Roles(ROLE_NAME.SELLER)

@@ -3,6 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { BillService } from 'domains/bill/bill.service';
 import { EvaluationService } from 'domains/evaluation/evaluation.service';
 import { Evaluation } from 'domains/evaluation/schema/evaluation.schema';
+import { FeedbackService } from 'domains/feedback/feedback.service';
+import { Feedback } from 'domains/feedback/schema/feedback.schema';
 import { UserService } from 'domains/user/user.service';
 import { Model, Types } from 'mongoose';
 import { PRODUCT_TYPE } from 'shared/enums/bill.enum';
@@ -33,16 +35,19 @@ export class ProductService {
 
     @InjectModel(Evaluation.name)
     private readonly evaluationModel: Model<Evaluation>,
-
-    private readonly storeService: StoreService,
-    private readonly userService: UserService,
-
     @Inject(forwardRef(() => EvaluationService))
     private readonly evaluationService: EvaluationService,
 
     @Inject(forwardRef(() => BillService))
     private readonly billService: BillService,
+
+    @InjectModel(Feedback.name)
+    private readonly feedbackModel: Model<Feedback>,
+
+    private readonly storeService: StoreService,
+    private readonly userService: UserService,
     private readonly categoryService: CategoryService,
+    private readonly feedbackService: FeedbackService,
   ) {}
 
   async create(userId: string, body: ProductCreateREQ) {
@@ -257,6 +262,161 @@ export class ProductService {
       }),
     );
     return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách sản phẩm yêu thích thành công!');
+  }
+
+  async getProductsWithDetailByManager() {
+    const products = await this.productModel.find().lean().limit(30);
+    const data = await Promise.all(
+      products.map(async (item) => {
+        const product = await this.productModel.findById(item._id, {}, { lean: true });
+        if (!product) return;
+        const evaluation = await this.evaluationModel.findOne({ productId: item._id }).lean();
+        if (!evaluation) return;
+        const total = evaluation.emojis.length;
+        const emoji = { Haha: 0, Love: 0, Wow: 0, Sad: 0, Angry: 0, like: 0 };
+        evaluation.emojis.forEach((e) => {
+          switch (e.name) {
+            case 'Haha':
+              emoji.Haha++;
+              break;
+            case 'Love':
+              emoji.Love++;
+              break;
+            case 'Wow':
+              emoji.Wow++;
+              break;
+            case 'Sad':
+              emoji.Sad++;
+              break;
+            case 'Angry':
+              emoji.Angry++;
+              break;
+            case 'like':
+              emoji.like++;
+              break;
+          }
+        });
+        const emojis = {
+          total,
+          haha: emoji.Haha,
+          love: emoji.Love,
+          wow: emoji.Wow,
+          sad: emoji.Sad,
+          angry: emoji.Angry,
+          like: emoji.like,
+        };
+        const feedbacks = await this.feedbackModel.find({ productId: item._id }).sort({ createdAt: -1 }).lean();
+        const star = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        const starPercent = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        let averageStar = 0;
+        if (feedbacks.length > 0) {
+          feedbacks.forEach((feedback) => {
+            star[feedback.star]++;
+          });
+          Object.keys(star).forEach((key) => {
+            starPercent[key] = Math.round((star[key] / feedbacks.length) * 100);
+          });
+          Object.keys(star).forEach((key) => {
+            averageStar += star[key] * Number(key);
+          });
+          averageStar = Number((averageStar / feedbacks.length).toFixed(2));
+        }
+        const totalFeedback = await this.feedbackModel.countDocuments({ productId: item._id });
+        const store = await this.storeService.findById(item.storeId);
+        if (!store) return;
+        const category = await this.categoryService.findOne(product.categoryId);
+        const quantitySold = await this.billService.countProductDelivered(item._id, PRODUCT_TYPE.SELL, 'DELIVERED');
+        const quantityGive = await this.billService.countProductDelivered(item._id, PRODUCT_TYPE.GIVE, 'DELIVERED');
+        const revenue = quantitySold * product.newPrice;
+        const isPurchased = await this.billService.checkProductPurchased(item._id);
+        const productFullInfo = {
+          ...product,
+          categoryName: category.name,
+          storeName: store.name,
+          quantitySold,
+          quantityGive,
+          revenue,
+          isPurchased,
+        };
+        return { product: productFullInfo, emojis, starPercent, averageStar, totalFeedback };
+      }),
+    );
+    return BaseResponse.withMessage(data, 'Lấy danh sách sản phẩm thành công!');
+  }
+
+  async getProductById(id: string) {
+    const product = await this.productModel.findById(id).lean();
+    if (!product) return new NotFoundException('Không tìm thấy sản phẩm này!');
+    const type = product.newPrice === 0 ? PRODUCT_TYPE.GIVE : PRODUCT_TYPE.SELL;
+    const quantityDelivered = await this.billService.countProductDelivered(id, type, 'DELIVERED');
+    const category = await this.categoryService.findOne(product.categoryId);
+    const store = await this.storeService.findById(product.storeId);
+    const data = { ...product };
+    return BaseResponse.withMessage(
+      { data, quantityDelivered, categoryName: category.name, storeName: store.name },
+      'Lấy thông tin sản phẩm thành công!',
+    );
+  }
+
+  async getProductByManager(id: string) {
+    const product = await this.productModel.findById(id).lean();
+    if (!product) throw new NotFoundException('Không tìm thấy sản phẩm này!');
+    const type = product.newPrice === 0 ? PRODUCT_TYPE.GIVE : PRODUCT_TYPE.SELL;
+    const quantityDelivered = await this.billService.countProductDelivered(id, type, 'DELIVERED');
+    const evaluation = await this.evaluationModel.findOne({ productId: id }).lean();
+    if (!evaluation) throw new NotFoundException('Không tìm thấy đánh giá của sản phẩm này!');
+    const total = evaluation.emojis.length;
+    const emoji = { Haha: 0, Love: 0, Wow: 0, Sad: 0, Angry: 0, like: 0 };
+    evaluation.emojis.forEach((e) => {
+      switch (e.name) {
+        case 'Haha':
+          emoji.Haha++;
+          break;
+        case 'Love':
+          emoji.Love++;
+          break;
+        case 'Wow':
+          emoji.Wow++;
+          break;
+        case 'Sad':
+          emoji.Sad++;
+          break;
+        case 'Angry':
+          emoji.Angry++;
+          break;
+        case 'like':
+          emoji.like++;
+          break;
+      }
+    });
+    const emojis = {
+      total,
+      haha: emoji.Haha,
+      love: emoji.Love,
+      wow: emoji.Wow,
+      sad: emoji.Sad,
+      angry: emoji.Angry,
+      like: emoji.like,
+    };
+    const feedbacks = await this.feedbackModel.find({ productId: id }).sort({ createdAt: -1 }).lean();
+    const star = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const starPercent = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    let averageStar = 0;
+    feedbacks.forEach((feedback) => {
+      star[feedback.star]++;
+    });
+    Object.keys(star).forEach((key) => {
+      starPercent[key] = Math.round((star[key] / feedbacks.length) * 100);
+    });
+    Object.keys(star).forEach((key) => {
+      averageStar += star[key] * Number(key);
+    });
+    averageStar = Number((averageStar / feedbacks.length).toFixed(2));
+    const totalFeedback = await this.feedbackModel.countDocuments({ productId: id });
+    return BaseResponse.withMessage(
+      { product, quantityDelivered, emojis, starPercent, averageStar, totalFeedback },
+      'Lấy thông tin sản phẩm bởi Manager thành công!',
+    );
   }
 
   async findById(id: string) {

@@ -372,36 +372,18 @@ export class BillService {
 
   async countProductDelivered(productId: string, type: string, status: string) {
     return await this.billModel.countDocuments({
-      products: {
-        $elemMatch: {
-          id: productId.toString(),
-          type: type.toUpperCase(),
-        },
-      },
+      products: { $elemMatch: { id: productId.toString(), type: type.toUpperCase() } },
       status: status.toUpperCase(),
     });
   }
 
   async checkProductPurchased(productId: string) {
-    const bill = await this.billModel.findOne({
-      products: {
-        $elemMatch: {
-          id: productId.toString(),
-        },
-      },
-    });
+    const bill = await this.billModel.findOne({ products: { $elemMatch: { id: productId.toString() } } });
     return bill ? true : false;
   }
 
   async checkProductPurchasedByUser(userId: string, productId: string) {
-    const bill = await this.billModel.findOne({
-      userId,
-      products: {
-        $elemMatch: {
-          id: productId.toString(),
-        },
-      },
-    });
+    const bill = await this.billModel.findOne({ userId, products: { $elemMatch: { id: productId.toString() } } });
     return bill ? true : false;
   }
 }
