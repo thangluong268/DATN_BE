@@ -26,10 +26,10 @@ export class StoreService {
 
   async create(userId: string, body: StoreCreateREQ) {
     const user = await this.userService.findById(userId);
-    if (!user) return new NotFoundException('Không tìm thấy người dùng này!');
+    if (!user) throw new NotFoundException('Không tìm thấy người dùng này!');
 
     const store = await this.storeModel.findOne({ userId }, {}, { lean: true });
-    if (store) return new NotFoundException('Người dùng đã có cửa hàng!');
+    if (store) throw new NotFoundException('Người dùng đã có cửa hàng!');
 
     const newStore = await this.storeModel.create({ userId, ...body });
 
@@ -40,7 +40,7 @@ export class StoreService {
 
   async getMyStore(userId: string) {
     const store = await this.storeModel.findOne({ userId }, {}, { lean: true });
-    if (!store) return new NotFoundException('Không tìm thấy cửa hàng!');
+    if (!store) throw new NotFoundException('Không tìm thấy cửa hàng!');
 
     return BaseResponse.withMessage<Store>(store, 'Lấy thông tin cửa hàng thành công!');
   }
@@ -60,7 +60,7 @@ export class StoreService {
 
   async update(userId: string, body: StoreUpdateREQ) {
     const store = await this.storeModel.findOne({ userId }, {}, { lean: true });
-    if (!store) return new NotFoundException('Không tìm thấy cửa hàng!');
+    if (!store) throw new NotFoundException('Không tìm thấy cửa hàng!');
     const updatedStore = await this.storeModel.findOneAndUpdate({ userId }, { ...body }, { lean: true, new: true });
     return BaseResponse.withMessage<Store>(updatedStore, 'Cập nhật thông tin cửa hàng thành công!');
   }

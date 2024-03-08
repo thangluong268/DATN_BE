@@ -122,9 +122,9 @@ export class CartService {
 
   async removeProductFromCart(userId: string, productId: string) {
     const product = await this.productService.findById(productId);
-    if (!product) return new NotFoundException('Không tìm thấy sản phẩm này!');
+    if (!product) throw new NotFoundException('Không tìm thấy sản phẩm này!');
     const store = await this.storeService.findById(product.storeId);
-    if (!store) return new NotFoundException('Không tìm thấy cửa hàng này!');
+    if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const cart = await this.cartModel.findOne({ userId, storeId: store._id });
     if (cart.products.length === 1) {
       await this.cartModel.findByIdAndDelete(cart._id);

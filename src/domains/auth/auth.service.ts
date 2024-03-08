@@ -55,7 +55,7 @@ export class AuthService {
 
   async signup(body: AuthSignUpREQ) {
     const user = await this.userService.findOneByEmailSystem(body.email);
-    if (user) return new ConflictException('Email đã tồn tại!');
+    if (user) throw new ConflictException('Email đã tồn tại!');
     const newUser = await this.userService.createUserSystem(body);
     const payload = { userId: newUser._id };
     const tokens = await this.getTokens(payload);
@@ -76,9 +76,9 @@ export class AuthService {
 
   async refreshToken(userId: string, refreshToken: string) {
     const userToken = await this.userTokenService.findByUserId(userId);
-    if (!userToken) return new ForbiddenException('Không tìm thấy token!');
+    if (!userToken) throw new ForbiddenException('Không tìm thấy token!');
     const isMatched = await bcrypt.compare(refreshToken, userToken.hashedRefreshToken);
-    if (!isMatched) return new ForbiddenException('Token không hợp lệ!');
+    if (!isMatched) throw new ForbiddenException('Token không hợp lệ!');
     const payload = { userId };
     const tokens = await this.getTokens(payload);
     await this.userTokenService.upsert(userToken.userId, tokens.refreshToken);

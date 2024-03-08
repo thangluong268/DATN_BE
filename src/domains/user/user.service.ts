@@ -95,7 +95,7 @@ export class UserService {
 
   async updateById(id: string, body: UserUpdateREQ, user: User) {
     if (user.role.includes(ROLE_NAME.USER) && user._id.toString() !== id) {
-      return new ForbiddenException('Bạn không có quyền cập nhật thông tin người dùng khác!');
+      throw new ForbiddenException('Bạn không có quyền cập nhật thông tin người dùng khác!');
     }
     const updatedUser = await this.userModel.findByIdAndUpdate(id, { ...body }, { lean: true, new: true });
     return BaseResponse.withMessage<User>(User.toDocModel(updatedUser), 'Cập nhật thông tin thành công!');

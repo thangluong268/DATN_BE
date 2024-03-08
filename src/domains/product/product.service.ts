@@ -342,7 +342,7 @@ export class ProductService {
 
   async getProductById(id: string) {
     const product = await this.productModel.findById(id).lean();
-    if (!product) return new NotFoundException('Không tìm thấy sản phẩm này!');
+    if (!product) throw new NotFoundException('Không tìm thấy sản phẩm này!');
     const type = product.newPrice === 0 ? PRODUCT_TYPE.GIVE : PRODUCT_TYPE.SELL;
     const quantityDelivered = await this.billService.countProductDelivered(id, type, 'DELIVERED');
     const category = await this.categoryService.findOne(product.categoryId);
