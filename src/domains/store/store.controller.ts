@@ -12,20 +12,11 @@ import { StoreService } from './store.service';
 export class StoreController {
   constructor(private readonly storeService: StoreService) {}
 
-  @Roles(ROLE_NAME.USER)
-  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
-  @Post('store/user')
-  createStore(@Req() req, @Body() body: StoreCreateREQ) {
-    const userId = req.user._id;
-    return this.storeService.create(userId, body);
-  }
-
   @Roles(ROLE_NAME.SELLER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Get('store/seller')
   getMyStore(@Req() req) {
-    const userId = req.user._id;
-    return this.storeService.getMyStore(userId);
+    return this.storeService.getMyStore(req.user._id);
   }
 
   @Roles(ROLE_NAME.MANAGER)
@@ -33,6 +24,13 @@ export class StoreController {
   @Get('store/admin')
   getStores(@Query() query: GetStoresByAdminREQ) {
     return this.storeService.getStores(query);
+  }
+
+  @Roles(ROLE_NAME.USER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Post('store/user')
+  createStore(@Req() req, @Body() body: StoreCreateREQ) {
+    return this.storeService.create(req.user._id, body);
   }
 
   @Roles(ROLE_NAME.SELLER)

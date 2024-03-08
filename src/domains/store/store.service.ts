@@ -27,22 +27,17 @@ export class StoreService {
   async create(userId: string, body: StoreCreateREQ) {
     const user = await this.userService.findById(userId);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng này!');
-
     const store = await this.storeModel.findOne({ userId }, {}, { lean: true });
     if (store) throw new NotFoundException('Người dùng đã có cửa hàng!');
-
     const newStore = await this.storeModel.create({ userId, ...body });
-
-    await this.userModel.updateOne({ _id: userId }, { role: [...user.role, ROLE_NAME.SELLER] });
-
-    return BaseResponse.withMessage<Store>(newStore, 'Tạo cửa hàng thành công!');
+    await this.userModel.findByIdAndUpdate(userId, { role: [...user.role, ROLE_NAME.SELLER] });
+    return BaseResponse.withMessage(newStore, 'Tạo cửa hàng thành công!');
   }
 
   async getMyStore(userId: string) {
     const store = await this.storeModel.findOne({ userId }, {}, { lean: true });
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng!');
-
-    return BaseResponse.withMessage<Store>(store, 'Lấy thông tin cửa hàng thành công!');
+    return BaseResponse.withMessage(store, 'Lấy thông tin cửa hàng thành công!');
   }
 
   async getStores(query: GetStoresByAdminREQ) {
