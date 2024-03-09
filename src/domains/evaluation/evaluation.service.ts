@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { BillService } from 'domains/bill/bill.service';
 import { ProductService } from 'domains/product/product.service';
@@ -12,6 +12,7 @@ import { Evaluation } from './schema/evaluation.schema';
 
 @Injectable()
 export class EvaluationService {
+  private readonly logger = new Logger(EvaluationService.name);
   constructor(
     @InjectModel(Evaluation.name)
     private readonly evaluationModel: Model<Evaluation>,
@@ -28,10 +29,12 @@ export class EvaluationService {
   ) {}
 
   async create(productId: string) {
+    this.logger.log(`Create Evaluation: ${productId}`);
     return await this.evaluationModel.create({ productId });
   }
 
   async expressedEmoji(userId: string, productId: string, name: string) {
+    this.logger.log(`Expressed Emoji: ${userId} - ${productId} - ${name}`);
     const product = await this.productService.findById(productId);
     if (!product) throw new NotFoundException('Không tìm thấy sản phẩm này!');
     const store = await this.storeService.findById(product.storeId);
@@ -69,6 +72,7 @@ export class EvaluationService {
   }
 
   async getByProductId(user: any, productId: string) {
+    this.logger.log(`Get Evaluation By Product Id: ${productId}`);
     const evaluation = await this.evaluationModel.findOne({ productId });
     if (!evaluation) throw new NotFoundException('Không tìm thấy sản phẩm này!');
     const total = evaluation.emojis.length;

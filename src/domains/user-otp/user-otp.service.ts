@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { MailService } from 'services/mail/mail.service';
@@ -10,6 +10,7 @@ import { UserOTP } from './schema/user-otp.schema';
 
 @Injectable()
 export class UserOTPService {
+  private readonly logger = new Logger(UserOTPService.name);
   constructor(
     @InjectModel(UserOTP.name)
     private readonly userOTPModel: Model<UserOTP>,
@@ -18,6 +19,7 @@ export class UserOTPService {
   ) {}
 
   async sendOTP(body: SendOTPREQ) {
+    this.logger.log(`Send OTP: ${body.email}`);
     const email = body.email;
     const user = await this.userService.findOneByEmailSystem(email);
     if (user) {
@@ -30,6 +32,7 @@ export class UserOTPService {
   }
 
   async checkOTP(body: CheckOTPREQ) {
+    this.logger.log(`Check OTP: ${body.email}`);
     const { email, otp } = body;
     const userOTP = await this.userOTPModel.findOne({ email, otp }, {}, { lean: true });
     if (!userOTP) {
@@ -39,6 +42,7 @@ export class UserOTPService {
   }
 
   async sendOTPForget(body: SendOTPREQ) {
+    this.logger.log(`Send OTP Forget: ${body.email}`);
     const email = body.email;
     const user = await this.userService.findOneByEmailSystem(email);
     if (!user) {

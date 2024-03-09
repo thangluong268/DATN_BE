@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { CartService } from 'domains/cart/cart.service';
 import { ProductService } from 'domains/product/product.service';
@@ -26,6 +26,7 @@ import { Bill } from './schema/bill.schema';
 
 @Injectable()
 export class BillService {
+  private readonly logger = new Logger(BillService.name);
   constructor(
     @InjectModel(Bill.name)
     private readonly billModel: Model<Bill>,
@@ -43,6 +44,7 @@ export class BillService {
   ) {}
 
   async create(userId: string, body: BillCreateREQ) {
+    this.logger.log(`create bill: ${userId}`);
     const user = await this.userService.findById(userId);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng này!');
     const newBills = [];
@@ -70,6 +72,7 @@ export class BillService {
   }
 
   async countTotalByStatusSeller(userId: string, year: number) {
+    this.logger.log(`Count Total By Status Seller: ${userId}`);
     const user = await this.userService.findById(userId);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng này!');
     const store = await this.storeService.findByUserId(userId);
@@ -88,6 +91,7 @@ export class BillService {
   }
 
   async countTotalByStatusUser(userId: string) {
+    this.logger.log(`Count Total By Status User: ${userId}`);
     const user = await this.userService.findById(userId);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng này!');
     const statusData: string[] = BILL_STATUS.split('-').map((item: string) => item.toUpperCase());
@@ -111,6 +115,7 @@ export class BillService {
   }
 
   async calculateRevenueByYear(userId: string, year: number) {
+    this.logger.log(`Calculate Revenue By Year: ${userId}`);
     const user = await this.userService.findById(userId);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng này!');
     const store = await this.storeService.findByUserId(userId);
@@ -147,6 +152,7 @@ export class BillService {
   }
 
   async countCharityByYear(userId: string, year: number) {
+    this.logger.log(`Count Charity By Year: ${userId}`);
     const user = await this.userService.findById(userId);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng này!');
     const store = await this.storeService.findByUserId(userId);
@@ -180,6 +186,7 @@ export class BillService {
   }
 
   async calculateTotalRevenueByYear(year: number) {
+    this.logger.log(`Calculate Total Revenue By Year: ${year}`);
     const data = await this.billModel.aggregate(BillGetCalculateTotalByYearREQ.toQueryCondition(year));
     const monthlyRevenue = getMonthRevenue;
     let totalRevenue = 0;
@@ -209,6 +216,7 @@ export class BillService {
   }
 
   async getAllByStatusUser(userId: string, query: BillGetAllByStatusUserREQ) {
+    this.logger.log(`Get All By Status User: ${userId}`);
     const condition = BillGetAllByStatusUserREQ.toQueryCondition(userId, query);
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const user = await this.userService.findById(userId);
@@ -236,6 +244,7 @@ export class BillService {
   }
 
   async getAllByStatusSeller(userId: string, query: BillGetAllByStatusSellerREQ) {
+    this.logger.log(`Get All By Status Seller: ${userId}`);
     const store = await this.storeService.findByUserId(userId);
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const condition = BillGetAllByStatusSellerREQ.toQueryCondition(store._id, query);
@@ -263,6 +272,7 @@ export class BillService {
   }
 
   async countTotalData() {
+    this.logger.log(`Count Total Data`);
     const totalProduct = await this.productService.countTotal();
     const totalStore = await this.storeService.countTotal();
     const totalUser = await this.userService.countTotal();
@@ -277,6 +287,7 @@ export class BillService {
   }
 
   async revenueStore(storeId: string) {
+    this.logger.log(`Revenue Store: ${storeId}`);
     const totalRevenueAllTime = await this.billModel.aggregate(BillGetRevenueStoreREQ.toQueryRevenueAllTime(storeId));
     const totalDelivered = await this.billModel.countDocuments({ storeId, status: 'DELIVERED' });
     return BaseResponse.withMessage(
@@ -286,6 +297,7 @@ export class BillService {
   }
 
   async getMyBill(userId: string, billId: string) {
+    this.logger.log(`Get My Bill: ${userId}`);
     const bill = await this.billModel.findOne({ _id: billId, userId }, {}, { lean: true });
     if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
     const listProductsFullInfo = await Promise.all(
@@ -307,6 +319,7 @@ export class BillService {
   }
 
   async updateStatusBillUser(billId: string, status: string) {
+    this.logger.log(`Update Status Bill User: ${billId}`);
     if (status !== 'CANCELLED' && status !== 'RETURNED') throw new BadRequestException('Trạng thái không hợp lệ!');
     const bill = await this.billModel.findById(billId);
     if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
@@ -322,6 +335,7 @@ export class BillService {
   }
 
   async updateStatusBillSeller(billId: string, status: string) {
+    this.logger.log(`Update Status Bill Seller: ${billId}`);
     const bill = await this.billModel.findById(billId, {}, { lean: true });
     if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
     const updatedBill = await this.billModel.findByIdAndUpdate({ _id: billId }, { status }, { new: true });
@@ -351,6 +365,7 @@ export class BillService {
   }
 
   async getUsersHaveMostBill(limit: number) {
+    this.logger.log(`Get Users Have Most Bill: ${limit}`);
     return await this.billModel.aggregate([
       { $group: { _id: '$userId', count: { $sum: 1 } } },
       { $sort: { count: -1 } },

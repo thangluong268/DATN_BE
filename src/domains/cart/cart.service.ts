@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ProductInfoDTO } from 'domains/bill/dto/product-info.dto';
 import { ProductDTO } from 'domains/product/dto/product.dto';
@@ -16,6 +16,7 @@ import { Cart } from './schema/cart.schema';
 
 @Injectable()
 export class CartService {
+  private readonly logger = new Logger(CartService.name);
   constructor(
     @InjectModel(Cart.name)
     private readonly cartModel: Model<Cart>,
@@ -26,6 +27,7 @@ export class CartService {
   ) {}
 
   async handleAddProductIntoCart(userId: string, productId: string) {
+    this.logger.log(`Handle Add Product Into Cart: ${userId} - ${productId}`);
     const product = await this.productService.findById(productId);
     if (!product) {
       throw new NotFoundException('Không tìm thấy sản phẩm này!');
@@ -69,6 +71,7 @@ export class CartService {
   }
 
   async create(userId: string, store: Store, product: Product) {
+    this.logger.log(`Create Cart: ${userId} - ${store._id} - ${product._id}`);
     const productIntoCart = ProductDTO.toNewCart(product);
     const newCart = await this.cartModel.create({
       userId,
@@ -83,6 +86,7 @@ export class CartService {
   }
 
   async addNewProductIntoCartOfStore(cart: Cart, product: ProductDTO) {
+    this.logger.log(`Add New Product Into Cart Of Store: ${cart._id} - ${product.id}`);
     cart.products.push(product);
     cart.totalPrice = this.getTotalPrice(cart.products);
     return await this.cartModel.findByIdAndUpdate(cart._id, cart, { lean: true, new: true });
@@ -103,6 +107,7 @@ export class CartService {
   }
 
   async getPagingByUserId(userId: string, query: CartGetPagingByUserREQ) {
+    this.logger.log(`Get Paging By User Id: ${userId}`);
     const condition = CartGetPagingByUserREQ.toQueryCondition(userId, query);
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.cartModel.countDocuments(condition);
@@ -111,16 +116,19 @@ export class CartService {
   }
 
   async getWithoutPagingByUserId(userId: string) {
+    this.logger.log(`Get Without Paging By User Id: ${userId}`);
     const carts = await this.cartModel.find({ userId }, {}, { lean: true }).sort({ createdAt: -1 });
     return BaseResponse.withMessage<Cart[]>(carts, 'Lấy giỏ hàng thành công!');
   }
 
   async getNewCartByUserId(userId: string) {
+    this.logger.log(`Get New Cart By User Id: ${userId}`);
     const cart = await this.cartModel.find({ userId }).sort({ createdAt: -1 }).limit(1).lean();
     return BaseResponse.withMessage<Cart>(cart[0], 'Lấy giỏ hàng mới nhất thành công!');
   }
 
   async removeProductFromCart(userId: string, productId: string) {
+    this.logger.log(`Remove Product From Cart: ${userId} - ${productId}`);
     const product = await this.productService.findById(productId);
     if (!product) throw new NotFoundException('Không tìm thấy sản phẩm này!');
     const store = await this.storeService.findById(product.storeId);
@@ -138,6 +146,7 @@ export class CartService {
   }
 
   async removeMultiProductInCart(userId: string, storeId: string, products: ProductInfoDTO[]) {
+    this.logger.log(`Remove Multi Product In Cart: ${userId} - ${storeId}`);
     const cart = await this.cartModel.findOne({ userId, storeId });
     products.forEach((product) => {
       const index = cart.products.findIndex((p) => p.id.toString() === product.id.toString());

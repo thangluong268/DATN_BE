@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
@@ -24,6 +24,7 @@ import { JwtPayload } from './strategies/auth-jwt-at.strategy';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
@@ -34,6 +35,7 @@ export class AuthService {
   ) {}
 
   async loginWithSocial(req) {
+    this.logger.log(`loginWithSocial: ${req.user.fullName}`);
     if (!req.user) {
       return `No user from ${req.user.socialApp}`;
     }
@@ -47,6 +49,7 @@ export class AuthService {
   }
 
   async login(user: User) {
+    this.logger.log(`login: ${user.email}`);
     const payload = { userId: user._id };
     const tokens = await this.getTokens(payload);
     await this.userTokenService.upsert(user._id, tokens.refreshToken);
@@ -54,6 +57,7 @@ export class AuthService {
   }
 
   async signup(body: AuthSignUpREQ) {
+    this.logger.log(`signup: ${body.email}`);
     const user = await this.userService.findOneByEmailSystem(body.email);
     if (user) throw new ConflictException('Email đã tồn tại!');
     const newUser = await this.userService.createUserSystem(body);
@@ -64,17 +68,20 @@ export class AuthService {
   }
 
   async forgetPassword(body: ForgetPassREQ) {
+    this.logger.log(`forgetPassword: ${body.email}`);
     const user = await this.userService.updatePassword(body);
     return BaseResponse.withMessage<string>(user.email, 'Lấy lại mật khẩu thành công!');
   }
 
   async logout(user: User) {
+    this.logger.log(`logout: ${user.email}`);
     const userToken = await this.userTokenService.delete(user._id);
     if (!userToken) throw new ForbiddenException('Đăng xuất thất bại!');
     return BaseResponse.withMessage<boolean>(true, 'Đăng xuất thành công!');
   }
 
   async refreshToken(userId: string, refreshToken: string) {
+    this.logger.log(`refreshToken: ${userId}`);
     const userToken = await this.userTokenService.findByUserId(userId);
     if (!userToken) throw new ForbiddenException('Không tìm thấy token!');
     const isMatched = await bcrypt.compare(refreshToken, userToken.hashedRefreshToken);
@@ -86,6 +93,7 @@ export class AuthService {
   }
 
   async changeRole(userId: string, query: AuthSetRoleUserREQ) {
+    this.logger.log(`changeRole: ${userId}`);
     if (query.role === ROLE_NAME.ADMIN) {
       throw new ForbiddenException(`Không thể cấp quyền ${ROLE_NAME.ADMIN}!`);
     }

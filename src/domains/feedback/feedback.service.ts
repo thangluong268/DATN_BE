@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { UserService } from 'domains/user/user.service';
 import { Model } from 'mongoose';
@@ -14,6 +14,7 @@ import { Feedback } from './schema/feedback.schema';
 
 @Injectable()
 export class FeedbackService {
+  private readonly logger = new Logger(FeedbackService.name);
   constructor(
     @InjectModel(Feedback.name)
     private readonly feedbackModel: Model<Feedback>,
@@ -22,12 +23,14 @@ export class FeedbackService {
   ) {}
 
   async create(userId: string, productId: string, feedback: FeedbackCreateREQ) {
+    this.logger.log(`Create Feedback: ${userId} - ${productId}`);
     const newFeedback = await this.feedbackModel.create({ ...feedback, userId, productId });
     await this.userService.updateWallet(userId, 5000, 'plus');
     return BaseResponse.withMessage(toDocModel(newFeedback), 'Tạo feedback thành công');
   }
 
   async getFeedbacks(user: any, query: FeedbackGetREQ) {
+    this.logger.log(`Get Feedbacks: ${user._id}`);
     const condition = { productId: query.productId };
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.feedbackModel.countDocuments(condition);
@@ -46,11 +49,13 @@ export class FeedbackService {
   }
 
   async countFeedbackByProduct(productId: string) {
+    this.logger.log(`Count Feedback By Product: ${productId}`);
     const total = await this.feedbackModel.countDocuments({ productId });
     return BaseResponse.withMessage(total, 'Lấy tổng feedback thành công');
   }
 
   async getFeedbackStar(productId: string) {
+    this.logger.log(`Get Feedback Star: ${productId}`);
     const feedbacks = await this.feedbackModel.find({ productId }).sort({ createdAt: -1 });
     const star = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     const starPercent = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
@@ -71,6 +76,7 @@ export class FeedbackService {
   }
 
   async updateConsensus(currentUserId: string, query: FeedbackUpdateConsensusREQ) {
+    this.logger.log(`Update Consensus: ${currentUserId}`);
     const { productId, userId } = query;
     if (currentUserId.toString() === userId.toString()) throw new BadRequestException('Bạn không thể đồng thuận với chính mình!');
     const feedback = await this.feedbackModel.findOne({ userId, productId });

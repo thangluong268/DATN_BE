@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { BillService } from 'domains/bill/bill.service';
 import { Bill } from 'domains/bill/schema/bill.schema';
@@ -19,6 +19,7 @@ import { Store } from './schema/store.schema';
 
 @Injectable()
 export class StoreService {
+  private readonly logger = new Logger(StoreService.name);
   constructor(
     @InjectModel(Store.name)
     private readonly storeModel: Model<Store>,
@@ -41,6 +42,7 @@ export class StoreService {
   ) {}
 
   async create(userId: string, body: StoreCreateREQ) {
+    this.logger.log(`Create Store: ${userId}`);
     const user = await this.userService.findById(userId);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng này!');
     const store = await this.storeModel.findOne({ userId }, {}, { lean: true });
@@ -51,12 +53,14 @@ export class StoreService {
   }
 
   async getMyStore(userId: string) {
+    this.logger.log(`Get My Store: ${userId}`);
     const store = await this.storeModel.findOne({ userId }, {}, { lean: true });
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng!');
     return BaseResponse.withMessage(store, 'Lấy thông tin cửa hàng thành công!');
   }
 
   async getStores(query: GetStoresByAdminREQ) {
+    this.logger.log(`Get Stores: ${JSON.stringify(query)}`);
     const condition = GetStoresByAdminREQ.toQueryCondition(query);
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.storeModel.countDocuments(condition);
@@ -65,6 +69,7 @@ export class StoreService {
   }
 
   async getStoreReputation(userReq: any, storeId: string) {
+    this.logger.log(`Get Store Reputation: ${storeId}`);
     const store = await this.storeModel.findById(storeId, {}, { lean: true });
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const products = await this.productModel.find({ storeId }, {}, { lean: true });
@@ -102,6 +107,7 @@ export class StoreService {
   }
 
   async getStoresHaveMostProduct(query: StoreGetHaveMostProductREQ) {
+    this.logger.log(`Get Stores Have Most Product: ${JSON.stringify(query)}`);
     const stores = await this.productModel.aggregate(StoreGetHaveMostProductREQ.toQueryCondition(query) as any);
     const data = await Promise.all(
       stores.map(async (item) => {
@@ -114,6 +120,7 @@ export class StoreService {
   }
 
   async getStoreByManager(storeId: string) {
+    this.logger.log(`Get Store By Manager: ${storeId}`);
     const store = await this.storeModel.findById(storeId).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const products = await this.productModel.find({ storeId }).lean();
@@ -148,6 +155,7 @@ export class StoreService {
   }
 
   async getStoresByManager() {
+    this.logger.log(`Get Stores By Manager`);
     const stores = await this.storeModel.find().limit(50).lean();
     const data = await Promise.all(
       stores.map(async (item) => {
@@ -185,6 +193,7 @@ export class StoreService {
   }
 
   async getStoreById(storeId: string) {
+    this.logger.log(`Get Store By Id: ${storeId}`);
     const store = await this.storeModel.findById(storeId).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const products = await this.productModel.find({ storeId }).lean();
@@ -219,6 +228,7 @@ export class StoreService {
   }
 
   async update(userId: string, body: StoreUpdateREQ) {
+    this.logger.log(`Update Store: ${userId}`);
     const store = await this.storeModel.findOne({ userId }, {}, { lean: true });
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng!');
     const updatedStore = await this.storeModel.findOneAndUpdate({ userId }, { ...body }, { lean: true, new: true });

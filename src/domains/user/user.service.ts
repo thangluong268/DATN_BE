@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { SALT_ROUNDS } from 'app.config';
 import * as bcrypt from 'bcrypt';
@@ -22,6 +22,7 @@ import { User } from './schema/user.schema';
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
   constructor(
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
@@ -35,6 +36,7 @@ export class UserService {
   ) {}
 
   async createUserSystem(body: AuthSignUpREQ) {
+    this.logger.log(`Create User System: ${body.email}`);
     const hashedPassword = await bcrypt.hash(body.password, SALT_ROUNDS);
     body.password = hashedPassword;
     const user = await this.findOneByEmailSystem(body.email);
@@ -48,6 +50,7 @@ export class UserService {
   }
 
   async createUserWithoutRole(body: UserCreateREQ) {
+    this.logger.log(`Create User Without Role: ${body.email}`);
     const hashedPassword = await bcrypt.hash(body.password, SALT_ROUNDS);
     body.password = hashedPassword;
     const user = await this.findOneByEmailSystem(body.email);
@@ -94,6 +97,7 @@ export class UserService {
   }
 
   async updateById(id: string, body: UserUpdateREQ, user: User) {
+    this.logger.log(`Update User By Id: ${id}`);
     if (user.role.includes(ROLE_NAME.USER) && user._id.toString() !== id) {
       throw new ForbiddenException('Bạn không có quyền cập nhật thông tin người dùng khác!');
     }
@@ -102,6 +106,7 @@ export class UserService {
   }
 
   async getDetail(id: string) {
+    this.logger.log(`Get Detail: ${id}`);
     const user = await this.findById(id);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng này!');
     const billsOfUser = await this.billModel.find({ userId: id }).lean();
@@ -124,6 +129,7 @@ export class UserService {
   }
 
   async getUsersHaveMostBill(limit: number = 5) {
+    this.logger.log(`Get Users Have Most Bill: ${limit}`);
     const bills = await this.billService.getUsersHaveMostBill(Number(limit));
     const data = await Promise.all(
       bills.map(async (item: any) => {
@@ -140,6 +146,7 @@ export class UserService {
   }
 
   async getUsersFollowStore(userId: string, query: UserGetFollowStoreREQ) {
+    this.logger.log(`Get Users Follow Store: ${userId}`);
     const user = await this.userModel.findById(userId).lean();
     const condition = UserGetFollowStoreREQ.toQueryCondition(user, query.search);
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
@@ -152,6 +159,7 @@ export class UserService {
   }
 
   async getUsersNoPaging(limit: number = 50) {
+    this.logger.log(`Get Users No Paging: ${limit}`);
     const users = await this.userModel.find({}, { socialApp: 0, socialId: 0 }, { lean: true }).limit(Number(limit));
     const data = await Promise.all(
       users.map(async (item) => {
@@ -168,6 +176,7 @@ export class UserService {
   }
 
   async getUsersPaging(query: UserGetPagingREQ) {
+    this.logger.log(`Get Users Paging: ${JSON.stringify(query)}`);
     const condition = UserGetPagingREQ.toQueryCondition(query.search);
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.userModel.countDocuments(condition);
@@ -184,6 +193,7 @@ export class UserService {
   }
 
   async followStore(userId: string, storeId: string) {
+    this.logger.log(`Follow Store: ${userId} - ${storeId}`);
     const store = await this.storeModel.findById(storeId).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     if (store.userId.toString() === userId) throw new BadRequestException('Bạn không thể theo dõi cửa hàng của chính mình!');
@@ -195,6 +205,7 @@ export class UserService {
   }
 
   async addFriend(userIdSend: string, userIdReceive: string) {
+    this.logger.log(`Add Friend: ${userIdSend} - ${userIdReceive}`);
     const userReceive = await this.findById(userIdReceive);
     if (!userReceive) throw new NotFoundException('Không tìm thấy người dùng này!');
     if (userIdReceive === userIdSend) throw new BadRequestException('Bạn không thể kết bạn với chính mình!');

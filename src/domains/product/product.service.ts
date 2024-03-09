@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { BillService } from 'domains/bill/bill.service';
 import { EvaluationService } from 'domains/evaluation/evaluation.service';
@@ -27,6 +27,7 @@ import { Product } from './schema/product.schema';
 
 @Injectable()
 export class ProductService {
+  private readonly logger = new Logger(ProductService.name);
   constructor(
     @InjectModel(Product.name)
     private readonly productModel: Model<Product>,
@@ -47,6 +48,7 @@ export class ProductService {
   ) {}
 
   async create(userId: string, body: ProductCreateREQ) {
+    this.logger.log(`Create Product: ${userId}`);
     const store = await this.storeService.findByUserId(userId);
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const category = await this.categoryService.findById(body.categoryId);
@@ -57,6 +59,7 @@ export class ProductService {
   }
 
   async getProductsGive(query: PaginationREQ) {
+    this.logger.log(`Get Products Give: ${JSON.stringify(query)}`);
     const condition = { newPrice: 0, status: true };
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.productModel.countDocuments(condition);
@@ -68,6 +71,7 @@ export class ProductService {
   }
 
   async getProducts(query: ProductsGetREQ) {
+    this.logger.log(`Get Products: ${JSON.stringify(query)}`);
     const condition = ProductsGetREQ.toQueryCondition(null, query, { status: true });
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.productModel.countDocuments(condition);
@@ -78,6 +82,7 @@ export class ProductService {
   }
 
   async getProductsBySeller(userId: string, query: ProductsGetREQ) {
+    this.logger.log(`Get Products By Seller: ${userId}`);
     const store = await this.storeService.findByUserId(userId);
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const condition = ProductsGetREQ.toQueryCondition(store._id, query, {});
@@ -108,6 +113,7 @@ export class ProductService {
   }
 
   async getProductsByManager(query: ProductsGetREQ) {
+    this.logger.log(`Get Products By Manager: ${JSON.stringify(query)}`);
     const condition = ProductsGetREQ.toQueryCondition(null, query, {});
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.productModel.countDocuments(condition);
@@ -135,6 +141,7 @@ export class ProductService {
   }
 
   async getProductsInStore(query: ProductGetInStoreREQ) {
+    this.logger.log(`Get Products In Store: ${JSON.stringify(query)}`);
     const store = await this.storeService.findById(query.storeId);
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const condition = ProductsGetREQ.toQueryCondition(query.storeId, query, { status: true });
@@ -157,6 +164,7 @@ export class ProductService {
   }
 
   async getProductsOtherInStore(query: ProductGetOtherInStoreREQ) {
+    this.logger.log(`Get Products Other In Store: ${JSON.stringify(query)}`);
     const { storeId, productId } = query;
     const products = await this.productModel
       .find({ _id: { $ne: productId }, storeId, status: true }, {}, { lean: true })
@@ -166,11 +174,13 @@ export class ProductService {
   }
 
   async getProductsLasted(limit: number = 10) {
+    this.logger.log(`Get Products Lasted: ${limit}`);
     const products = await this.productModel.find({ status: true }, {}, { lean: true }).sort({ createdAt: -1 }).limit(limit);
     return BaseResponse.withMessage(products, 'Lấy danh sách sản phẩm mới nhất thành công!');
   }
 
   async getProductsMostInStore(limit: number = 10) {
+    this.logger.log(`Get Products Most In Store: ${limit}`);
     const stores = await this.productModel.aggregate(ProductGetMostInStoreREQ.toQueryCondition(limit) as any);
     const data = await Promise.all(
       stores.map(async (item) => {
@@ -191,6 +201,7 @@ export class ProductService {
   }
 
   async getProductsRandom(query: ProductGetRandomREQ, body: string[]) {
+    this.logger.log(`Get Products Random: ${JSON.stringify(query)}`);
     const limit = query.limit || 10;
     const excludeIds = body.map((id) => new Types.ObjectId(id));
     const products = await this.productModel.aggregate(ProductGetRandomREQ.toQueryCondition(query, excludeIds));
@@ -208,6 +219,7 @@ export class ProductService {
   }
 
   async getProductsFilter(query: ProductGetFilterREQ) {
+    this.logger.log(`Get Products Filter: ${JSON.stringify(query)}`);
     const category = await this.categoryService.findOne(query.search);
     const condition = ProductGetFilterREQ.toQueryCondition(query);
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
@@ -228,6 +240,7 @@ export class ProductService {
   }
 
   async getProductsLoveByUser(userId: string, query: ProductsGetLoveREQ) {
+    this.logger.log(`Get Products Love By User: ${userId}`);
     const conditionFindProduct = ProductsGetLoveREQ.toQueryConditionFindProduct(query);
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const productIds = (await this.productModel.find(conditionFindProduct).select('_id').lean()).map((product) => product._id);
@@ -261,6 +274,7 @@ export class ProductService {
   }
 
   async getProductsWithDetailByManager() {
+    this.logger.log(`Get Products With Detail By Manager`);
     const products = await this.productModel.find().lean().limit(30);
     const data = await Promise.all(
       products.map(async (item) => {
@@ -341,6 +355,7 @@ export class ProductService {
   }
 
   async getProductById(id: string) {
+    this.logger.log(`Get Product By Id: ${id}`);
     const product = await this.productModel.findById(id).lean();
     if (!product) throw new NotFoundException('Không tìm thấy sản phẩm này!');
     const type = product.newPrice === 0 ? PRODUCT_TYPE.GIVE : PRODUCT_TYPE.SELL;
@@ -355,6 +370,7 @@ export class ProductService {
   }
 
   async getProductByManager(id: string) {
+    this.logger.log(`Get Product By Manager: ${id}`);
     const product = await this.productModel.findById(id).lean();
     if (!product) throw new NotFoundException('Không tìm thấy sản phẩm này!');
     const type = product.newPrice === 0 ? PRODUCT_TYPE.GIVE : PRODUCT_TYPE.SELL;
@@ -440,6 +456,7 @@ export class ProductService {
   }
 
   async update(id: string, body: ProductUpdateREQ) {
+    this.logger.log(`Update Product: ${id}`);
     await this.productModel.findByIdAndUpdate(id, { ...body });
     return BaseResponse.withMessage({}, 'Cập nhật sản phẩm thành công!');
   }
