@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthRoleGuard } from 'domains/auth/guards/auth-role.guard';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { Roles } from '../auth/decorators/auth-role.decorator';
 import { AuthJwtATGuard } from '../auth/guards/auth-jwt-at.guard';
 import { StoreCreateREQ } from './request/store-create.request';
 import { GetStoresByAdminREQ } from './request/store-get-all-admin.request';
+import { StoreGetHaveMostProductREQ } from './request/store-get-have-most-product.request';
 import { StoreUpdateREQ } from './request/store-update.request';
 import { StoreService } from './store.service';
 
@@ -26,6 +27,37 @@ export class StoreController {
     return this.storeService.getStores(query);
   }
 
+  @Get('store-reputation')
+  getStoreReputation(@Req() req, @Query('storeId') storeId: string) {
+    return this.storeService.getStoreReputation(req.user, storeId);
+  }
+
+  @Roles(ROLE_NAME.ADMIN)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Get('store/admin/stores-most-products')
+  getStoresHaveMostProduct(@Query() query: StoreGetHaveMostProductREQ) {
+    return this.storeService.getStoresHaveMostProduct(query);
+  }
+
+  @Roles(ROLE_NAME.MANAGER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Get('store/admin-get-all')
+  getStoresByManager() {
+    return this.storeService.getStoresByManager();
+  }
+
+  @Roles(ROLE_NAME.MANAGER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Get('store/admin/:id')
+  getStoreByManager(@Param('id') id: string) {
+    return this.storeService.getStoreByManager(id);
+  }
+
+  @Get('store/:id')
+  getStoreById(@Param('id') id: string) {
+    return this.storeService.getStoreById(id);
+  }
+
   @Roles(ROLE_NAME.USER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Post('store/user')
@@ -37,7 +69,6 @@ export class StoreController {
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Put('store/seller')
   updateStore(@Req() req, @Body() body: StoreUpdateREQ) {
-    const userId = req.user._id;
-    return this.storeService.update(userId, body);
+    return this.storeService.update(req.user._id, body);
   }
 }

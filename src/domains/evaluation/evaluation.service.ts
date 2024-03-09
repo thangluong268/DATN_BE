@@ -98,10 +98,9 @@ export class EvaluationService {
     let isReaction = false;
     let isPurchased = false;
     if (user) {
-      const userId = user._id.toString();
-      const evaluationOfUser = evaluation.emojis.find((emoji) => emoji.userId.toString() === userId);
+      const evaluationOfUser = evaluation.emojis.find((emoji) => emoji.userId.toString() === user.userId);
       evaluationOfUser ? (isReaction = true) : (isReaction = false);
-      isPurchased = await this.billService.checkProductPurchasedByUser(userId, productId);
+      isPurchased = await this.billService.checkProductPurchasedByUser(user.userId, productId);
     }
     return BaseResponse.withMessage(
       EvaluationGetByUserRESP.of(total, emoji, isReaction, isPurchased),

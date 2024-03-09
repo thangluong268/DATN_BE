@@ -1,7 +1,8 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from 'domains/user/schema/user.schema';
+import { CheckLoginMiddleware } from 'middlewares/check-login.middleware';
 import { JwtHelper } from 'shared/helpers/jwt.helper';
 import { UserTokenModule } from '../user-token/user-token.module';
 import { UserModule } from '../user/user.module';
@@ -24,4 +25,10 @@ import { LocalStrategy } from './strategies/local.strategy';
   providers: [AuthService, JwtATStrategy, JwtRTStrategy, LocalStrategy, JwtHelper, GoogleStrategy, FacebookStrategy],
   exports: [JwtHelper],
 })
-export class AuthModule {}
+export class AuthModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(CheckLoginMiddleware)
+      .forRoutes({ path: 'store-reputation', method: RequestMethod.GET }, { path: 'evaluation', method: RequestMethod.GET });
+  }
+}

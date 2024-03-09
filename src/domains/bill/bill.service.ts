@@ -357,4 +357,12 @@ export class BillService {
       { $limit: Number(limit) },
     ]);
   }
+
+  async calculateRevenueAllTimeByStoreId(storeId: string) {
+    const result = await this.billModel.aggregate([
+      { $match: { status: 'DELIVERED', storeId: storeId.toString() } },
+      { $group: { _id: null, totalRevenue: { $sum: '$totalPrice' } } },
+    ]);
+    return result[0]?.totalRevenue || 0;
+  }
 }
