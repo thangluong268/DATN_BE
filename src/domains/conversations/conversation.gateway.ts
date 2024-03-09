@@ -23,6 +23,8 @@ import { MessageIsTypingREQ } from '../message/request/message-is-typing.request
 import { UserService } from '../user/user.service';
 import { ConversationService } from './conversation.service';
 import { ConversationGetREQ } from './request/conversation-get.request';
+import { ConversationJoinRoomREQ } from './request/conversation-join-room.request';
+import { ConversationLeaveRoomREQ } from './request/conversation-leave-room.request';
 
 @WebSocketGateway({
   namespace: 'conversation',
@@ -44,6 +46,20 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     // client.use(SocketAuthMiddleware(this.jwtService) as any);
   }
 
+  @SubscribeMessage(WS_EVENT.JOIN_ROOM)
+  async joinRoom(@ConnectedSocket() client: AuthSocket, @MessageBody() body: ConversationJoinRoomREQ) {
+    const conversation = await this.conversationService.findOneByParticipants(client.userId, body.receiverId);
+    client.join(conversation._id);
+    this.io.emit(WS_EVENT.JOIN_ROOM, `User ${client.userId} and user ${body.receiverId} joined rom: ${conversation._id}`);
+  }
+
+  @SubscribeMessage(WS_EVENT.LEAVE_ROOM)
+  async leaveRoom(@ConnectedSocket() client: AuthSocket, @MessageBody() body: ConversationLeaveRoomREQ) {
+    const conversation = await this.conversationService.findOneByParticipants(client.userId, body.receiverId);
+    client.leave(conversation._id);
+    this.io.emit(WS_EVENT.LEAVE_ROOM, `User ${client.userId} and user ${body.receiverId} have left rom: ${conversation._id}`);
+  }
+
   @SubscribeMessage(WS_EVENT.SEND_MESSAGE)
   async sendMessage(@ConnectedSocket() client: AuthSocket, @MessageBody() body: MessageCreateREQ) {
     const { text, receiverId } = body;
@@ -52,8 +68,7 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const conversation = await this.conversationService.findOneByParticipants(userId, receiverId);
     await this.messageService.create(conversation._id, userId, text);
     await this.conversationService.updateLastMessage(conversation._id, userId, text);
-    // this.io.to(conversation._id).emit(WS_EVENT.SEND_MESSAGE, text);
-    this.io.emit(WS_EVENT.SEND_MESSAGE, text);
+    this.io.to(conversation._id).emit(WS_EVENT.SEND_MESSAGE, text);
   }
 
   @SubscribeMessage(WS_EVENT.GET_CONVERSATION)
@@ -62,6 +77,7 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const { receiverId, ...query } = body;
     const conversation = await this.conversationService.findOneByParticipants(userId, receiverId);
     const data = await this.messageService.findByConversation(userId, conversation._id, query);
+    client.join(conversation._id);
     return { event: WS_EVENT.GET_CONVERSATION, data };
   }
 
@@ -76,20 +92,17 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
   async deleteMessage(@ConnectedSocket() client: AuthSocket, @MessageBody() body: MessageDeleteREQ) {
     const userId = client.userId;
     const deletedMessage = await this.messageService.delete(userId, body.messageId);
-    // this.io.to(deletedMessage.conversationId).emit(WS_EVENT.DELETE_MESSAGE, deletedMessage.id);
-    this.io.emit(WS_EVENT.DELETE_MESSAGE, deletedMessage.id);
+    client.join(deletedMessage.conversationId);
+    this.io.to(deletedMessage.conversationId).emit(WS_EVENT.DELETE_MESSAGE, deletedMessage.id);
   }
 
   @SubscribeMessage(WS_EVENT.IS_TYPING)
   async isTyping(@ConnectedSocket() client: AuthSocket, @MessageBody() body: MessageIsTypingREQ) {
     const userId = client.userId;
     const user = await this.userService.findById(userId);
-    // const conversation = await this.conversationService.findOneByParticipants(userId, body.receiverId);
-    // client.broadcast.to(conversation._id).emit(WS_EVENT.IS_TYPING, {
-    //   userName: user.fullName,
-    //   isTyping: body.isTyping,
-    // });
-    client.broadcast.emit(WS_EVENT.IS_TYPING, {
+    const conversation = await this.conversationService.findOneByParticipants(userId, body.receiverId);
+    client.join(conversation._id);
+    client.broadcast.to(conversation._id).emit(WS_EVENT.IS_TYPING, {
       userName: user.fullName,
       isTyping: body.isTyping,
     });

@@ -5,4 +5,6 @@ export const WS_EVENT = {
   DELETE_MESSAGE: 'deleteMessage',
   IS_TYPING: 'isTyping',
   IS_ONLINE: 'isOnline',
+  JOIN_ROOM: 'joinRoom',
+  LEAVE_ROOM: 'leaveRoom',
 };

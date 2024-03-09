@@ -18,34 +18,22 @@ export class ConversationService {
   ) {}
 
   async create(senderId: string, receiverId: string) {
-    const newConversation = await this.conversationModel.create({
-      participants: [senderId, receiverId],
-    });
+    const newConversation = await this.conversationModel.create({ participants: [senderId, receiverId] });
     return toDocModel(newConversation);
   }
 
   async isFirstConversation(senderId: string, receiverId: string) {
-    const conversation = await this.conversationModel.findOne({
-      participants: { $all: [senderId, receiverId] },
-    });
+    const conversation = await this.conversationModel.findOne({ participants: { $all: [senderId, receiverId] } });
     return !conversation;
   }
 
   async createIfIsFirstConversation(senderId: string, receiverId: string) {
     const isFirstConversation = await this.isFirstConversation(senderId, receiverId);
-    if (isFirstConversation) {
-      return await this.create(senderId, receiverId);
-    }
+    if (isFirstConversation) return await this.create(senderId, receiverId);
   }
 
   async findOneByParticipants(senderId: string, receiverId: string) {
-    return await this.conversationModel.findOne(
-      {
-        participants: { $all: [senderId, receiverId] },
-      },
-      {},
-      { lean: true },
-    );
+    return await this.conversationModel.findOne({ participants: { $all: [senderId, receiverId] } }, {}, { lean: true });
   }
 
   async updateLastMessage(conversationId: string, senderId: string, message: string) {
