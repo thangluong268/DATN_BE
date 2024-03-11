@@ -53,7 +53,7 @@ export class AuthService {
     const payload = { userId: user._id };
     const tokens = await this.getTokens(payload);
     await this.userTokenService.upsert(user._id, tokens.refreshToken);
-    return BaseResponse.withMessage<AuthLoginRESP>(AuthLoginRESP.of(user, tokens), 'Đăng nhập thành công!');
+    return BaseResponse.withMessage(AuthLoginRESP.of(user, tokens), 'Đăng nhập thành công!');
   }
 
   async signup(body: AuthSignUpREQ) {
