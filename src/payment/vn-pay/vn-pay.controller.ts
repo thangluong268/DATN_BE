@@ -20,7 +20,7 @@ export class VNPayController {
       req.socket.remoteAddress ||
       req.connection.socket.remoteAddress;
 
-    const orderId = uuid();
+    const orderId = req.body.billId || uuid();
     const amount = req.body.amount;
     const bankCode = req.body.bankCode;
 

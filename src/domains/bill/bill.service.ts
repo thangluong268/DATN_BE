@@ -5,6 +5,7 @@ import { ProductService } from 'domains/product/product.service';
 import { StoreService } from 'domains/store/store.service';
 import { UserService } from 'domains/user/user.service';
 import { Connection, Model } from 'mongoose';
+import { createVNPayPayment } from 'payment/vn-pay/vn-pay.service';
 import { BILL_STATUS, BILL_STATUS_TRANSITION } from 'shared/constants/bill.constant';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationResponse } from 'shared/generics/pagination.response';
@@ -20,6 +21,7 @@ import { BillGetCalculateTotalByYearREQ } from './request/bill-get-calculate-tot
 import { BillGetCountCharityByYearREQ } from './request/bill-get-count-charity-by-year.request';
 import { BillGetRevenueStoreREQ } from './request/bill-get-revenue-store.request';
 import { BillGetTotalByStatusSellerREQ } from './request/bill-get-total-by-status-seller.request';
+import { BillVNPayREQ } from './request/bill-vnpay.request';
 import { BillGetAllByStatusUserRESP } from './response/bill-get-all-by-status-user.response';
 import { GetMyBillRESP } from './response/get-my-bill.response';
 import { Bill } from './schema/bill.schema';
@@ -62,6 +64,9 @@ export class BillService {
         });
         const newBill = await this.billModel.create(cart);
         BillCreateREQ.saveData(newBill, userId, body);
+        const paymentBody = { billId: newBill._id, amount: newBill.totalPrice, bankCode: 'NCB' } as BillVNPayREQ;
+        const payment = await createVNPayPayment(paymentBody);
+        console.log(payment);
         newBills.push(newBill);
       } catch (err) {
         await session.abortTransaction();
