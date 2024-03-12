@@ -42,8 +42,11 @@ export class Bill extends Document {
   @Prop({ default: 'NEW' })
   status: string;
 
-  @Prop()
+  @Prop({ default: false })
   isPaid: boolean;
+
+  @Prop({ default: '' })
+  paymentId: string;
 }
 
 export const BillSchema = SchemaFactory.createForClass(Bill);

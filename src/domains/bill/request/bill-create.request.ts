@@ -24,14 +24,14 @@ export class BillCreateREQ {
   @IsNotEmpty()
   deliveryFee: number;
 
-  static saveData(newBill: Bill, userId: string, body: BillCreateREQ) {
+  static saveData(newBill: Bill, userId: string, body: BillCreateREQ, paymentId: string) {
     newBill.userId = userId;
     newBill.deliveryMethod = body.deliveryMethod;
     newBill.paymentMethod = body.paymentMethod;
     newBill.receiverInfo = body.receiverInfo;
     if (body.giveInfo) newBill.giveInfo = body.giveInfo;
     newBill.deliveryFee = body.deliveryFee;
-    body.paymentMethod === PAYMENT_METHOD.CASH ? (newBill.isPaid = false) : (newBill.isPaid = true);
+    newBill.paymentId = paymentId;
     newBill.save();
   }
 }

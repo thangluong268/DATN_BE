@@ -445,9 +445,6 @@ export class ProductService {
   async decreaseQuantity(id: string, quantitySold: number) {
     const product = await this.productModel.findById(id);
     product.quantity -= quantitySold;
-    if (product.quantity === 0) {
-      product.status = false;
-    }
     await product.save();
   }
 

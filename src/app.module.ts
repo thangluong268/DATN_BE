@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { BillModule } from 'domains/bill/bill.module';
 import { CartModule } from 'domains/cart/cart.module';
 import { EvaluationModule } from 'domains/evaluation/evaluation.module';
@@ -7,6 +8,7 @@ import { NotificationModule } from 'domains/notification/notification.module';
 import { PolicyModule } from 'domains/policy/policy.module';
 import { ReportModule } from 'domains/report/report.module';
 import { PaymentModule } from 'payment/paymen.module';
+import { CronjobsService } from 'services/cronjob.service';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './domains/auth/auth.module';
 import { CategoryModule } from './domains/category/category.module';
@@ -21,6 +23,7 @@ import { SeederService } from './services/seeder.service';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     DatabaseModule,
     UserModule,
     AuthModule,
@@ -40,6 +43,6 @@ import { SeederService } from './services/seeder.service';
     FeedbackModule,
     ReportModule,
   ],
-  providers: [SeederService],
+  providers: [SeederService, CronjobsService],
 })
 export class AppModule {}

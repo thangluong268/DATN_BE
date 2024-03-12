@@ -4,13 +4,19 @@ import { CartService } from 'domains/cart/cart.service';
 import { ProductService } from 'domains/product/product.service';
 import { StoreService } from 'domains/store/store.service';
 import { UserService } from 'domains/user/user.service';
+import { Response } from 'express';
 import { Connection, Model } from 'mongoose';
-import { createVNPayPayment } from 'payment/vn-pay/vn-pay.service';
+import { PaymentDTO } from 'payment/dto/payment.dto';
+import { PaypalGateway, VNPayGateway } from 'payment/payment.gateway';
+import { PaymentService } from 'payment/payment.service';
+import { PaypalPaymentService } from 'payment/paypal/paypal.service';
 import { BILL_STATUS, BILL_STATUS_TRANSITION } from 'shared/constants/bill.constant';
+import { PAYMENT_METHOD } from 'shared/enums/bill.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationResponse } from 'shared/generics/pagination.response';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { toDocModel } from 'shared/helpers/to-doc-model.helper';
+import { v4 as uuid } from 'uuid';
 import { ProductInfoDTO } from './dto/product-info.dto';
 import { getMonthRevenue } from './helper/get-month-revenue.helper';
 import { BillCreateREQ } from './request/bill-create.request';
@@ -21,7 +27,6 @@ import { BillGetCalculateTotalByYearREQ } from './request/bill-get-calculate-tot
 import { BillGetCountCharityByYearREQ } from './request/bill-get-count-charity-by-year.request';
 import { BillGetRevenueStoreREQ } from './request/bill-get-revenue-store.request';
 import { BillGetTotalByStatusSellerREQ } from './request/bill-get-total-by-status-seller.request';
-import { BillVNPayREQ } from './request/bill-vnpay.request';
 import { BillGetAllByStatusUserRESP } from './response/bill-get-all-by-status-user.response';
 import { GetMyBillRESP } from './response/get-my-bill.response';
 import { Bill } from './schema/bill.schema';
@@ -43,17 +48,25 @@ export class BillService {
 
     private readonly storeService: StoreService,
     private readonly cartService: CartService,
-  ) {}
 
-  async create(userId: string, body: BillCreateREQ) {
+    private readonly paymentService: PaymentService,
+    private readonly paypalPaymentService: PaypalPaymentService,
+  ) {
+    this.paymentService.registerPaymentGateway.set(PAYMENT_METHOD.VNPAY, new VNPayGateway());
+    this.paymentService.registerPaymentGateway.set(PAYMENT_METHOD.PAYPAL, new PaypalGateway(this.paypalPaymentService));
+  }
+
+  async create(userId: string, body: BillCreateREQ, res: Response) {
     this.logger.log(`create bill: ${userId}`);
     const user = await this.userService.findById(userId);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng này!');
     const newBills = [];
-    for (const cart of body.data) {
-      const session = await this.connection.startSession();
-      session.startTransaction();
-      try {
+    let totalAmount = 0;
+    const paymentId = uuid();
+    const session = await this.connection.startSession();
+    session.startTransaction();
+    try {
+      for (const cart of body.data) {
         await this.userService.updateWallet(userId, cart.totalPrice, 'plus');
         await this.cartService.removeMultiProductInCart(userId, cart.storeId, cart.products);
         for (const product of cart.products) {
@@ -63,17 +76,23 @@ export class BillService {
           product.type = product.type.toUpperCase();
         });
         const newBill = await this.billModel.create(cart);
-        BillCreateREQ.saveData(newBill, userId, body);
-        const paymentBody = { billId: newBill._id, amount: newBill.totalPrice, bankCode: 'NCB' } as BillVNPayREQ;
-        const payment = await createVNPayPayment(paymentBody);
-        console.log(payment);
+        BillCreateREQ.saveData(newBill, userId, body, paymentId);
         newBills.push(newBill);
-      } catch (err) {
-        await session.abortTransaction();
-        throw err;
+        totalAmount += newBill.totalPrice;
       }
+      if (body.paymentMethod === PAYMENT_METHOD.CASH) {
+        await session.commitTransaction();
+        session.endSession();
+        return newBills.map((bill) => toDocModel(bill));
+      }
+      const paymentBody = { paymentId, amount: totalAmount } as PaymentDTO;
+      await this.paymentService.processPayment(paymentBody, body.paymentMethod, res);
+      await session.commitTransaction();
+      session.endSession();
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
     }
-    return newBills.map((bill) => toDocModel(bill));
   }
 
   async countTotalByStatusSeller(userId: string, year: number) {
@@ -384,5 +403,13 @@ export class BillService {
       { $group: { _id: null, totalRevenue: { $sum: '$totalPrice' } } },
     ]);
     return result[0]?.totalRevenue || 0;
+  }
+
+  async getByPaymentId(paymentId: string) {
+    return await this.billModel.find({ paymentId }).lean();
+  }
+
+  async updateIsPaid(billId: string) {
+    await this.billModel.findByIdAndUpdate(billId, { isPaid: true });
   }
 }

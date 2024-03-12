@@ -8,6 +8,7 @@ import { BillController } from './bill.controller';
 import { BillService } from './bill.service';
 import { Bill, BillSchema } from './schema/bill.schema';
 import { NotificationModule } from 'domains/notification/notification.module';
+import { PaymentModule } from 'payment/paymen.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { NotificationModule } from 'domains/notification/notification.module';
     StoreModule,
     forwardRef(() => UserModule),
     forwardRef(() => NotificationModule),
+    PaymentModule,
   ],
   controllers: [BillController],
   providers: [BillService],
