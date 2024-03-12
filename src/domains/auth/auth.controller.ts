@@ -6,12 +6,12 @@ import { AuthService } from './auth.service';
 import { Roles } from './decorators/auth-role.decorator';
 import { AuthJwtATGuard } from './guards/auth-jwt-at.guard';
 import { AuthJwtRTGuard } from './guards/auth-jwt-rt.guard';
+import { AuthRoleGuard } from './guards/auth-role.guard';
 import { FacebookOAuthGuard } from './guards/facebook-oauth.guard';
 import { GoogleOAuthGuard } from './guards/google-oauth.guard';
 import { AuthSetRoleUserREQ } from './request/auth-set-role-user.request';
 import { ForgetPassREQ } from './request/forget-password.request';
 import { AuthSignUpREQ } from './request/sign-up.request';
-import { AuthRoleGuard } from './guards/auth-role.guard';
 
 @Controller('auth')
 export class AuthController {
