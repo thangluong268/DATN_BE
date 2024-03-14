@@ -7,6 +7,7 @@ import { Evaluation, EvaluationSchema } from 'domains/evaluation/schema/evaluati
 import { FeedbackModule } from 'domains/feedback/feedback.module';
 import { Feedback, FeedbackSchema } from 'domains/feedback/schema/feedback.schema';
 import { NotificationModule } from 'domains/notification/notification.module';
+import { Store, StoreSchema } from 'domains/store/schema/store.schema';
 import { StoreModule } from 'domains/store/store.module';
 import { UserModule } from 'domains/user/user.module';
 import { ProductController } from './product.controller';
@@ -19,6 +20,7 @@ import { Product, ProductSchema } from './schema/product.schema';
       { name: Product.name, schema: ProductSchema },
       { name: Evaluation.name, schema: EvaluationSchema },
       { name: Feedback.name, schema: FeedbackSchema },
+      { name: Store.name, schema: StoreSchema },
     ]),
     forwardRef(() => NotificationModule),
     CategoryModule,

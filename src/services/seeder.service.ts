@@ -32,9 +32,17 @@ export class SeederService {
   async seedAdmin() {
     const hashedPassword = await bcrypt.hash(PASSWORD_ADMIN, SALT_ROUNDS);
     await this.userModel.create({
+      avatar: '',
+      fullName: 'Admin',
       email: EMAIL_ADMIN,
+      address: [],
+      phone: '',
+      gender: 'Khác',
+      birthday: new Date(),
       password: hashedPassword,
       role: [ROLE_NAME.ADMIN],
+      socialId: null,
+      socialApp: null,
     });
   }
 

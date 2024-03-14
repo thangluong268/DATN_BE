@@ -1,9 +1,11 @@
 import { Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import axios, { AxiosHeaders } from 'axios';
 import { BillService } from 'domains/bill/bill.service';
 import { EvaluationService } from 'domains/evaluation/evaluation.service';
 import { Evaluation } from 'domains/evaluation/schema/evaluation.schema';
 import { Feedback } from 'domains/feedback/schema/feedback.schema';
+import { Store } from 'domains/store/schema/store.schema';
 import { Model, Types } from 'mongoose';
 import { PRODUCT_TYPE } from 'shared/enums/bill.enum';
 import { BaseResponse } from 'shared/generics/base.response';
@@ -43,7 +45,10 @@ export class ProductService {
     @InjectModel(Feedback.name)
     private readonly feedbackModel: Model<Feedback>,
 
+    @InjectModel(Store.name)
+    private readonly storeModel: Model<Store>,
     private readonly storeService: StoreService,
+
     private readonly categoryService: CategoryService,
   ) {}
 
@@ -456,5 +461,42 @@ export class ProductService {
     this.logger.log(`Update Product: ${id}`);
     await this.productModel.findByIdAndUpdate(id, { ...body });
     return BaseResponse.withMessage({}, 'Cập nhật sản phẩm thành công!');
+  }
+
+  /**
+   * This is part for scraping data from website
+   */
+
+  // Đồ gia dụng, nội thất, cây cảnh
+  async scraping_DoGiaDung_NoiThat_CayCanh() {
+    const storeIds = (await this.storeModel.find({}, { _id: 1 }).lean()).map((store) => store._id.toString());
+    const categoryId = '65d20668b91436a3f359ad3c';
+    const scrapingId = '14000';
+    const url = `https://gateway.chotot.com/v1/public/ad-listing?cg=${scrapingId}&o=20&page=2&st=s,k&limit=20&key_param_included=true`;
+    const headers = new AxiosHeaders();
+    headers.set('Content-Type', 'application/json');
+    const res = await axios.get(url, { headers });
+    const dataRes = res.data.ads;
+
+    for (const [index, data] of dataRes.entries()) {
+      const productOfScrapingId = data.list_id;
+      const urlDetail = `https://gateway.chotot.com/v2/public/ad-listing/${productOfScrapingId}?adview_position=true&tm=treatment2`;
+      const headersDetail = new AxiosHeaders();
+      headers.set('Content-Type', 'application/json');
+      const resDetail = await axios.get(urlDetail, { headers: headersDetail });
+      const dataResDetail = resDetail.data.ad;
+
+      const newProduct = await this.productModel.create({
+        avatar: dataResDetail.images,
+        quantity: Math.floor(Math.random() * 20) + 2,
+        name: dataResDetail.subject,
+        oldPrice: dataResDetail.price + Math.floor(Math.random() * 200000) + 50000,
+        newPrice: dataResDetail.price,
+        description: dataResDetail.body,
+        categoryId,
+        storeId: storeIds[index % 10],
+      });
+      await this.evaluationService.create(newProduct._id);
+    }
   }
 }

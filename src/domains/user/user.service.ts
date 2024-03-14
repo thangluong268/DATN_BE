@@ -20,6 +20,7 @@ import { PaginationResponse } from 'shared/generics/pagination.response';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { ForgetPassREQ } from '../auth/request/forget-password.request';
 import { AuthSignUpREQ } from '../auth/request/sign-up.request';
+import { USER_DATA } from './data/sample.data';
 import { UserCreateREQ } from './request/user-create.request';
 import { UserGetFollowStoreREQ } from './request/user-get-follow-store.request';
 import { UserGetPagingREQ } from './request/user-get-paging.resquest';
@@ -221,5 +222,13 @@ export class UserService {
     index == -1 ? userSend.friends.push(userIdReceive) : userSend.friends.splice(index, 1);
     await this.userModel.findByIdAndUpdate(userIdSend, { friends: userSend.friends });
     return BaseResponse.withMessage({}, index == -1 ? 'Kết bạn thành công!' : 'Hủy kết bạn thành công!');
+  }
+
+  async seedData() {
+    await this.userModel.insertMany(USER_DATA);
+  }
+
+  async updateAvatar() {
+    await this.userModel.updateMany({}, { avatar: 'https://static-00.iconduck.com/assets.00/user-icon-2048x2048-ihoxz4vq.png' });
   }
 }

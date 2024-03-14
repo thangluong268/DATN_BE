@@ -11,6 +11,7 @@ import { PaginationResponse } from 'shared/generics/pagination.response';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { User } from '../user/schema/user.schema';
 import { UserService } from '../user/user.service';
+import { STORE_DATA } from './data/sample.data';
 import { StoreCreateREQ } from './request/store-create.request';
 import { GetStoresByAdminREQ } from './request/store-get-all-admin.request';
 import { StoreGetHaveMostProductREQ } from './request/store-get-have-most-product.request';
@@ -245,5 +246,17 @@ export class StoreService {
 
   async countTotal() {
     return await this.storeModel.countDocuments();
+  }
+
+  async scrapingData() {
+    this.logger.log(`Seed Data Store`);
+    const users = await this.userModel.find({}, { _id: 1, phone: 1 }, { lean: true }).skip(1).limit(10);
+    const data = STORE_DATA.map((item, index) => ({
+      ...item,
+      userId: users[users.length - 1 - index]._id.toString(),
+      avatar: 'https://static.vecteezy.com/system/resources/previews/010/879/093/original/store-3d-icon-png.png',
+      phoneNumber: users[index].phone,
+    }));
+    await this.storeModel.insertMany(data);
   }
 }
