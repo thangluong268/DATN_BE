@@ -112,4 +112,12 @@ export class ProductController {
   update(@Param('id') id: string, @Body() body: ProductUpdateREQ) {
     return this.productService.update(id, body);
   }
+
+  /**
+   * This is part of craping data from another website
+   */
+  @Post('product/scraping/DoGiaDung_NoiThat_CayCanh')
+  scraping_DoGiaDung_NoiThat_CayCanh() {
+    return this.productService.scraping_DoGiaDung_NoiThat_CayCanh();
+  }
 }

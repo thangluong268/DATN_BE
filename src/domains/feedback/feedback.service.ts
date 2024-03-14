@@ -30,7 +30,7 @@ export class FeedbackService {
   }
 
   async getFeedbacks(user: any, query: FeedbackGetREQ) {
-    this.logger.log(`Get Feedbacks: ${user._id}`);
+    this.logger.log(`Get Feedbacks`);
     const condition = { productId: query.productId };
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.feedbackModel.countDocuments(condition);

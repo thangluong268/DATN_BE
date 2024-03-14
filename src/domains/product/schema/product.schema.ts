@@ -27,7 +27,7 @@ export class Product extends Document {
   @Prop()
   categoryId: string;
 
-  @Prop({ type: [String] })
+  @Prop({ type: [String], default: [] })
   keywords: string[];
 
   @Prop()

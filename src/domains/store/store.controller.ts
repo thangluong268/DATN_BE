@@ -71,4 +71,12 @@ export class StoreController {
   updateStore(@Req() req, @Body() body: StoreUpdateREQ) {
     return this.storeService.update(req.user._id, body);
   }
+
+  /**
+   * This is part of scraping data
+   */
+  @Post('store/scraping')
+  scrapingData() {
+    return this.storeService.scrapingData();
+  }
 }

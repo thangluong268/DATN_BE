@@ -76,4 +76,17 @@ export class UserController {
     const user = req.user;
     return this.userService.updateById(id, body, user);
   }
+
+  /**
+   * This is part of scraping data
+   */
+  @Post('scraping')
+  seedData() {
+    return this.userService.seedData();
+  }
+
+  @Patch('avatar')
+  updateAvatar() {
+    return this.userService.updateAvatar();
+  }
 }
