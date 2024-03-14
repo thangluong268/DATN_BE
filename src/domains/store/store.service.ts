@@ -258,5 +258,6 @@ export class StoreService {
       phoneNumber: users[index].phone,
     }));
     await this.storeModel.insertMany(data);
+    await this.userModel.updateMany({ _id: { $in: users.map((item) => item._id) } }, { $push: { role: ROLE_NAME.SELLER } });
   }
 }
