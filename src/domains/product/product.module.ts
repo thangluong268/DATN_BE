@@ -13,6 +13,7 @@ import { UserModule } from 'domains/user/user.module';
 import { ProductController } from './product.controller';
 import { ProductService } from './product.service';
 import { Product, ProductSchema } from './schema/product.schema';
+import { ProductScraping } from './scraping/product.scraping';
 
 @Module({
   imports: [
@@ -31,7 +32,7 @@ import { Product, ProductSchema } from './schema/product.schema';
     FeedbackModule,
   ],
   controllers: [ProductController],
-  providers: [ProductService],
+  providers: [ProductService, ProductScraping],
   exports: [ProductService, MongooseModule],
 })
 export class ProductModule {}

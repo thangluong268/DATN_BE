@@ -14,10 +14,14 @@ import { ProductGetOtherInStoreREQ } from './request/product-get-orther-in-store
 import { ProductGetRandomREQ } from './request/product-get-random.request';
 import { ProductsGetREQ } from './request/product-get.request';
 import { ProductUpdateREQ } from './request/product-update.request';
+import { ProductScraping } from './scraping/product.scraping';
 
 @Controller()
 export class ProductController {
-  constructor(private readonly productService: ProductService) {}
+  constructor(
+    private readonly productService: ProductService,
+    private readonly productScraping: ProductScraping,
+  ) {}
 
   @Get('product')
   getProducts(@Query() query: ProductsGetREQ) {
@@ -118,6 +122,51 @@ export class ProductController {
    */
   @Post('product/scraping/DoGiaDung_NoiThat_CayCanh')
   scraping_DoGiaDung_NoiThat_CayCanh() {
-    return this.productService.scraping_DoGiaDung_NoiThat_CayCanh();
+    return this.productScraping.scraping_DoGiaDung_NoiThat_CayCanh();
+  }
+
+  @Post('product/scraping/Do_Dien_Tu')
+  scraping_Do_Dien_Tu() {
+    return this.productScraping.scraping_Do_Dien_Tu();
+  }
+
+  @Post('product/scraping/Me_Va_Be')
+  scraping_Me_Va_Be() {
+    return this.productScraping.scraping_Do_Choi_Me_Be();
+  }
+
+  @Post('product/scraping/Xe_Co')
+  scraping_Xe_Co() {
+    return this.productScraping.scraping_Xe_Co();
+  }
+
+  @Post('product/scraping/Dien_Lanh')
+  scraping_Dien_Lanh() {
+    return this.productScraping.scraping_Dien_Lanh();
+  }
+
+  @Post('product/scraping/GiaiTri_TheThao_SoThich')
+  scraping_GiaiTri_TheThao_SoThich() {
+    return this.productScraping.scraping_GiaiTri_TheThao_SoThich();
+  }
+
+  @Post('product/scraping/ThuCung')
+  scraping_ThuCung() {
+    return this.productScraping.scraping_ThuCung();
+  }
+
+  @Post('product/scraping/Give')
+  scraping_Give() {
+    return this.productScraping.scraping_Give();
+  }
+
+  @Post('product/scraping/Thoi_Trang_Do_Dung_Ca_Nhan')
+  scraping_Thoi_Trang_Do_Dung_Ca_Nhan() {
+    return this.productScraping.scraping_Thoi_Trang_Do_Dung_Ca_Nhan();
+  }
+
+  @Post('product/scraping/Do_Dung_Van_Phong')
+  scraping_Do_Dung_Van_Phong() {
+    return this.productScraping.scraping_Do_Dung_Van_Phong();
   }
 }
