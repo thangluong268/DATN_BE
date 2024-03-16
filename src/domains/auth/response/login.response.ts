@@ -6,7 +6,7 @@ export class AuthLoginRESP {
     return {
       providerData: [
         {
-          userId: user._id,
+          _id: user._id,
           avatar: user.avatar,
           fullName: user.fullName,
           wallet: user.wallet,
