@@ -6,7 +6,7 @@ export class PromotionGetByStore {
 
   static toQueryCondition(storeId: string, query: PromotionGetByStore) {
     const { isActive } = query;
-    const condition = { storeId: storeId.toString() };
+    const condition = { storeIds: storeId.toString() };
     if (isActive !== undefined) {
       condition['isActive'] = isActive;
     }

@@ -4,9 +4,15 @@ import { Store } from 'domains/store/schema/store.schema';
 import { User } from 'domains/user/schema/user.schema';
 import { ObjectId } from 'mongodb';
 import { Model } from 'mongoose';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BaseResponse } from 'shared/generics/base.response';
+import { PaginationREQ } from 'shared/generics/pagination.request';
+import { PaginationResponse } from 'shared/generics/pagination.response';
+import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { PromotionCreateREQ } from './request/promotion-create.request';
+import { PromotionGetByManagerFilterREQ } from './request/promotion-get-by-manager-filter.request';
 import { PromotionGetByStore } from './request/promotion-get-by-store.request';
+import { PromotionGetUserUsesREQ } from './request/promotion-get-user-use.request';
 import { PromotionUpdateREQ } from './request/promotion-update.request';
 import { PromotionGetByStoreIdRESP } from './response/promotion-get-by-store-id.response';
 import { PromotionGetDetailRESP } from './response/promotion-get-detail.response';
@@ -28,20 +34,32 @@ export class PromotionService {
   ) {}
 
   async create(userId: string, body: PromotionCreateREQ) {
-    this.logger.log(`userId: ${userId}, body: ${JSON.stringify(body)}`);
-    const store = await this.storeModel.findOne({ userId }).lean();
-    if (!store) throw new NotFoundException('Không tìm thấy cửa hàng!');
+    this.logger.log(`Create promotion by userId: ${userId}, body: ${JSON.stringify(body)}`);
     const voucherCode = await this.generateVoucherCode();
-    return this.promotionModel.create({ ...body, voucherCode, storeId: store._id.toString() });
+    return await this.promotionModel.create({ ...body, voucherCode });
   }
 
   async getPromotionsByStoreId(storeId: string) {
     this.logger.log(`storeId: ${storeId}`);
     const promotions = await this.promotionModel
-      .find({ storeId, isActive: true }, { createdAt: 0, updatedAt: 0, userSaves: 0, userUses: 0 })
+      .find({ storeIds: storeId, isActive: true }, { createdAt: 0, updatedAt: 0, userSaves: 0 })
       .lean();
     const data = promotions.map((promotion) => PromotionGetByStoreIdRESP.of(promotion));
     return BaseResponse.withMessage(data, 'Lấy danh sách khuyến mãi của cửa hàng thành công!');
+  }
+
+  async getPromotionsByManager(query: PaginationREQ, filter: PromotionGetByManagerFilterREQ) {
+    this.logger.log(`get promotions by manager`);
+    const { skip, limit } = QueryPagingHelper.queryPaging(query);
+    const condition = PromotionGetByManagerFilterREQ.toFilter(filter);
+    const total = await this.promotionModel.countDocuments(condition);
+    const data = await this.promotionModel
+      .find(condition, { createdAt: 0, updatedAt: 0 })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+    return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách khuyến mãi thành công!');
   }
 
   async getMyPromotions(userId: string, query: PromotionGetByStore) {
@@ -50,85 +68,61 @@ export class PromotionService {
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng!');
     const condition = PromotionGetByStore.toQueryCondition(store._id, query);
     const promotions = await this.promotionModel
-      .find(condition, { createdAt: 0, updatedAt: 0, userSaves: 0, userUses: 0 })
+      .find(condition, { createdAt: 0, updatedAt: 0, userSaves: 0, storeIds: 0 })
       .lean();
     const data = promotions.map((promotion) => PromotionGetMyRESP.of(promotion));
     return BaseResponse.withMessage(data, 'Lấy danh sách khuyến mãi của cửa hàng thành công!');
   }
 
-  async getPromotion(userId: string, promotionId: string) {
+  async getPromotion(promotionId: string) {
     this.logger.log(`get detail promotionId: ${promotionId}`);
-    const store = await this.storeModel.findOne({ userId }).lean();
-    if (!store) throw new NotFoundException('Không tìm thấy cửa hàng!');
     const promotion = await this.promotionModel.findById(promotionId).lean();
     if (!promotion) throw new NotFoundException('Không tìm thấy khuyến mãi!');
-    if (promotion.storeId.toString() !== store._id.toString()) throw new NotFoundException('Không tìm thấy khuyến mãi!');
     return BaseResponse.withMessage(PromotionGetDetailRESP.of(promotion), 'Lấy thông tin chi tiết khuyến mãi thành công!');
   }
 
-  async getUserUsesPromotion(userId: string, promotionId: string) {
+  async getUserUsesPromotion(userId: string, userRole: string[], promotionId: string, query: PromotionGetUserUsesREQ) {
     this.logger.log(`get user uses promotionId: ${promotionId}`);
-    const store = await this.storeModel.findOne({ userId }).lean();
-    if (!store) throw new NotFoundException('Không tìm thấy cửa hàng!');
     const promotion = await this.promotionModel.findById(promotionId).lean();
     if (!promotion) throw new NotFoundException('Không tìm thấy khuyến mãi!');
-    if (promotion.storeId.toString() !== store._id.toString()) throw new NotFoundException('Không tìm thấy khuyến mãi!');
+    if (!(userRole.includes(ROLE_NAME.MANAGER) || userRole.includes(ROLE_NAME.ADMIN))) {
+      const store = await this.storeModel.findOne({ userId }).lean();
+      if (!store) throw new NotFoundException('Không tìm thấy cửa hàng!');
+      if (!promotion.storeIds.includes(store._id.toString())) throw new NotFoundException('Không tìm thấy khuyến mãi!');
+    }
     const promotionObjId = new ObjectId(promotionId);
-    const data = await this.promotionModel.aggregate([
-      { $match: { _id: promotionObjId } },
-      { $unwind: '$userUses' },
-      { $addFields: { userIdString: { $toObjectId: '$userUses' } } },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'userIdString',
-          foreignField: '_id',
-          as: 'userInfos',
-        },
-      },
-      { $unwind: '$userInfos' },
-      {
-        $project: {
-          _id: 0,
-          id: '$userInfos._id',
-          avatar: '$userInfos.avatar',
-          fullName: '$userInfos.fullName',
-          email: '$userInfos.email',
-          phone: '$userInfos.phone',
-          gender: '$userInfos.gender',
-        },
-      },
-    ]);
-    return BaseResponse.withMessage(data, 'Lấy danh sách người dùng sử dụng khuyến mãi thành công!');
+    const conditionToTal = PromotionGetUserUsesREQ.toTotalQuery(promotionObjId);
+    const conditionFind = PromotionGetUserUsesREQ.toFindUsers(promotionObjId, query);
+    const total = await this.promotionModel.aggregate(conditionToTal);
+    const data = await this.promotionModel.aggregate(conditionFind);
+    return PaginationResponse.ofWithTotalAndMessage(
+      data,
+      total[0]?.total || 0,
+      'Lấy danh sách người dùng sử dụng khuyến mãi thành công!',
+    );
   }
 
-  async getPromotionByVoucherCode(voucherCode: string) {
-    this.logger.log(`get promotion by voucherCode: ${voucherCode}`);
-    const promotion = await this.promotionModel
-      .findOne(
-        { voucherCode: { $regex: voucherCode, $options: 'i' }, isActive: true },
-        { createdAt: 0, updatedAt: 0, isActive: 0, userSaves: 0, userUses: 0 },
+  async getPromotionsByUser(userId: string, voucherCode: string, storeIds: string[]) {
+    this.logger.log(`get promotion by user and voucherCode: ${voucherCode}`);
+    const promotionsByVoucherCode = await this.promotionModel
+      .find(
+        { voucherCode: { $regex: voucherCode, $options: 'i' }, isActive: true, storeIds: { $in: storeIds } },
+        { createdAt: 0, updatedAt: 0, isActive: 0, userSaves: 0, userUses: 0, storeIds: 0 },
       )
       .lean();
-    if (!promotion) throw new NotFoundException('Không tìm thấy khuyến mãi!');
-    return BaseResponse.withMessage(PromotionGetDetailRESP.of(promotion), 'Lấy thông tin khuyến mãi thành công!');
-  }
-
-  async getPromotionOfUser(userId: string) {
-    this.logger.log(`get promotion of user: ${userId}`);
     const promotionsUserSave = await this.promotionModel
-      .find({ userSaves: userId, isActive: true }, { createdAt: 0, updatedAt: 0, isActive: 0, userSaves: 0, userUses: 0 })
+      .find(
+        { userSaves: userId, isActive: true, storeIds: { $in: storeIds } },
+        { createdAt: 0, updatedAt: 0, isActive: 0, userSaves: 0, userUses: 0, storeIds: 0 },
+      )
       .lean();
-    return BaseResponse.withMessage(promotionsUserSave, 'Lấy danh sách khuyến mãi đã lưu thành công!');
+    return BaseResponse.withMessage({ promotionsByVoucherCode, promotionsUserSave }, 'Lấy danh sách khuyến mãi thành công!');
   }
 
-  async update(userId: string, promotionId: string, body: PromotionUpdateREQ) {
+  async update(promotionId: string, body: PromotionUpdateREQ) {
     this.logger.log(`update promotionId: ${promotionId}, body: ${JSON.stringify(body)}`);
-    const store = await this.storeModel.findOne({ userId }).lean();
-    if (!store) throw new NotFoundException('Không tìm thấy cửa hàng!');
     const promotion = await this.promotionModel.findById(promotionId).lean();
     if (!promotion) throw new NotFoundException('Không tìm thấy khuyến mãi!');
-    if (promotion.storeId.toString() !== store._id.toString()) throw new NotFoundException('Không tìm thấy khuyến mãi!');
     await this.promotionModel.findByIdAndUpdate(promotionId, { ...body });
     return BaseResponse.withMessage({}, 'Cập nhật khuyến mãi thành công!');
   }

@@ -1,7 +1,11 @@
 import { Transform, Type } from 'class-transformer';
-import { IsArray, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsDate, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class PromotionCreateREQ {
+  @IsNotEmpty()
+  @IsString()
+  avatar: string;
+
   @IsNumber()
   @IsNotEmpty()
   minSpend: number;
@@ -14,17 +18,10 @@ export class PromotionCreateREQ {
   @IsNotEmpty()
   value: number;
 
-  @IsString()
   @IsNotEmpty()
-  label: string;
-
-  @IsOptional()
-  @Type(() => String)
   @IsArray()
-  productLimits?: string[];
-
-  @IsOptional()
-  orderLimit?: number;
+  @Type(() => String)
+  storeIds: string[];
 
   @IsDate()
   @Transform(({ value }) => new Date(value))

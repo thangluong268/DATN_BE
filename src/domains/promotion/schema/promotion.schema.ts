@@ -6,10 +6,7 @@ import { Document } from 'mongoose';
 // minSpend: giá trị đơn tối thiểu
 // quantity: số lượng voucher
 // value: giá trị của voucher
-// label: điều kiện sử dụng voucher
-// productLimits: những produc được chỉ định để sử dụng
-// orderLimit: số lượng đơn tối thiểu
-// storeId
+// storeIds: những cửa hàng áp dụng
 // userSaves: những user đã lưu mã
 // userUses: những user đã sử dụng
 // endTime: ngày kết thúc
@@ -20,6 +17,9 @@ import { Document } from 'mongoose';
   timestamps: true,
 })
 export class Promotion extends Document {
+  @Prop({ type: String })
+  avatar: string;
+
   @Prop({ type: String })
   voucherCode: string;
 
@@ -32,17 +32,8 @@ export class Promotion extends Document {
   @Prop({ type: Number })
   value: number;
 
-  @Prop({ type: String })
-  label: string;
-
-  @Prop({ type: [String], default: [] })
-  productLimits: string[];
-
-  @Prop({ type: Number, default: 0 })
-  orderLimit: number;
-
-  @Prop({ type: String })
-  storeId: string;
+  @Prop({ type: [String] })
+  storeIds: string[];
 
   @Prop({ type: [String], default: [] })
   userSaves: string[];

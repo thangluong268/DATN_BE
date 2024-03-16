@@ -3,9 +3,12 @@ import { Roles } from 'domains/auth/decorators/auth-role.decorator';
 import { AuthJwtATGuard } from 'domains/auth/guards/auth-jwt-at.guard';
 import { AuthRoleGuard } from 'domains/auth/guards/auth-role.guard';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
+import { PaginationREQ } from 'shared/generics/pagination.request';
 import { PromotionService } from './promotion.service';
 import { PromotionCreateREQ } from './request/promotion-create.request';
+import { PromotionGetByManagerFilterREQ } from './request/promotion-get-by-manager-filter.request';
 import { PromotionGetByStore } from './request/promotion-get-by-store.request';
+import { PromotionGetUserUsesREQ } from './request/promotion-get-user-use.request';
 import { PromotionUpdateREQ } from './request/promotion-update.request';
 
 @Controller('promotions')
@@ -14,37 +17,37 @@ export class PromotionController {
 
   @Roles(ROLE_NAME.SELLER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
-  @Get()
+  @Get('seller')
   getMyPromotionsByStore(@Req() req, @Query() query: PromotionGetByStore) {
     return this.promotionService.getMyPromotions(req.user._id, query);
-  }
-
-  @Roles(ROLE_NAME.SELLER)
-  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
-  @Get(':promotionId/detail')
-  getPromotion(@Req() req, @Param('promotionId') promotionId: string) {
-    return this.promotionService.getPromotion(req.user._id, promotionId);
-  }
-
-  @Roles(ROLE_NAME.SELLER)
-  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
-  @Get(':promotionId/user-uses')
-  getUserUsesPromotion(@Req() req, @Param('promotionId') promotionId: string) {
-    return this.promotionService.getUserUsesPromotion(req.user._id, promotionId);
-  }
-
-  @Roles(ROLE_NAME.USER)
-  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
-  @Get('voucher-code')
-  getPromotionByVoucherCode(@Query('voucherCode') voucherCode: string) {
-    return this.promotionService.getPromotionByVoucherCode(voucherCode);
   }
 
   @Roles(ROLE_NAME.USER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Get('user')
-  getPromotionOfUser(@Req() req) {
-    return this.promotionService.getPromotionOfUser(req.user._id);
+  getPromotionsByUser(@Req() req, @Query('voucherCode') voucherCode: string, @Body() body: string[]) {
+    return this.promotionService.getPromotionsByUser(req.user._id, voucherCode, body);
+  }
+
+  @Roles(ROLE_NAME.MANAGER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Get('manager')
+  getPromotionsByManager(@Query() query: PaginationREQ, @Query() filter?: PromotionGetByManagerFilterREQ) {
+    return this.promotionService.getPromotionsByManager(query, filter);
+  }
+
+  @Roles(ROLE_NAME.MANAGER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Get(':promotionId/detail')
+  getPromotion(@Param('promotionId') promotionId: string) {
+    return this.promotionService.getPromotion(promotionId);
+  }
+
+  @Roles(ROLE_NAME.SELLER, ROLE_NAME.MANAGER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Get(':promotionId/user-uses')
+  getUserUsesPromotion(@Req() req, @Param('promotionId') promotionId: string, @Query() query: PromotionGetUserUsesREQ) {
+    return this.promotionService.getUserUsesPromotion(req.user._id, req.user.role, promotionId, query);
   }
 
   @Roles(ROLE_NAME.USER)
@@ -54,18 +57,18 @@ export class PromotionController {
     return this.promotionService.getPromotionsByStoreId(storeId);
   }
 
-  @Roles(ROLE_NAME.SELLER)
+  @Roles(ROLE_NAME.MANAGER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Post()
   create(@Req() req, @Body() body: PromotionCreateREQ) {
     return this.promotionService.create(req.user._id, body);
   }
 
-  @Roles(ROLE_NAME.SELLER)
+  @Roles(ROLE_NAME.MANAGER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Patch(':promotionId')
-  update(@Req() req, @Param('promotionId') promotionId: string, @Body() body: PromotionUpdateREQ) {
-    return this.promotionService.update(req.user._id, promotionId, body);
+  update(@Param('promotionId') promotionId: string, @Body() body: PromotionUpdateREQ) {
+    return this.promotionService.update(promotionId, body);
   }
 
   @Roles(ROLE_NAME.USER)
