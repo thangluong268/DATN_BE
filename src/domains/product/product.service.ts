@@ -114,7 +114,7 @@ export class ProductService {
         };
       }),
     );
-    return PaginationResponse.ofWithTotalAndMessage(productsFullInfo, total, 'Lấy sản phẩm thành công!');
+    return { message: 'Lấy sản phẩm thành công!', metadata: { products: productsFullInfo, total } };
   }
 
   async getProductsByManager(query: ProductsGetREQ) {

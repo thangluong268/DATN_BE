@@ -146,8 +146,8 @@ export class BillService {
     // Tạo mảng chứa 12 tháng với doanh thu mặc định là 0
     const monthlyRevenue = getMonthRevenue();
     let totalRevenue = 0;
-    let minRevenue: { month: string; revenue: number } = null;
-    let maxRevenue: { month: string; revenue: number } = null;
+    let minRevenue: { month: string; revenue: number } = { month: '', revenue: 0 };
+    let maxRevenue: { month: string; revenue: number } = { month: '', revenue: 0 };
     data.forEach((entry: { _id: number; totalRevenue: number }) => {
       const month = entry._id;
       const revenue = entry.totalRevenue;
@@ -167,8 +167,8 @@ export class BillService {
       data: monthlyRevenue,
       revenueTotalAllTime: totalRevenueAllTime[0]?.totalRevenue || 0,
       revenueTotalInYear: totalRevenue,
-      minRevenue: minRevenue ? minRevenue : 0,
-      maxRevenue: maxRevenue ? maxRevenue : 0,
+      minRevenue,
+      maxRevenue,
     };
     return BaseResponse.withMessage(response, 'Lấy doanh thu của từng tháng theo năm thành công!');
   }
@@ -182,8 +182,8 @@ export class BillService {
     const data = await this.billModel.aggregate(BillGetCountCharityByYearREQ.toQueryCondition(store._id, year));
     const monthlyCharity = getMonthRevenue();
     let totalGive = 0;
-    let minGive: { month: string; numOfGive: number } = null;
-    let maxGive: { month: string; numOfGive: number } = null;
+    let minGive: { month: string; numOfGive: number } = { month: '', numOfGive: 0 };
+    let maxGive: { month: string; numOfGive: number } = { month: '', numOfGive: 0 };
     data.forEach((entry: { _id: number; totalCharity: number }) => {
       const month = entry._id;
       const numOfGive = entry.totalCharity;
@@ -201,8 +201,8 @@ export class BillService {
       data: monthlyCharity,
       charityTotalAllTime: totalAllTime[0]?.totalCharity || 0,
       charityTotalInYear: totalGive,
-      minGive: minGive ? minGive : 0,
-      maxGive: maxGive ? maxGive : 0,
+      minGive,
+      maxGive,
     };
     return BaseResponse.withMessage(response, 'Lấy số lượng sản phẩm từ thiện của từng tháng theo năm thành công!');
   }
@@ -212,8 +212,8 @@ export class BillService {
     const data = await this.billModel.aggregate(BillGetCalculateTotalByYearREQ.toQueryCondition(year));
     const monthlyRevenue = getMonthRevenue();
     let totalRevenue = 0;
-    let minRevenue: { month: string; revenue: number } = null;
-    let maxRevenue: { month: string; revenue: number } = null;
+    let minRevenue: { month: string; revenue: number } = { month: '', revenue: 0 };
+    let maxRevenue: { month: string; revenue: number } = { month: '', revenue: 0 };
     data.forEach((entry: { _id: number; totalRevenue: number }) => {
       const month = entry._id;
       const revenue = entry.totalRevenue;
@@ -231,8 +231,8 @@ export class BillService {
       data: monthlyRevenue,
       revenueTotalAllTime: revenueAllTime[0]?.totalRevenue || 0,
       revenueTotalInYear: totalRevenue,
-      minRevenue: minRevenue ? minRevenue : 0,
-      maxRevenue: maxRevenue ? maxRevenue : 0,
+      minRevenue,
+      maxRevenue,
     };
     return BaseResponse.withMessage(response, 'Lấy tổng doanh thu của từng tháng theo năm thành công!');
   }
