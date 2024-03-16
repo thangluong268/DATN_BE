@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { BillService } from 'domains/bill/bill.service';
 import { Bill } from 'domains/bill/schema/bill.schema';
@@ -47,7 +47,7 @@ export class StoreService {
     const user = await this.userService.findById(userId);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng này!');
     const store = await this.storeModel.findOne({ userId }, {}, { lean: true });
-    if (store) throw new NotFoundException('Người dùng đã có cửa hàng!');
+    if (store) throw new ConflictException('Người dùng đã có cửa hàng!');
     const newStore = await this.storeModel.create({ userId, ...body });
     await this.userModel.findByIdAndUpdate(userId, { role: [...user.role, ROLE_NAME.SELLER] });
     return BaseResponse.withMessage(newStore, 'Tạo cửa hàng thành công!');
