@@ -6,6 +6,7 @@ import { EvaluationModule } from 'domains/evaluation/evaluation.module';
 import { FeedbackModule } from 'domains/feedback/feedback.module';
 import { NotificationModule } from 'domains/notification/notification.module';
 import { PolicyModule } from 'domains/policy/policy.module';
+import { PromotionModule } from 'domains/promotion/promotion.module';
 import { ReportModule } from 'domains/report/report.module';
 import { PaymentModule } from 'payment/paymen.module';
 import { CronjobsService } from 'services/cronjob.service';
@@ -42,6 +43,7 @@ import { SeederService } from './services/seeder.service';
     EvaluationModule,
     FeedbackModule,
     ReportModule,
+    PromotionModule,
   ],
   providers: [SeederService, CronjobsService],
 })
