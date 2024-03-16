@@ -2,10 +2,12 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Store } from 'domains/store/schema/store.schema';
 import { User } from 'domains/user/schema/user.schema';
+import { ObjectId } from 'mongodb';
 import { Model } from 'mongoose';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PromotionCreateREQ } from './request/promotion-create.request';
 import { PromotionGetByStore } from './request/promotion-get-by-store.request';
+import { PromotionUpdateREQ } from './request/promotion-update.request';
 import { PromotionGetByStoreIdRESP } from './response/promotion-get-by-store-id.response';
 import { PromotionGetDetailRESP } from './response/promotion-get-detail.response';
 import { PromotionGetMyRESP } from './response/promotion-get-my.response';
@@ -64,7 +66,54 @@ export class PromotionService {
     return BaseResponse.withMessage(PromotionGetDetailRESP.of(promotion), 'Lấy thông tin chi tiết khuyến mãi thành công!');
   }
 
-  async generateVoucherCode() {
+  async getUserUsesPromotion(userId: string, promotionId: string) {
+    this.logger.log(`get user uses promotionId: ${promotionId}`);
+    const store = await this.storeModel.findOne({ userId }).lean();
+    if (!store) throw new NotFoundException('Không tìm thấy cửa hàng!');
+    const promotion = await this.promotionModel.findById(promotionId).lean();
+    if (!promotion) throw new NotFoundException('Không tìm thấy khuyến mãi!');
+    if (promotion.storeId.toString() !== store._id.toString()) throw new NotFoundException('Không tìm thấy khuyến mãi!');
+    const promotionObjId = new ObjectId(promotionId);
+    const data = await this.promotionModel.aggregate([
+      { $match: { _id: promotionObjId } },
+      { $unwind: '$userUses' },
+      { $addFields: { userIdString: { $toObjectId: '$userUses' } } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userIdString',
+          foreignField: '_id',
+          as: 'userInfos',
+        },
+      },
+      { $unwind: '$userInfos' },
+      {
+        $project: {
+          _id: 0,
+          id: '$userInfos._id',
+          avatar: '$userInfos.avatar',
+          fullName: '$userInfos.fullName',
+          email: '$userInfos.email',
+          phone: '$userInfos.phone',
+          gender: '$userInfos.gender',
+        },
+      },
+    ]);
+    return BaseResponse.withMessage(data, 'Lấy danh sách người dùng sử dụng khuyến mãi thành công!');
+  }
+
+  async update(userId: string, promotionId: string, body: PromotionUpdateREQ) {
+    this.logger.log(`update promotionId: ${promotionId}, body: ${JSON.stringify(body)}`);
+    const store = await this.storeModel.findOne({ userId }).lean();
+    if (!store) throw new NotFoundException('Không tìm thấy cửa hàng!');
+    const promotion = await this.promotionModel.findById(promotionId).lean();
+    if (!promotion) throw new NotFoundException('Không tìm thấy khuyến mãi!');
+    if (promotion.storeId.toString() !== store._id.toString()) throw new NotFoundException('Không tìm thấy khuyến mãi!');
+    await this.promotionModel.findByIdAndUpdate(promotionId, { ...body });
+    return BaseResponse.withMessage({}, 'Cập nhật khuyến mãi thành công!');
+  }
+
+  private async generateVoucherCode() {
     const characters = `ABCDA1231KQJLALM121KLSDF097ESEUQWIHADLJALKSQIP${new Date().getTime()}O123ASDWEIQ12321OU8EFGHIJKLMVWXYZ0123456789`;
     const maxLengthCode = 8;
     let voucherCode = '';
