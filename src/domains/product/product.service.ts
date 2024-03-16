@@ -5,6 +5,7 @@ import { EvaluationService } from 'domains/evaluation/evaluation.service';
 import { Evaluation } from 'domains/evaluation/schema/evaluation.schema';
 import { Feedback } from 'domains/feedback/schema/feedback.schema';
 import { Store } from 'domains/store/schema/store.schema';
+import { ObjectId } from 'mongodb';
 import { Model, Types } from 'mongoose';
 import { PRODUCT_TYPE } from 'shared/enums/bill.enum';
 import { BaseResponse } from 'shared/generics/base.response';
@@ -177,28 +178,77 @@ export class ProductService {
     return BaseResponse.withMessage(products, 'Lấy danh sách sản phẩm khác thành công!');
   }
 
-  async getProductsLasted(limit: number = 10) {
-    this.logger.log(`Get Products Lasted: ${limit}`);
-    const products = await this.productModel.find({ status: true }, {}, { lean: true }).sort({ createdAt: -1 }).limit(limit);
+  async getProductsLasted(limitQuery: number) {
+    this.logger.log(`Get Products Lasted: ${limitQuery || 10}`);
+    const limit = limitQuery || 10;
+    const products = await this.productModel.aggregate([
+      { $match: { status: true } },
+      { $sort: { createdAt: -1 } },
+      { $limit: limit },
+      { $addFields: { storeIdObj: { $toObjectId: '$storeId' } } },
+      {
+        $lookup: {
+          from: 'stores',
+          localField: 'storeIdObj',
+          foreignField: '_id',
+          as: 'store',
+        },
+      },
+      { $unwind: '$store' },
+      { $addFields: { storeName: '$store.name' } },
+      { $project: { store: 0, storeIdObj: 0 } },
+    ]);
     return BaseResponse.withMessage(products, 'Lấy danh sách sản phẩm mới nhất thành công!');
   }
 
-  async getProductsMostInStore(limit: number = 10) {
-    this.logger.log(`Get Products Most In Store: ${limit}`);
+  async getProductsMostInStore(limitQuey: number) {
+    this.logger.log(`Get Products Most In Store: ${limitQuey || 10}`);
+    const limit = limitQuey || 10;
     const stores = await this.productModel.aggregate(ProductGetMostInStoreREQ.toQueryCondition(limit) as any);
     const data = await Promise.all(
       stores.map(async (item) => {
-        const store = await this.storeService.findById(item._id);
-        if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
-        const products = await this.productModel
-          .find({ storeId: store._id, status: true }, { storeId: 0, status: 0, createdAt: 0, updatedAt: 0 }, { lean: true })
-          .limit(10);
-        return {
-          storeId: store._id,
-          storeName: store.name,
-          storeAvatar: store.avatar,
-          listProducts: products,
-        };
+        const storeId = new ObjectId(item._id);
+        return (
+          await this.storeModel.aggregate([
+            { $match: { _id: storeId } },
+            { $addFields: { idString: { $toString: '$_id' } } },
+            {
+              $lookup: {
+                from: 'products',
+                localField: 'idString',
+                foreignField: 'storeId',
+                as: 'products',
+              },
+            },
+            {
+              $addFields: {
+                listProducts: {
+                  $map: {
+                    input: { $slice: ['$products', 2] },
+                    as: 'product',
+                    in: {
+                      _id: '$$product._id',
+                      avatar: '$$product.avatar',
+                      quantity: '$$product.quantity',
+                      name: '$$product.name',
+                      oldPrice: '$$product.oldPrice',
+                      newPrice: '$$product.newPrice',
+                      description: '$$product.description',
+                      categoryId: '$$product.categoryId',
+                      keywords: '$$product.keywords',
+                      storeId: '$$product.storeId',
+                      storeName: '$name',
+                    },
+                  },
+                },
+              },
+            },
+            { $addFields: { storeId: { $toString: '$_id' } } },
+            { $addFields: { storeName: '$name' } },
+            { $addFields: { storeAvatar: '$avatar' } },
+            { $project: { _id: 0, storeId: 1, storeName: 1, storeAvatar: 1, listProducts: 1 } },
+          ])
+        )[0];
       }),
     );
     return BaseResponse.withMessage(data, 'Lấy danh sách sản phẩm bán chạy nhất thành công!');
