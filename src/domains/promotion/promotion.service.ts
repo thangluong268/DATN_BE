@@ -102,6 +102,26 @@ export class PromotionService {
     return BaseResponse.withMessage(data, 'Lấy danh sách người dùng sử dụng khuyến mãi thành công!');
   }
 
+  async getPromotionByVoucherCode(voucherCode: string) {
+    this.logger.log(`get promotion by voucherCode: ${voucherCode}`);
+    const promotion = await this.promotionModel
+      .findOne(
+        { voucherCode: { $regex: voucherCode, $options: 'i' }, isActive: true },
+        { createdAt: 0, updatedAt: 0, isActive: 0, userSaves: 0, userUses: 0 },
+      )
+      .lean();
+    if (!promotion) throw new NotFoundException('Không tìm thấy khuyến mãi!');
+    return BaseResponse.withMessage(PromotionGetDetailRESP.of(promotion), 'Lấy thông tin khuyến mãi thành công!');
+  }
+
+  async getPromotionOfUser(userId: string) {
+    this.logger.log(`get promotion of user: ${userId}`);
+    const promotionsUserSave = await this.promotionModel
+      .find({ userSaves: userId, isActive: true }, { createdAt: 0, updatedAt: 0, isActive: 0, userSaves: 0, userUses: 0 })
+      .lean();
+    return BaseResponse.withMessage(promotionsUserSave, 'Lấy danh sách khuyến mãi đã lưu thành công!');
+  }
+
   async update(userId: string, promotionId: string, body: PromotionUpdateREQ) {
     this.logger.log(`update promotionId: ${promotionId}, body: ${JSON.stringify(body)}`);
     const store = await this.storeModel.findOne({ userId }).lean();
@@ -111,6 +131,15 @@ export class PromotionService {
     if (promotion.storeId.toString() !== store._id.toString()) throw new NotFoundException('Không tìm thấy khuyến mãi!');
     await this.promotionModel.findByIdAndUpdate(promotionId, { ...body });
     return BaseResponse.withMessage({}, 'Cập nhật khuyến mãi thành công!');
+  }
+
+  async handleSaveVoucher(userId: string, promotionId: string) {
+    this.logger.log(`save voucher: ${promotionId}`);
+    const promotion = await this.promotionModel.findOne({ _id: promotionId, userSaves: userId }).lean();
+    promotion
+      ? await this.promotionModel.findByIdAndUpdate(promotionId, { $pull: { userSaves: userId } })
+      : await this.promotionModel.findByIdAndUpdate(promotionId, { $push: { userSaves: userId } });
+    return BaseResponse.withMessage({}, 'Xử lý lưu khuyến mãi thành công!');
   }
 
   private async generateVoucherCode() {

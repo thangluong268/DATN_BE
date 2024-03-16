@@ -35,6 +35,20 @@ export class PromotionController {
 
   @Roles(ROLE_NAME.USER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Get('voucher-code')
+  getPromotionByVoucherCode(@Query('voucherCode') voucherCode: string) {
+    return this.promotionService.getPromotionByVoucherCode(voucherCode);
+  }
+
+  @Roles(ROLE_NAME.USER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Get('user')
+  getPromotionOfUser(@Req() req) {
+    return this.promotionService.getPromotionOfUser(req.user._id);
+  }
+
+  @Roles(ROLE_NAME.USER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Get(':storeId')
   getPromotionsByStoreId(@Param('storeId') storeId: string) {
     return this.promotionService.getPromotionsByStoreId(storeId);
@@ -52,5 +66,12 @@ export class PromotionController {
   @Patch(':promotionId')
   update(@Req() req, @Param('promotionId') promotionId: string, @Body() body: PromotionUpdateREQ) {
     return this.promotionService.update(req.user._id, promotionId, body);
+  }
+
+  @Roles(ROLE_NAME.USER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Patch(':promotionId/voucher')
+  handleSaveVoucher(@Req() req, @Param('promotionId') promotionId: string) {
+    return this.promotionService.handleSaveVoucher(req.user._id, promotionId);
   }
 }
