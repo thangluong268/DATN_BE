@@ -9,6 +9,7 @@ import { PolicyModule } from 'domains/policy/policy.module';
 import { PromotionModule } from 'domains/promotion/promotion.module';
 import { ReportModule } from 'domains/report/report.module';
 import { PaymentModule } from 'payment/paymen.module';
+import { CloudinaryModule } from 'services/cloudinary/cloudinary.module';
 import { CronjobsService } from 'services/cronjob.service';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './domains/auth/auth.module';
@@ -44,6 +45,7 @@ import { SeederService } from './services/seeder.service';
     FeedbackModule,
     ReportModule,
     PromotionModule,
+    CloudinaryModule,
   ],
   providers: [SeederService, CronjobsService],
 })

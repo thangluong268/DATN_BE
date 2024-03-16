@@ -224,7 +224,7 @@ export class ProductService {
               $addFields: {
                 listProducts: {
                   $map: {
-                    input: { $slice: ['$products', 2] },
+                    input: { $slice: ['$products', 10] },
                     as: 'product',
                     in: {
                       _id: '$$product._id',

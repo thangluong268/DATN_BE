@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { Roles } from 'domains/auth/decorators/auth-role.decorator';
 import { AuthJwtATGuard } from 'domains/auth/guards/auth-jwt-at.guard';
 import { AuthRoleGuard } from 'domains/auth/guards/auth-role.guard';
@@ -26,6 +26,13 @@ export class PromotionController {
     return this.promotionService.getPromotion(req.user._id, promotionId);
   }
 
+  @Roles(ROLE_NAME.SELLER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Get(':promotionId/user-uses')
+  getUserUsesPromotion(@Req() req, @Param('promotionId') promotionId: string) {
+    return this.promotionService.getUserUsesPromotion(req.user._id, promotionId);
+  }
+
   @Roles(ROLE_NAME.USER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Get(':storeId')
@@ -42,8 +49,8 @@ export class PromotionController {
 
   @Roles(ROLE_NAME.SELLER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
-  @Put(':promotionId')
+  @Patch(':promotionId')
   update(@Req() req, @Param('promotionId') promotionId: string, @Body() body: PromotionUpdateREQ) {
-    return this.promotionService.create(req.user._id, body);
+    return this.promotionService.update(req.user._id, promotionId, body);
   }
 }
