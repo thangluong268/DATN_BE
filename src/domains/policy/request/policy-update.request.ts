@@ -1,5 +1,5 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { PolicyObject } from 'shared/enums/policy.enum';
+import { PolicyType } from 'shared/enums/policy.enum';
 
 export class PolicyUpdateREQ {
   @IsOptional()
@@ -11,6 +11,6 @@ export class PolicyUpdateREQ {
   content: string;
 
   @IsOptional()
-  @IsEnum(PolicyObject)
-  policyObject: PolicyObject;
+  @IsEnum(PolicyType)
+  type: PolicyType;
 }

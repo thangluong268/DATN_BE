@@ -15,4 +15,26 @@ export class MailService {
       },
     });
   }
+
+  async sendWarningStore(email: string, content: string) {
+    await this.mailerService.sendMail({
+      to: email,
+      subject: 'STORE WARNING',
+      template: 'store-warning.hbs',
+      context: {
+        content,
+      },
+    });
+  }
+
+  async sendBanStore(email: string) {
+    await this.mailerService.sendMail({
+      to: email,
+      subject: 'STORE BANNED',
+      template: 'store-banned.hbs',
+      context: {
+        content: 'Your store has been banned. Please contact the administrator for more information.',
+      },
+    });
+  }
 }

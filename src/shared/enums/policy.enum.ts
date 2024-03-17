@@ -1,6 +1,6 @@
-export enum PolicyObject {
-  'COMMUNITY' = 'COMMUNITY',
-  'PRODUCT' = 'PRODUCT',
-  'USER' = 'USER',
-  'STORE' = 'STORE',
+export enum PolicyType {
+  COMMUNITY = 'COMMUNITY',
+  PRODUCT = 'PRODUCT',
+  USER = 'USER',
+  STORE = 'STORE',
 }

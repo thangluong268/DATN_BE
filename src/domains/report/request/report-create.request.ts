@@ -1,10 +1,10 @@
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { PolicyType } from 'shared/enums/policy.enum';
 
-export class PolicyCreateREQ {
+export class ReportCreateREQ {
   @IsNotEmpty()
   @IsString()
-  name: string;
+  subjectId: string;
 
   @IsNotEmpty()
   @IsString()
