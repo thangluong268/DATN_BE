@@ -492,7 +492,7 @@ export class ProductService {
   async checkExceedQuantityInStock(id: string, quantity: number) {
     const product = await this.findById(id);
     if (quantity > product.quantity) {
-      throw new NotFoundException('Số lượng sản phẩm trong kho không đủ!');
+      throw new NotFoundException(`Số lượng sản phẩm trong kho không đủ! Còn lại: ${product.quantity}`);
     }
   }
 

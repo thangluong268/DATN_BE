@@ -7,6 +7,7 @@ export class ProductDTO {
   oldPrice: number;
   newPrice: number;
   quantity: number;
+  quantityInStock: number;
 
   static toNewCart(product: Product) {
     return {
@@ -16,6 +17,7 @@ export class ProductDTO {
       oldPrice: product.oldPrice,
       newPrice: product.newPrice,
       quantity: 1,
+      quantityInStock: product.quantity,
     };
   }
 }

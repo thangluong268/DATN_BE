@@ -62,7 +62,7 @@ export class CartService {
           result = await this.addNewProductIntoCartOfStore(cartOfStore, ProductDTO.toNewCart(product));
         } else {
           // 7. If product existed in cart -> increase quantity of product
-          result = await this.increaseProductQuantity(cartOfStore, productId);
+          result = await this.increaseProductQuantity(cartOfStore, productId, product.quantity);
         }
       }
     }
@@ -92,9 +92,10 @@ export class CartService {
     return await this.cartModel.findByIdAndUpdate(cart._id, cart, { lean: true, new: true });
   }
 
-  async increaseProductQuantity(cart: Cart, productId: string) {
+  async increaseProductQuantity(cart: Cart, productId: string, quantityInStock: number) {
     const product = cart.products.find((product) => product.id.toString() === productId.toString());
     product.quantity += 1;
+    product.quantityInStock = quantityInStock;
     await this.productService.checkExceedQuantityInStock(product.id, product.quantity);
     cart.totalPrice = this.getTotalPrice(cart.products);
     return await this.cartModel.findByIdAndUpdate(cart._id, cart, { lean: true, new: true });
@@ -119,7 +120,7 @@ export class CartService {
     this.logger.log(`Get Without Paging By User Id: ${userId}`);
     const carts = await this.cartModel.find({ userId }, {}, { lean: true }).sort({ createdAt: -1 });
     console.log(carts);
-    return BaseResponse.withMessage<Cart[]>(carts, 'Lấy giỏ hàng thành công!');
+    return BaseResponse.withMessage(carts, 'Lấy giỏ hàng thành công!');
   }
 
   async getNewCartByUserId(userId: string) {
