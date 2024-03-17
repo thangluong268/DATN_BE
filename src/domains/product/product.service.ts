@@ -1,6 +1,15 @@
-import { Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { BillService } from 'domains/bill/bill.service';
+import { Bill } from 'domains/bill/schema/bill.schema';
 import { EvaluationService } from 'domains/evaluation/evaluation.service';
 import { Evaluation } from 'domains/evaluation/schema/evaluation.schema';
 import { Feedback } from 'domains/feedback/schema/feedback.schema';
@@ -8,6 +17,7 @@ import { Store } from 'domains/store/schema/store.schema';
 import { ObjectId } from 'mongodb';
 import { Model, Types } from 'mongoose';
 import { PRODUCT_TYPE } from 'shared/enums/bill.enum';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationREQ } from 'shared/generics/pagination.request';
 import { PaginationResponse } from 'shared/generics/pagination.response';
@@ -39,6 +49,8 @@ export class ProductService {
     @Inject(forwardRef(() => EvaluationService))
     private readonly evaluationService: EvaluationService,
 
+    @InjectModel(Bill.name)
+    private readonly billModel: Model<Bill>,
     @Inject(forwardRef(() => BillService))
     private readonly billService: BillService,
 
@@ -510,5 +522,21 @@ export class ProductService {
     this.logger.log(`Update Product: ${id}`);
     await this.productModel.findByIdAndUpdate(id, { ...body });
     return BaseResponse.withMessage({}, 'Cập nhật sản phẩm thành công!');
+  }
+
+  async delete(userId: string, userRole: string[], id: string) {
+    this.logger.log(`Delete Product: ${id}`);
+    const product = await this.productModel.findOne({ _id: id, status: true }).lean();
+    if (!product) throw new NotFoundException('Không tìm thấy sản phẩm này!');
+    const isPurchased = await this.billModel.findOne({ 'products.id': id }).lean();
+    if (isPurchased) throw new BadRequestException('Sản phẩm này đã được mua, không thể xóa!');
+    if (!(userRole.includes(ROLE_NAME.MANAGER) || userRole.includes(ROLE_NAME.ADMIN))) {
+      const store = await this.storeService.findByUserId(userId);
+      if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
+      if (product.storeId.toString() !== store._id.toString())
+        throw new ForbiddenException('Bạn không có quyền xóa sản phẩm này!');
+    }
+    await this.productModel.findByIdAndUpdate(id, { status: false });
+    return BaseResponse.withMessage({}, 'Xóa sản phẩm thành công!');
   }
 }

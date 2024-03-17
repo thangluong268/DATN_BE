@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthRoleGuard } from 'domains/auth/guards/auth-role.guard';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { PaginationREQ } from 'shared/generics/pagination.request';
@@ -115,6 +115,13 @@ export class ProductController {
   @Patch('product/seller/:id')
   update(@Param('id') id: string, @Body() body: ProductUpdateREQ) {
     return this.productService.update(id, body);
+  }
+
+  @Roles(ROLE_NAME.SELLER, ROLE_NAME.MANAGER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Delete('product/:id')
+  delete(@Req() req, @Param('id') id: string) {
+    return this.productService.delete(req.user._id, req.user.role, id);
   }
 
   /**
