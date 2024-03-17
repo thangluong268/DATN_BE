@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Bill } from 'domains/bill/schema/bill.schema';
 import { Product } from 'domains/product/schema/product.schema';
+import { Promotion } from 'domains/promotion/schema/promotion.schema';
 import { Model } from 'mongoose';
 import { PAYMENT_METHOD } from 'shared/enums/bill.enum';
 
@@ -15,6 +16,9 @@ export class CronjobsService {
 
     @InjectModel(Bill.name)
     private readonly billModel: Model<Bill>,
+
+    @InjectModel(Promotion.name)
+    private readonly promotionModel: Model<Promotion>,
   ) {}
 
   @Cron('0 * * * * *')
@@ -30,5 +34,10 @@ export class CronjobsService {
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async cleanBill() {
     await this.billModel.deleteMany({ isPaid: false, paymentMethod: { $ne: PAYMENT_METHOD.CASH } });
+  }
+
+  @Cron('*/1 * * * * *')
+  async passEndTimePromotion() {
+    await this.promotionModel.updateMany({ endTime: { $lte: new Date() }, isActive: true }, { $set: { isActive: false } });
   }
 }

@@ -16,5 +16,6 @@ import { Promotion, PromotionSchema } from './schema/promotion.schema';
   ],
   controllers: [PromotionController],
   providers: [PromotionService],
+  exports: [MongooseModule],
 })
 export class PromotionModule {}
