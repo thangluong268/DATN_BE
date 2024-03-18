@@ -17,7 +17,6 @@ import { PaginationResponse } from 'shared/generics/pagination.response';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 import { v4 as uuid } from 'uuid';
-import { ProductInfoDTO } from './dto/product-info.dto';
 import { getMonthRevenue } from './helper/get-month-revenue.helper';
 import { BillCreateREQ } from './request/bill-create.request';
 import { BillGetAllByStatusSellerREQ } from './request/bill-get-all-by-status-seller.request';
@@ -58,8 +57,6 @@ export class BillService {
 
   async create(userId: string, body: BillCreateREQ, res: Response) {
     this.logger.log(`create bill: ${userId}`);
-    const user = await this.userService.findById(userId);
-    if (!user) throw new NotFoundException('Không tìm thấy người dùng này!');
     const newBills = [];
     let totalAmount = 0;
     const paymentId = uuid();
@@ -67,20 +64,13 @@ export class BillService {
     session.startTransaction();
     try {
       for (const cart of body.data) {
-        await this.userService.updateWallet(userId, cart.totalPrice, 'plus');
-        await this.cartService.removeMultiProductInCart(userId, cart.storeId, cart.products);
-        for (const product of cart.products) {
-          await this.productService.decreaseQuantity(product.id, product.quantity);
-        }
-        cart.products.forEach((product: ProductInfoDTO) => {
-          product.type = product.type.toUpperCase();
-        });
         const newBill = await this.billModel.create(cart);
         BillCreateREQ.saveData(newBill, userId, body, paymentId);
-        newBills.push(newBill);
+        newBills.push(toDocModel(newBill));
         totalAmount += newBill.totalPrice;
       }
       if (body.paymentMethod === PAYMENT_METHOD.CASH) {
+        await this.handleBillSuccess(paymentId);
         await session.commitTransaction();
         session.endSession();
         return newBills.map((bill) => toDocModel(bill));
@@ -93,6 +83,28 @@ export class BillService {
       await session.abortTransaction();
       throw err;
     }
+  }
+
+  async handleBillSuccess(paymentId: string) {
+    this.logger.log(`Handle Bill Success: ${paymentId}`);
+    const bills = await this.billModel.find({ paymentId }).lean();
+    bills.forEach(async (bill) => {
+      await this.userService.updateWallet(bill.userId, bill.totalPrice, 'plus');
+      await this.cartService.removeMultiProductInCart(bill.userId, bill.storeId, bill.products);
+      bill.products.forEach(async (product) => {
+        await this.productService.decreaseQuantity(product.id, product.quantity);
+      });
+      await this.billModel.findByIdAndUpdate(bill._id, { isPaid: true });
+    });
+  }
+
+  async handleBillFail(paymentId: string) {
+    this.logger.log(`Handle Bill Fail: ${paymentId}`);
+    const bills = await this.billModel.find({ paymentId }).lean();
+    bills.forEach(async (bill) => {
+      await this.billModel.findByIdAndDelete(bill._id);
+    });
+    // TO DO: Need use redis to cache promotion and wallet to rollback...
   }
 
   async countTotalByStatusSeller(userId: string, year: number) {

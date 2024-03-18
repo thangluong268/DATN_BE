@@ -196,7 +196,7 @@ export class StoreService {
 
   async getStoreById(storeId: string) {
     this.logger.log(`Get Store By Id: ${storeId}`);
-    const store = await this.storeModel.findById(storeId).lean();
+    const store = await this.storeModel.findOne({ _id: storeId, status: true }).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const products = await this.productModel.find({ storeId }).lean();
     let totalFeedback = 0;

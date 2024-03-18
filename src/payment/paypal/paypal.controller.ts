@@ -1,4 +1,5 @@
-import { BadRequestException, Controller, Get, Req } from '@nestjs/common';
+import { Controller, Get, Req, Res } from '@nestjs/common';
+import { HOST_URL } from 'app.config';
 import { BillService } from 'domains/bill/bill.service';
 import { PaypalPaymentService } from 'payment/paypal/paypal.service';
 
@@ -10,16 +11,16 @@ export class PayPalController {
   ) {}
 
   @Get('payment/callback')
-  async callBackPayPal(@Req() req) {
+  async callBackPayPal(@Req() req, @Res() res) {
     const orderId = req.query.token;
-    const paymentId = await this.paypalPaymentService.capturePayPalPayment(orderId);
-    const bills = await this.billService.getByPaymentId(paymentId);
-    if (bills.length !== 0) {
-      throw new BadRequestException('Invalid payment');
+    const data = await this.paypalPaymentService.capturePayPalPayment(orderId);
+    const paymentId = data.purchase_units[0].reference_id;
+    console.log(paymentId);
+    if (data.status === 'COMPLETED') {
+      await this.billService.handleBillFail(paymentId);
+      res.redirect(`${HOST_URL}/payment/fail`);
     }
-    for (const bill of bills) {
-      await this.billService.updateIsPaid(bill._id);
-    }
-    // res.redirect(`${HOST_URL}/payment/success`);
+    await this.billService.handleBillSuccess(paymentId);
+    res.redirect(`${HOST_URL}/payment/success`);
   }
 }

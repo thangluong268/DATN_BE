@@ -1,7 +1,7 @@
-import { BadRequestException } from '@nestjs/common';
 import { HOST_URL, PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET } from 'app.config';
 import axios, { Axios, AxiosHeaders } from 'axios';
 import * as CC from 'currency-converter-lt';
+import { BillService } from 'domains/bill/bill.service';
 import { Response } from 'express';
 import { PaymentDTO } from 'payment/dto/payment.dto';
 import { PaymentOrderRto } from './paypal.route';
@@ -35,7 +35,6 @@ export class PaypalPaymentService {
 
     const currencyConverter = new CC();
     const amountUSD = await currencyConverter.from('VND').to('USD').amount(bill.amount).convert();
-    console.log(amountUSD);
 
     const body = {
       intent: 'CAPTURE',
@@ -78,11 +77,6 @@ export class PaypalPaymentService {
     headers.set('Authorization', `Bearer ${accessToken}`);
     // headers.set('Paypal-Request-Id', paypalRequestID);
     const { data } = await this.axios.post(url, {}, { headers });
-    const paymentId = data.purchase_units[0].reference_id;
-    console.log(paymentId);
-    if (data.status !== 'COMPLETED') {
-      throw new BadRequestException('Payment is not completed');
-    }
-    return paymentId;
+    return data;
   }
 }

@@ -26,9 +26,3 @@ export class PaypalGateway implements PaymentGateway {
 //     return 2;
 //   }
 // }
-
-// export class GiveGateway implements PaymentGateway {
-//   processPayment(bill: CreateBillDto): number {
-//     return 0;
-//   }
-// }

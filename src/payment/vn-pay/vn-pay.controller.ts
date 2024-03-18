@@ -82,20 +82,15 @@ export class VNPayController {
 
     if (secureHash === signed) {
       const code = vnp_Params['vnp_ResponseCode'];
-      if (code !== '00') {
-        throw new BadRequestException(getReturnUrlStatus(code));
-      }
       const paymentId = vnp_Params['vnp_TxnRef'];
       console.log(paymentId);
-      const bills = await this.billService.getByPaymentId(paymentId);
-      if (bills.length === 0) {
-        throw new BadRequestException('Invalid payment');
+      if (code !== '00') {
+        await this.billService.handleBillFail(paymentId);
+        res.redirect(`${HOST_URL}/payment/fail`);
+        // throw new BadRequestException(getReturnUrlStatus(code));
       }
-      for (const bill of bills) {
-        await this.billService.updateIsPaid(bill._id);
-      }
-      // res.redirect(`${HOST_URL}/payment/success`);
-      return;
+      await this.billService.handleBillSuccess(paymentId);
+      res.redirect(`${HOST_URL}/payment/success`);
     } else {
       throw new BadRequestException('Invalid signature');
     }
