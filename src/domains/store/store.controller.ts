@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthRoleGuard } from 'domains/auth/guards/auth-role.guard';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { Roles } from '../auth/decorators/auth-role.decorator';
@@ -8,6 +8,7 @@ import { GetStoresByAdminREQ } from './request/store-get-all-admin.request';
 import { StoreGetHaveMostProductREQ } from './request/store-get-have-most-product.request';
 import { StoreUpdateREQ } from './request/store-update.request';
 import { StoreService } from './store.service';
+import { PaginationREQ } from 'shared/generics/pagination.request';
 
 @Controller()
 export class StoreController {
@@ -53,6 +54,13 @@ export class StoreController {
     return this.storeService.getStoreByManager(id);
   }
 
+  @Roles(ROLE_NAME.MANAGER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Get('store/banned')
+  getStoreBanned(@Query() query: PaginationREQ) {
+    return this.storeService.getStoresBanned(query);
+  }
+
   @Get('store/:id')
   getStoreById(@Param('id') id: string) {
     return this.storeService.getStoreById(id);
@@ -70,6 +78,13 @@ export class StoreController {
   @Put('store/seller')
   updateStore(@Req() req, @Body() body: StoreUpdateREQ) {
     return this.storeService.update(req.user._id, body);
+  }
+
+  @Roles(ROLE_NAME.MANAGER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Patch('store/un-ban/:id')
+  unBanStore(@Param('id') id: string) {
+    return this.storeService.unBanStore(id);
   }
 
   /**

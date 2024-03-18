@@ -28,6 +28,6 @@ import { MailModule } from 'services/mail/mail.module';
   ],
   controllers: [ReportController],
   providers: [ReportService],
-  exports: [ReportService],
+  exports: [ReportService, MongooseModule],
 })
 export class ReportModule {}
