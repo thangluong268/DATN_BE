@@ -7,6 +7,7 @@ import { Product } from 'domains/product/schema/product.schema';
 import { Model } from 'mongoose';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BaseResponse } from 'shared/generics/base.response';
+import { PaginationREQ } from 'shared/generics/pagination.request';
 import { PaginationResponse } from 'shared/generics/pagination.response';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { User } from '../user/schema/user.schema';
@@ -228,12 +229,28 @@ export class StoreService {
     );
   }
 
+  async getStoresBanned(query: PaginationREQ) {
+    this.logger.log(`Get Stores Banned`);
+    const { skip, limit } = QueryPagingHelper.queryPaging(query);
+    const total = await this.storeModel.countDocuments({ status: false });
+    const data = await this.storeModel.find({ status: false }).sort({ updatedAt: -1 }).skip(skip).limit(limit).lean();
+    return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách cửa hàng bị vô hiệu hóa thành công!');
+  }
+
   async update(userId: string, body: StoreUpdateREQ) {
     this.logger.log(`Update Store: ${userId}`);
     const store = await this.storeModel.findOne({ userId }, {}, { lean: true });
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng!');
     const updatedStore = await this.storeModel.findOneAndUpdate({ userId }, { ...body }, { lean: true, new: true });
     return BaseResponse.withMessage<Store>(updatedStore, 'Cập nhật thông tin cửa hàng thành công!');
+  }
+
+  async unBanStore(storeId: string) {
+    this.logger.log(`UnBan Store: ${storeId}`);
+    const store = await this.storeModel.findOne({ _id: storeId, status: false }).lean();
+    if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
+    await this.storeModel.findByIdAndUpdate(storeId, { status: true });
+    return BaseResponse.withMessage({}, 'Mở khóa cửa hàng thành công!');
   }
 
   async findByUserId(userId: string) {

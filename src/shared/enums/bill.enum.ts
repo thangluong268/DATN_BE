@@ -8,5 +8,4 @@ export enum PAYMENT_METHOD {
   VNPAY = 'VNPAY',
   MOMO = 'MOMO',
   CASH = 'CASH',
-  GIVE = 'GIVE',
 }
