@@ -127,7 +127,7 @@ export class UserService {
 
   async updateWallet(id: string, money: number, type: string) {
     const user = await this.userModel.findById(id, {}, { lean: true });
-    const bonus = (money * 0.2) / 1000;
+    const bonus = Math.floor((money * 0.2) / 1000);
     const updatedWallet = type == 'plus' ? user.wallet + bonus : user.wallet - bonus;
     await this.userModel.findByIdAndUpdate(id, { wallet: updatedWallet }, { lean: true, new: true });
   }

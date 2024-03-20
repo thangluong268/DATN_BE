@@ -11,6 +11,7 @@ import { ReportModule } from 'domains/report/report.module';
 import { PaymentModule } from 'payment/paymen.module';
 import { CloudinaryModule } from 'services/cloudinary/cloudinary.module';
 import { CronjobsService } from 'services/cronjob.service';
+import { RedisModule } from 'services/redis/redis.module';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './domains/auth/auth.module';
 import { CategoryModule } from './domains/category/category.module';
@@ -26,6 +27,7 @@ import { SeederService } from './services/seeder.service';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
+    RedisModule,
     DatabaseModule,
     UserModule,
     AuthModule,

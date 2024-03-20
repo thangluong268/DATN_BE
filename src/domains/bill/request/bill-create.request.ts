@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { PAYMENT_METHOD } from 'shared/enums/bill.enum';
 import { CartInfoDTO } from '../dto/cart-info.dto';
 import { GiveInfoDTO } from '../dto/give-info.dto';
@@ -7,12 +8,16 @@ import { Bill } from '../schema/bill.schema';
 
 export class BillCreateREQ {
   @IsNotEmpty()
+  @Type(() => CartInfoDTO)
+  @IsArray()
   data: CartInfoDTO[];
 
   @IsNotEmpty()
+  @IsString()
   deliveryMethod: string;
 
   @IsNotEmpty()
+  @IsEnum(PAYMENT_METHOD)
   paymentMethod: PAYMENT_METHOD;
 
   @IsNotEmpty()
@@ -21,8 +26,13 @@ export class BillCreateREQ {
   @IsOptional()
   giveInfo: GiveInfoDTO | null;
 
-  @IsNotEmpty()
-  deliveryFee: number;
+  @IsOptional()
+  @IsString()
+  promotionShipId: string;
+
+  @IsOptional()
+  @IsNumber()
+  coins: number;
 
   static saveData(newBill: Bill, userId: string, body: BillCreateREQ, paymentId: string) {
     newBill.userId = userId;
@@ -30,7 +40,6 @@ export class BillCreateREQ {
     newBill.paymentMethod = body.paymentMethod;
     newBill.receiverInfo = body.receiverInfo;
     if (body.giveInfo) newBill.giveInfo = body.giveInfo;
-    newBill.deliveryFee = body.deliveryFee;
     newBill.paymentId = paymentId;
     newBill.save();
   }

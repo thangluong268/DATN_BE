@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, Get, Post, Req, Res } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res } from '@nestjs/common';
 import {
   HOST_URL,
   VN_PAY_COMMAND,
@@ -13,7 +13,7 @@ import * as crypto from 'crypto';
 import * as dayjs from 'dayjs';
 import { BillService } from 'domains/bill/bill.service';
 import * as querystring from 'qs';
-import { getReturnUrlStatus, sortObject } from 'shared/helpers/vn-pay.helper';
+import { sortObject } from 'shared/helpers/vn-pay.helper';
 
 @Controller('vn-pay')
 export class VNPayController {
@@ -79,20 +79,20 @@ export class VNPayController {
     const signData = querystring.stringify(vnp_Params, { encode: false });
     const hmac = crypto.createHmac('sha512', VN_PAY_SECRET);
     const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
-
+    const paymentId = vnp_Params['vnp_TxnRef'];
     if (secureHash === signed) {
       const code = vnp_Params['vnp_ResponseCode'];
-      const paymentId = vnp_Params['vnp_TxnRef'];
       console.log(paymentId);
       if (code !== '00') {
         await this.billService.handleBillFail(paymentId);
         res.redirect(`${HOST_URL}/payment/fail`);
-        // throw new BadRequestException(getReturnUrlStatus(code));
+      } else {
+        await this.billService.handleBillSuccess(paymentId);
+        res.redirect(`${HOST_URL}/payment/success`);
       }
-      await this.billService.handleBillSuccess(paymentId);
-      res.redirect(`${HOST_URL}/payment/success`);
     } else {
-      throw new BadRequestException('Invalid signature');
+      await this.billService.handleBillFail(paymentId);
+      res.redirect(`${HOST_URL}/payment/fail`);
     }
   }
 }

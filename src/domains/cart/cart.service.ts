@@ -119,7 +119,6 @@ export class CartService {
   async getWithoutPagingByUserId(userId: string) {
     this.logger.log(`Get Without Paging By User Id: ${userId}`);
     const carts = await this.cartModel.find({ userId }, {}, { lean: true }).sort({ createdAt: -1 });
-    console.log(carts);
     return BaseResponse.withMessage(carts, 'Lấy giỏ hàng thành công!');
   }
 
