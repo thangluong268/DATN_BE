@@ -51,6 +51,11 @@ export class CronjobsService {
     await this.promotionModel.updateMany({ endTime: { $lt: new Date() }, isActive: true }, { $set: { isActive: false } });
   }
 
+  @Cron('*/1 * * * * *')
+  async usedUpPromotion() {
+    await this.promotionModel.updateMany({ quantity: { $lte: 0 }, isActive: true }, { $set: { isActive: false } });
+  }
+
   /**
    * Handle product if store have been banned
    * Will disable all product of store if store is banned

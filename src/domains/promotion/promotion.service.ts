@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Store } from 'domains/store/schema/store.schema';
 import { User } from 'domains/user/schema/user.schema';
@@ -67,9 +67,7 @@ export class PromotionService {
     const store = await this.storeModel.findOne({ userId }).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng!');
     const condition = PromotionGetByStore.toQueryCondition(store._id, query);
-    const promotions = await this.promotionModel
-      .find(condition, { createdAt: 0, updatedAt: 0, userSaves: 0, storeIds: 0 })
-      .lean();
+    const promotions = await this.promotionModel.find(condition, { createdAt: 0, updatedAt: 0, userSaves: 0 }).lean();
     const data = promotions.map((promotion) => PromotionGetMyRESP.of(promotion));
     return BaseResponse.withMessage(data, 'Lấy danh sách khuyến mãi của cửa hàng thành công!');
   }
@@ -107,13 +105,13 @@ export class PromotionService {
     const promotionsByVoucherCode = await this.promotionModel
       .find(
         { voucherCode: { $regex: voucherCode, $options: 'i' }, isActive: true, storeIds: { $in: storeIds } },
-        { createdAt: 0, updatedAt: 0, isActive: 0, userSaves: 0, userUses: 0, storeIds: 0 },
+        { createdAt: 0, updatedAt: 0, isActive: 0, userSaves: 0 },
       )
       .lean();
     const promotionsUserSave = await this.promotionModel
       .find(
         { userSaves: userId, isActive: true, storeIds: { $in: storeIds } },
-        { createdAt: 0, updatedAt: 0, isActive: 0, userSaves: 0, userUses: 0, storeIds: 0 },
+        { createdAt: 0, updatedAt: 0, isActive: 0, userSaves: 0 },
       )
       .lean();
     return BaseResponse.withMessage({ promotionsByVoucherCode, promotionsUserSave }, 'Lấy danh sách khuyến mãi thành công!');
@@ -129,8 +127,10 @@ export class PromotionService {
 
   async handleSaveVoucher(userId: string, promotionId: string) {
     this.logger.log(`save voucher: ${promotionId}`);
-    const promotion = await this.promotionModel.findOne({ _id: promotionId, userSaves: userId }).lean();
-    promotion
+    const promotion = await this.promotionModel.findOne({ _id: promotionId, isActive: true }).lean();
+    if (!promotion) throw new NotFoundException('Không tìm thấy khuyến mãi!');
+    if (promotion.userUses.includes(userId)) throw new BadRequestException('Bạn đã sử dụng khuyến mãi này rồi!');
+    promotion.userSaves.includes(userId)
       ? await this.promotionModel.findByIdAndUpdate(promotionId, { $pull: { userSaves: userId } })
       : await this.promotionModel.findByIdAndUpdate(promotionId, { $push: { userSaves: userId } });
     return BaseResponse.withMessage({}, 'Xử lý lưu khuyến mãi thành công!');

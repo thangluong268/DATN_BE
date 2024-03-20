@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { PAYMENT_METHOD } from 'shared/enums/bill.enum';
 import { GiveInfoDTO } from '../dto/give-info.dto';
 import { ProductInfoDTO } from '../dto/product-info.dto';
 import { ReceiverInfoDTO } from '../dto/receiver-info.dto';
@@ -9,26 +10,38 @@ import { ReceiverInfoDTO } from '../dto/receiver-info.dto';
   timestamps: true,
 })
 export class Bill extends Document {
-  @Prop()
+  @Prop({ type: String })
   userId: string;
 
-  @Prop()
+  @Prop({ type: String })
   storeId: string;
 
   @Prop({ type: [Object] })
   products: ProductInfoDTO[];
 
-  @Prop()
+  @Prop({ type: String })
   notes: string;
 
-  @Prop()
+  @Prop({ type: Number })
+  initDeliveryFee: number;
+
+  @Prop({ type: Number })
+  deliveryFee: number;
+
+  @Prop({ type: String })
+  promotionId: string;
+
+  @Prop({ type: Number })
+  initTotalPrice: number;
+
+  @Prop({ type: Number })
   totalPrice: number;
 
-  @Prop()
+  @Prop({ type: String })
   deliveryMethod: string;
 
-  @Prop()
-  paymentMethod: string;
+  @Prop({ type: String, enum: PAYMENT_METHOD })
+  paymentMethod: PAYMENT_METHOD;
 
   @Prop({ type: Object })
   receiverInfo: ReceiverInfoDTO;
@@ -36,16 +49,13 @@ export class Bill extends Document {
   @Prop({ type: Object || null })
   giveInfo: GiveInfoDTO | null;
 
-  @Prop()
-  deliveryFee: number;
-
   @Prop({ default: 'NEW' })
   status: string;
 
-  @Prop({ default: false })
+  @Prop({ type: Boolean, default: false })
   isPaid: boolean;
 
-  @Prop({ default: '' })
+  @Prop({ type: String })
   paymentId: string;
 }
 

@@ -155,7 +155,6 @@ export class ReportService {
         },
       },
     ]);
-    console.log(numOfReportProductInStore);
     if (numOfReportProductInStore[0].total === 3) {
       const content = `Tổng số lượng báo cáo về sản phẩm: ${product.name} là: ${totalOfSubjectReport} lần.
       Chúng tôi sẽ ẩn sản phẩm : ${product.name} để bảo vệ quyền lợi của người tiêu dùng.

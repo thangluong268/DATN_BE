@@ -9,7 +9,6 @@ export class CheckLoginMiddleware implements NestMiddleware {
   async use(req: Request, res: Response, next: NextFunction) {
     try {
       const authorizationHeader = req.headers.authorization;
-      console.log(authorizationHeader);
       if (!authorizationHeader || !authorizationHeader.startsWith('Bearer ')) {
         return next();
       }

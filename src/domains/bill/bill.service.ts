@@ -2,7 +2,9 @@ import { BadRequestException, Inject, Injectable, Logger, NotFoundException, for
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { CartService } from 'domains/cart/cart.service';
 import { ProductService } from 'domains/product/product.service';
+import { Promotion } from 'domains/promotion/schema/promotion.schema';
 import { StoreService } from 'domains/store/store.service';
+import { User } from 'domains/user/schema/user.schema';
 import { UserService } from 'domains/user/user.service';
 import { Response } from 'express';
 import { Connection, Model } from 'mongoose';
@@ -10,6 +12,7 @@ import { PaymentDTO } from 'payment/dto/payment.dto';
 import { PaypalGateway, VNPayGateway } from 'payment/payment.gateway';
 import { PaymentService } from 'payment/payment.service';
 import { PaypalPaymentService } from 'payment/paypal/paypal.service';
+import { RedisService } from 'services/redis/redis.service';
 import { BILL_STATUS, BILL_STATUS_TRANSITION } from 'shared/constants/bill.constant';
 import { PAYMENT_METHOD } from 'shared/enums/bill.enum';
 import { BaseResponse } from 'shared/generics/base.response';
@@ -17,6 +20,7 @@ import { PaginationResponse } from 'shared/generics/pagination.response';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 import { v4 as uuid } from 'uuid';
+import { CartInfoDTO } from './dto/cart-info.dto';
 import { getMonthRevenue } from './helper/get-month-revenue.helper';
 import { BillCreateREQ } from './request/bill-create.request';
 import { BillGetAllByStatusSellerREQ } from './request/bill-get-all-by-status-seller.request';
@@ -39,6 +43,8 @@ export class BillService {
     @InjectConnection()
     private readonly connection: Connection,
 
+    @InjectModel(User.name)
+    private readonly userModel: Model<User>,
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
 
@@ -48,8 +54,12 @@ export class BillService {
     private readonly storeService: StoreService,
     private readonly cartService: CartService,
 
+    @InjectModel(Promotion.name)
+    private readonly promotionModel: Model<Promotion>,
+
     private readonly paymentService: PaymentService,
     private readonly paypalPaymentService: PaypalPaymentService,
+    private readonly redisService: RedisService,
   ) {
     this.paymentService.registerPaymentGateway.set(PAYMENT_METHOD.VNPAY, new VNPayGateway());
     this.paymentService.registerPaymentGateway.set(PAYMENT_METHOD.PAYPAL, new PaypalGateway(this.paypalPaymentService));
@@ -57,25 +67,48 @@ export class BillService {
 
   async create(userId: string, body: BillCreateREQ, res: Response) {
     this.logger.log(`create bill: ${userId}`);
-    const newBills = [];
-    let totalAmount = 0;
+    let totalPrice = 0;
+    let promotionShipValue = 0;
+    let numOfCoins = 0;
     const paymentId = uuid();
     const session = await this.connection.startSession();
     session.startTransaction();
     try {
-      for (const cart of body.data) {
-        const newBill = await this.billModel.create(cart);
-        BillCreateREQ.saveData(newBill, userId, body, paymentId);
-        newBills.push(toDocModel(newBill));
-        totalAmount += newBill.totalPrice;
+      // Promotion ship
+      const promotionShip = await this.promotionModel.findOne({ _id: body.promotionShipId, isActive: true });
+      promotionShipValue = promotionShip?.value || 0;
+      // Coins
+      if (body.coins) {
+        const user = await this.userService.findById(userId);
+        if (user.wallet < body.coins) throw new BadRequestException('Số dư xu không đủ!');
+        numOfCoins = body.coins;
       }
+      const numOfStore = body.data.length;
+      const discountValueShip = this.calculateDiscountShip(numOfStore, promotionShipValue);
+      const discountValueCoins = this.calculateDiscountCoins(numOfStore, numOfCoins);
+      const newBills = await Promise.all(
+        body.data.map(async (cart) => {
+          // Use discount value
+          await this.usePromotion(cart, userId);
+          cart['initDeliveryFee'] = cart.deliveryFee;
+          cart.deliveryFee -= discountValueShip;
+          cart['initTotalPrice'] = cart.totalPrice;
+          cart.totalPrice = cart.totalPrice + cart.deliveryFee - (discountValueShip + discountValueCoins);
+          totalPrice += cart.totalPrice;
+          const newBill = await this.billModel.create(cart);
+          BillCreateREQ.saveData(newBill, userId, body, paymentId);
+          return newBill;
+        }),
+      );
+      const redisClient = this.redisService.getClient();
+      await redisClient.setex(paymentId, 1800, numOfCoins); // set expire 30 minutes
       if (body.paymentMethod === PAYMENT_METHOD.CASH) {
         await this.handleBillSuccess(paymentId);
         await session.commitTransaction();
         session.endSession();
         return newBills.map((bill) => toDocModel(bill));
       }
-      const paymentBody = { paymentId, amount: totalAmount } as PaymentDTO;
+      const paymentBody = { paymentId, amount: totalPrice } as PaymentDTO;
       await this.paymentService.processPayment(paymentBody, body.paymentMethod, res);
       await session.commitTransaction();
       session.endSession();
@@ -85,17 +118,53 @@ export class BillService {
     }
   }
 
+  calculateDiscountShip(numOfStore: number, promotionShipValue: number) {
+    return promotionShipValue / numOfStore;
+  }
+
+  calculateDiscountCoins(numOfStore: number, numOfCoins: number) {
+    const coinsValue = numOfCoins * 100; // 1 xu = 100đ
+    return coinsValue / numOfStore;
+  }
+
+  async usePromotion(cart: CartInfoDTO, userId: string) {
+    if (cart.promotionId) {
+      const promotion = await this.promotionModel.findOne({
+        _id: cart.promotionId,
+        storeIds: cart.storeId,
+        isActive: true,
+      });
+      if (!promotion) throw new BadRequestException('Khuyến mãi không hợp lệ!');
+      if (promotion.userSaves.includes(userId)) throw new BadRequestException('Khuyến mãi đã được sử dụng!');
+      if (promotion.quantity === 0) throw new BadRequestException('Khuyến mãi đã hết!');
+      cart.totalPrice -= promotion.value;
+    }
+  }
+
   async handleBillSuccess(paymentId: string) {
     this.logger.log(`Handle Bill Success: ${paymentId}`);
     const bills = await this.billModel.find({ paymentId }).lean();
     bills.forEach(async (bill) => {
-      await this.userService.updateWallet(bill.userId, bill.totalPrice, 'plus');
-      await this.cartService.removeMultiProductInCart(bill.userId, bill.storeId, bill.products);
+      const userId = bill.userId;
+      await this.cartService.removeMultiProductInCart(userId, bill.storeId, bill.products);
       bill.products.forEach(async (product) => {
         await this.productService.decreaseQuantity(product.id, product.quantity);
       });
       await this.billModel.findByIdAndUpdate(bill._id, { isPaid: true });
+      await this.promotionModel.findByIdAndUpdate(bill.promotionId, {
+        $inc: { quantity: -1 },
+        $pull: { userSaves: userId },
+      });
+      const isUserUsedPromotion = await this.promotionModel.findOne({ _id: bill.promotionId, userUses: userId }).lean();
+      if (!isUserUsedPromotion) {
+        await this.promotionModel.findByIdAndUpdate(bill.promotionId, { $push: { userUses: userId } });
+      }
+      await this.userService.updateWallet(userId, bill.totalPrice, 'plus');
     });
+    const userId = bills[0].userId;
+    const redisClient = this.redisService.getClient();
+    const numOfCoins = await redisClient.get(paymentId);
+    if (numOfCoins) await this.userModel.findByIdAndUpdate(userId, { $inc: { wallet: -Number(numOfCoins) } });
   }
 
   async handleBillFail(paymentId: string) {
@@ -104,7 +173,6 @@ export class BillService {
     bills.forEach(async (bill) => {
       await this.billModel.findByIdAndDelete(bill._id);
     });
-    // TO DO: Need use redis to cache promotion and wallet to rollback...
   }
 
   async countTotalByStatusSeller(userId: string, year: number) {
