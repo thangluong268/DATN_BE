@@ -12,6 +12,7 @@ import { RedisModule } from 'services/redis/redis.module';
 import { BillController } from './bill.controller';
 import { BillService } from './bill.service';
 import { Bill, BillSchema } from './schema/bill.schema';
+import { Product, ProductSchema } from 'domains/product/schema/product.schema';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { Bill, BillSchema } from './schema/bill.schema';
       { name: Bill.name, schema: BillSchema },
       { name: Promotion.name, schema: PromotionSchema },
       { name: User.name, schema: UserSchema },
+      { name: Product.name, schema: ProductSchema },
     ]),
     CartModule,
     ProductModule,

@@ -24,9 +24,9 @@ export class PromotionController {
 
   @Roles(ROLE_NAME.USER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
-  @Get('user')
-  getPromotionsByUser(@Req() req, @Query('voucherCode') voucherCode: string, @Body() body: string[]) {
-    return this.promotionService.getPromotionsByUser(req.user._id, voucherCode, body);
+  @Post('user')
+  getPromotionsByUser(@Req() req, @Body() body: string[]) {
+    return this.promotionService.getPromotionsByUser(req.user._id, body);
   }
 
   @Roles(ROLE_NAME.MANAGER)

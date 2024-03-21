@@ -2,6 +2,7 @@ import { BadRequestException, Inject, Injectable, Logger, NotFoundException, for
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { CartService } from 'domains/cart/cart.service';
 import { ProductService } from 'domains/product/product.service';
+import { Product } from 'domains/product/schema/product.schema';
 import { Promotion } from 'domains/promotion/schema/promotion.schema';
 import { StoreService } from 'domains/store/store.service';
 import { User } from 'domains/user/schema/user.schema';
@@ -48,6 +49,8 @@ export class BillService {
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
 
+    @InjectModel(Product.name)
+    private readonly productModel: Model<Product>,
     @Inject(forwardRef(() => ProductService))
     private readonly productService: ProductService,
 
@@ -489,5 +492,38 @@ export class BillService {
 
   async updateIsPaid(billId: string) {
     await this.billModel.findByIdAndUpdate(billId, { isPaid: true });
+  }
+
+  async cancelBill(billId: string) {
+    this.logger.log(`Cancel Bill: ${billId}`);
+    const bill = await this.billModel.findById(billId).lean();
+    if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
+    if (bill.status !== 'NEW') throw new BadRequestException('Không thể hủy đơn hàng này!');
+    const session = await this.connection.startSession();
+    session.startTransaction();
+    try {
+      await this.billModel.findByIdAndUpdate(billId, { status: 'CANCELLED' });
+      bill.products.forEach(async (product) => {
+        await this.productModel.findByIdAndUpdate(product.id, { $inc: { quantity: product.quantity } });
+      });
+      if (bill.promotionId) {
+        await this.promotionModel.findByIdAndUpdate(bill.promotionId, {
+          $inc: { quantity: 1 },
+          $push: { userSaves: bill.userId },
+          $pull: { userUses: bill.userId },
+        });
+      }
+      await this.userService.updateWallet(bill.userId, bill.totalPrice, 'minus');
+      const numOfSameOrder = await this.billModel.countDocuments({ paymentId: bill.paymentId });
+      const redisClient = this.redisService.getClient();
+      const coinsUsed = await redisClient.get(bill.paymentId);
+      const coins = Number(coinsUsed) / numOfSameOrder;
+      await this.userModel.findByIdAndUpdate(bill.userId, { $inc: { wallet: coins } });
+      await session.commitTransaction();
+      session.endSession();
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
+    }
   }
 }
