@@ -100,21 +100,14 @@ export class PromotionService {
     );
   }
 
-  async getPromotionsByUser(userId: string, voucherCode: string, storeIds: string[]) {
-    this.logger.log(`get promotion by user and voucherCode: ${voucherCode}`);
-    const promotionsByVoucherCode = await this.promotionModel
-      .find(
-        { voucherCode: { $regex: voucherCode, $options: 'i' }, isActive: true, storeIds: { $in: storeIds } },
-        { createdAt: 0, updatedAt: 0, isActive: 0, userSaves: 0 },
-      )
-      .lean();
-    const promotionsUserSave = await this.promotionModel
-      .find(
-        { userSaves: userId, isActive: true, storeIds: { $in: storeIds } },
-        { createdAt: 0, updatedAt: 0, isActive: 0, userSaves: 0 },
-      )
-      .lean();
-    return BaseResponse.withMessage({ promotionsByVoucherCode, promotionsUserSave }, 'Lấy danh sách khuyến mãi thành công!');
+  async getPromotionsByUser(userId: string, storeIds: string[]) {
+    this.logger.log(`get promotion by user in: ${storeIds}`);
+    const data = await this.promotionModel.aggregate([
+      { $match: { isActive: true, storeIds: { $in: storeIds } } },
+      { $addFields: { isSaved: { $in: [userId.toString(), '$userSaves'] } } },
+      { $project: { createdAt: 0, updatedAt: 0, userSaves: 0, userUses: 0 } },
+    ]);
+    return BaseResponse.withMessage(data, 'Lấy danh sách khuyến mãi thành công!');
   }
 
   async update(promotionId: string, body: PromotionUpdateREQ) {
