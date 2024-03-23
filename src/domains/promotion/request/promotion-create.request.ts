@@ -18,6 +18,10 @@ export class PromotionCreateREQ {
   @IsNotEmpty()
   value: number;
 
+  @IsNumber()
+  @IsNotEmpty()
+  maxDiscountValue: number;
+
   @IsNotEmpty()
   @IsArray()
   @Type(() => String)

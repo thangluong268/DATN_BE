@@ -5,7 +5,8 @@ import { Document } from 'mongoose';
 // voucherCode: người dùng nhập để sử dụng
 // minSpend: giá trị đơn tối thiểu
 // quantity: số lượng voucher
-// value: giá trị của voucher
+// value: giá trị của voucher (%)
+// maxDiscountValue: giá trị tối đa mà voucher có thể giảm
 // storeIds: những cửa hàng áp dụng
 // userSaves: những user đã lưu mã
 // userUses: những user đã sử dụng
@@ -31,6 +32,9 @@ export class Promotion extends Document {
 
   @Prop({ type: Number })
   value: number;
+
+  @Prop({ type: Number })
+  maxDiscountValue: number;
 
   @Prop({ type: [String] })
   storeIds: string[];

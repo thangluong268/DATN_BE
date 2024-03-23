@@ -23,9 +23,6 @@ export class Bill extends Document {
   notes: string;
 
   @Prop({ type: Number })
-  initDeliveryFee: number;
-
-  @Prop({ type: Number })
   deliveryFee: number;
 
   @Prop({ type: String })

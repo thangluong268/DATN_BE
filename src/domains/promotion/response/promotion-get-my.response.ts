@@ -6,6 +6,7 @@ export class PromotionGetMyRESP {
   voucherCode: string;
   minSpend: number;
   value: number;
+  maxDiscountValue: number;
   startTime: Date;
   endTime: Date;
   usagePercent: number;
@@ -17,6 +18,7 @@ export class PromotionGetMyRESP {
       voucherCode: promotion.voucherCode,
       minSpend: promotion.minSpend,
       value: promotion.value,
+      maxDiscountValue: promotion.maxDiscountValue,
       startTime: promotion.startTime,
       endTime: promotion.endTime,
       usagePercent: Math.floor(promotion.userUses.length / promotion.quantity),

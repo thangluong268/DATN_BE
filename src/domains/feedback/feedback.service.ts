@@ -25,9 +25,10 @@ export class FeedbackService {
   async create(userId: string, productId: string, feedback: FeedbackCreateREQ) {
     this.logger.log(`Create Feedback: ${userId} - ${productId}`);
     // TO DO: check limit = 3, plus wallet in first time feedback
-    // const numOfFe
+    const numOfFeedback = await this.feedbackModel.countDocuments({ userId, productId });
+    if (numOfFeedback > 3) throw new BadRequestException('Bạn chỉ được feedback 3 lần trên một sản phẩm');
+    if (numOfFeedback === 0) await this.userService.updateWallet(userId, 5000, 'plus');
     const newFeedback = await this.feedbackModel.create({ ...feedback, userId, productId });
-    await this.userService.updateWallet(userId, 5000, 'plus');
     return BaseResponse.withMessage(toDocModel(newFeedback), 'Tạo feedback thành công');
   }
 

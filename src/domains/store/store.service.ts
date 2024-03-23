@@ -79,9 +79,9 @@ export class StoreService {
     let totalProductsHasFeedback = 0;
     let totalAverageStar = 0;
     let averageStar = 0;
-    for (const product of products) {
+    products.forEach(async (product) => {
       const feedbacks = await this.feedbackModel.find({ productId: product._id }, {}, { lean: true }).sort({ createdAt: -1 });
-      if (feedbacks.length === 0) continue;
+      if (feedbacks.length === 0) return;
       totalFeedback += feedbacks.length;
       const star = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
       feedbacks.forEach((feedback) => {
@@ -94,7 +94,7 @@ export class StoreService {
       averageStar = Number((averageStar / feedbacks.length).toFixed(2));
       totalAverageStar += averageStar;
       totalProductsHasFeedback++;
-    }
+    });
     if (totalProductsHasFeedback !== 0) averageStar = Number((totalAverageStar / totalProductsHasFeedback).toFixed(2));
     const totalFollow = await this.userModel.countDocuments({ followStores: storeId });
     let isFollow = false;

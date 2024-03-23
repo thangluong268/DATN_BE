@@ -1,4 +1,5 @@
 import { IsOptional } from 'class-validator';
+import { leanObject } from 'shared/parsers/io.parser';
 
 export class PromotionGetByManagerFilterREQ {
   @IsOptional()
@@ -20,6 +21,12 @@ export class PromotionGetByManagerFilterREQ {
   max_value: number;
 
   @IsOptional()
+  min_maxDiscountValue: number;
+
+  @IsOptional()
+  max_maxDiscountValue: number;
+
+  @IsOptional()
   min_startTime: Date;
 
   @IsOptional()
@@ -39,12 +46,15 @@ export class PromotionGetByManagerFilterREQ {
       minSpend: filter.min_minSpend && filter.max_minSpend ? { $gte: filter.min_minSpend, $lte: filter.max_minSpend } : undefined,
       quantity: filter.min_quantity && filter.max_quantity ? { $gte: filter.min_quantity, $lte: filter.max_quantity } : undefined,
       value: filter.min_value && filter.max_value ? { $gte: filter.min_value, $lte: filter.max_value } : undefined,
+      maxDiscountValue:
+        filter.min_maxDiscountValue && filter.max_maxDiscountValue
+          ? { $gte: filter.min_maxDiscountValue, $lte: filter.max_maxDiscountValue }
+          : undefined,
       startTime:
         filter.min_startTime && filter.max_startTime ? { $gte: filter.min_startTime, $lte: filter.max_startTime } : undefined,
       endTime: filter.min_endTime && filter.max_endTime ? { $gte: filter.min_endTime, $lte: filter.max_endTime } : undefined,
       isActive: filter.isActive !== undefined ? filter.isActive : undefined,
     };
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    return Object.fromEntries(Object.entries(condition).filter(([_, value]) => value !== undefined));
+    return leanObject(condition);
   }
 }

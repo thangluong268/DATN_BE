@@ -20,6 +20,7 @@ import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationResponse } from 'shared/generics/pagination.response';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { toDocModel } from 'shared/helpers/to-doc-model.helper';
+import { isBlank } from 'shared/validators/query.validator';
 import { v4 as uuid } from 'uuid';
 import { CartInfoDTO } from './dto/cart-info.dto';
 import { getMonthRevenue } from './helper/get-month-revenue.helper';
@@ -71,15 +72,11 @@ export class BillService {
   async create(userId: string, body: BillCreateREQ, res: Response) {
     this.logger.log(`create bill: ${userId}`);
     let totalPrice = 0;
-    let promotionShipValue = 0;
     let numOfCoins = 0;
     const paymentId = uuid();
     const session = await this.connection.startSession();
     session.startTransaction();
     try {
-      // Promotion ship
-      const promotionShip = await this.promotionModel.findOne({ _id: body.promotionShipId, isActive: true });
-      promotionShipValue = promotionShip?.value || 0;
       // Coins
       if (body.coins) {
         const user = await this.userService.findById(userId);
@@ -87,16 +84,13 @@ export class BillService {
         numOfCoins = body.coins;
       }
       const numOfStore = body.data.length;
-      const discountValueShip = this.calculateDiscountShip(numOfStore, promotionShipValue);
       const discountValueCoins = this.calculateDiscountCoins(numOfStore, numOfCoins);
       const newBills = await Promise.all(
         body.data.map(async (cart) => {
           // Use discount value
           await this.usePromotion(cart, userId);
-          cart['initDeliveryFee'] = cart.deliveryFee;
-          cart.deliveryFee -= discountValueShip;
           cart['initTotalPrice'] = cart.totalPrice;
-          cart.totalPrice = cart.totalPrice + cart.deliveryFee - (discountValueShip + discountValueCoins);
+          cart.totalPrice += cart.deliveryFee - discountValueCoins;
           totalPrice += cart.totalPrice;
           const newBill = await this.billModel.create(cart);
           BillCreateREQ.saveData(newBill, userId, body, paymentId);
@@ -104,7 +98,7 @@ export class BillService {
         }),
       );
       const redisClient = this.redisService.getClient();
-      await redisClient.setex(paymentId, 1800, numOfCoins); // set expire 30 minutes
+      await redisClient.setex(paymentId, 3600, numOfCoins); // set expire 30 minutes
       if (body.paymentMethod === PAYMENT_METHOD.CASH) {
         await this.handleBillSuccess(paymentId);
         await session.commitTransaction();
@@ -127,20 +121,22 @@ export class BillService {
 
   calculateDiscountCoins(numOfStore: number, numOfCoins: number) {
     const coinsValue = numOfCoins * 100; // 1 xu = 100đ
-    return coinsValue / numOfStore;
+    return Math.floor(coinsValue / numOfStore);
   }
 
   async usePromotion(cart: CartInfoDTO, userId: string) {
-    if (cart.promotionId) {
+    if (!isBlank(cart.promotionId)) {
       const promotion = await this.promotionModel.findOne({
         _id: cart.promotionId,
         storeIds: cart.storeId,
         isActive: true,
       });
       if (!promotion) throw new BadRequestException('Khuyến mãi không hợp lệ!');
-      if (promotion.userSaves.includes(userId)) throw new BadRequestException('Khuyến mãi đã được sử dụng!');
+      if (promotion.userUses.includes(userId)) throw new BadRequestException('Khuyến mãi đã được sử dụng!');
       if (promotion.quantity === 0) throw new BadRequestException('Khuyến mãi đã hết!');
-      cart.totalPrice -= promotion.value;
+      const discountValue = Math.floor((cart.totalPrice * promotion.value) / 100);
+      if (discountValue > promotion.maxDiscountValue) throw new BadRequestException('Khuyến mãi không hợp lệ!');
+      cart.totalPrice -= discountValue;
     }
   }
 
@@ -176,6 +172,10 @@ export class BillService {
     bills.forEach(async (bill) => {
       await this.billModel.findByIdAndDelete(bill._id);
     });
+    const userId = bills[0].userId;
+    const redisClient = this.redisService.getClient();
+    const numOfCoins = await redisClient.get(paymentId);
+    if (numOfCoins) await this.userModel.findByIdAndUpdate(userId, { $inc: { wallet: Number(numOfCoins) } });
   }
 
   async countTotalByStatusSeller(userId: string, year: number) {

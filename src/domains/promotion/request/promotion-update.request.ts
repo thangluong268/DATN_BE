@@ -19,6 +19,10 @@ export class PromotionUpdateREQ {
   value: number;
 
   @IsOptional()
+  @IsNumber()
+  maxDiscountValue: number;
+
+  @IsOptional()
   @IsArray()
   @Type(() => String)
   storeIds: string[];

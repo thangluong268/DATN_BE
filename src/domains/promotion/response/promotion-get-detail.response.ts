@@ -7,6 +7,7 @@ export class PromotionGetDetailRESP {
   minSpend: number;
   quantity: number;
   value: number;
+  maxDiscountValue: number;
   storeIds: string[];
   startTime: Date;
   endTime: Date;
@@ -19,6 +20,7 @@ export class PromotionGetDetailRESP {
       minSpend: promotion.minSpend,
       quantity: promotion.quantity,
       value: promotion.value,
+      maxDiscountValue: promotion.maxDiscountValue,
       storeIds: promotion.storeIds,
       startTime: promotion.startTime,
       endTime: promotion.endTime,

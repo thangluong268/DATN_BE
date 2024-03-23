@@ -125,7 +125,7 @@ export class PromotionService {
     const promotion = await this.promotionModel.findOne({ _id: promotionId, isActive: true }).lean();
     if (!promotion) throw new NotFoundException('Không tìm thấy khuyến mãi!');
     if (promotion.userUses.includes(userId)) throw new BadRequestException('Bạn đã sử dụng khuyến mãi này rồi!');
-    promotion.userSaves.includes(userId)
+    promotion.userSaves.includes(userId.toString())
       ? await this.promotionModel.findByIdAndUpdate(promotionId, { $pull: { userSaves: userId } })
       : await this.promotionModel.findByIdAndUpdate(promotionId, { $push: { userSaves: userId } });
     return BaseResponse.withMessage({}, 'Xử lý lưu khuyến mãi thành công!');

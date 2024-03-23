@@ -27,10 +27,6 @@ export class BillCreateREQ {
   giveInfo: GiveInfoDTO | null;
 
   @IsOptional()
-  @IsString()
-  promotionShipId: string;
-
-  @IsOptional()
   @IsNumber()
   coins: number;
 
