@@ -29,6 +29,10 @@ export class AuthModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(CheckLoginMiddleware)
-      .forRoutes({ path: 'store-reputation', method: RequestMethod.GET }, { path: 'evaluation', method: RequestMethod.GET });
+      .forRoutes(
+        { path: 'store-reputation', method: RequestMethod.GET },
+        { path: 'evaluation', method: RequestMethod.GET },
+        { path: 'promotions/:storeId', method: RequestMethod.GET },
+      );
   }
 }

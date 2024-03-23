@@ -9,6 +9,7 @@ export class PromotionGetByStoreIdRESP {
   startTime: Date;
   endTime: Date;
   usagePercent: number;
+  isSaved: boolean;
   static of(promotion: Promotion): PromotionGetByStoreIdRESP {
     return {
       id: promotion._id,
@@ -19,6 +20,7 @@ export class PromotionGetByStoreIdRESP {
       startTime: promotion.startTime,
       endTime: promotion.endTime,
       usagePercent: Math.floor(promotion.userUses.length / promotion.quantity),
+      isSaved: promotion['isSaved'],
     };
   }
 }

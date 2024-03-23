@@ -39,11 +39,13 @@ export class PromotionService {
     return await this.promotionModel.create({ ...body, voucherCode });
   }
 
-  async getPromotionsByStoreId(storeId: string) {
+  async getPromotionsByStoreId(user: any, storeId: string) {
     this.logger.log(`storeId: ${storeId}`);
-    const promotions = await this.promotionModel
-      .find({ storeIds: storeId, isActive: true }, { createdAt: 0, updatedAt: 0, userSaves: 0 })
-      .lean();
+    const promotions = await this.promotionModel.aggregate([
+      { $match: { storeIds: storeId, isActive: true } },
+      { $addFields: { isSaved: user ? { $in: [user.userId.toString(), '$userSaves'] } : false } },
+      { $project: { createdAt: 0, updatedAt: 0, userSaves: 0 } },
+    ]);
     const data = promotions.map((promotion) => PromotionGetByStoreIdRESP.of(promotion));
     return BaseResponse.withMessage(data, 'Lấy danh sách khuyến mãi của cửa hàng thành công!');
   }

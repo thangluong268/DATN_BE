@@ -51,8 +51,8 @@ export class PromotionController {
   }
 
   @Get(':storeId')
-  getPromotionsByStoreId(@Param('storeId') storeId: string) {
-    return this.promotionService.getPromotionsByStoreId(storeId);
+  getPromotionsByStoreId(@Req() req, @Param('storeId') storeId: string) {
+    return this.promotionService.getPromotionsByStoreId(req.user, storeId);
   }
 
   @Roles(ROLE_NAME.MANAGER)
