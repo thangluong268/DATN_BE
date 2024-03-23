@@ -8,6 +8,7 @@ import { NotificationModule } from 'domains/notification/notification.module';
 import { PolicyModule } from 'domains/policy/policy.module';
 import { PromotionModule } from 'domains/promotion/promotion.module';
 import { ReportModule } from 'domains/report/report.module';
+import { TaxModule } from 'domains/tax/tax.module';
 import { PaymentModule } from 'payment/paymen.module';
 import { CloudinaryModule } from 'services/cloudinary/cloudinary.module';
 import { CronjobsService } from 'services/cronjob.service';
@@ -48,6 +49,7 @@ import { SeederService } from './services/seeder.service';
     ReportModule,
     PromotionModule,
     CloudinaryModule,
+    TaxModule,
   ],
   providers: [SeederService, CronjobsService],
 })

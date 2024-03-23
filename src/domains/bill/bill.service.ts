@@ -1,10 +1,12 @@
 import { BadRequestException, Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { TAX_RATE } from 'app.config';
 import { CartService } from 'domains/cart/cart.service';
 import { ProductService } from 'domains/product/product.service';
 import { Product } from 'domains/product/schema/product.schema';
 import { Promotion } from 'domains/promotion/schema/promotion.schema';
 import { StoreService } from 'domains/store/store.service';
+import { Tax } from 'domains/tax/schema/tax.schema';
 import { User } from 'domains/user/schema/user.schema';
 import { UserService } from 'domains/user/user.service';
 import { Response } from 'express';
@@ -61,6 +63,9 @@ export class BillService {
     @InjectModel(Promotion.name)
     private readonly promotionModel: Model<Promotion>,
 
+    @InjectModel(Tax.name)
+    private readonly taxModel: Model<Tax>,
+
     private readonly paymentService: PaymentService,
     private readonly paypalPaymentService: PaypalPaymentService,
     private readonly redisService: RedisService,
@@ -94,11 +99,17 @@ export class BillService {
           totalPrice += cart.totalPrice;
           const newBill = await this.billModel.create(cart);
           BillCreateREQ.saveData(newBill, userId, body, paymentId);
+          await this.taxModel.create({
+            storeId: cart.storeId,
+            totalPayment: cart.totalPrice,
+            totalTax: cart.totalPrice * TAX_RATE,
+            paymentId,
+          });
           return newBill;
         }),
       );
       const redisClient = this.redisService.getClient();
-      await redisClient.setex(paymentId, 3600, numOfCoins); // set expire 30 minutes
+      await redisClient.setex(paymentId, 3600, numOfCoins); // set expire 1 hours
       if (body.paymentMethod === PAYMENT_METHOD.CASH) {
         await this.handleBillSuccess(paymentId);
         await session.commitTransaction();

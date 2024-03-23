@@ -22,5 +22,8 @@
       "source.organizeImports": "explicit",
       "source.fixAll.eslint": "explicit"
     }
-  }
+  },
+  "cSpell.words": [
+    "taxs"
+  ]
 }

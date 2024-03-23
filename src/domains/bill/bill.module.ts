@@ -13,6 +13,7 @@ import { BillController } from './bill.controller';
 import { BillService } from './bill.service';
 import { Bill, BillSchema } from './schema/bill.schema';
 import { Product, ProductSchema } from 'domains/product/schema/product.schema';
+import { Tax, TaxSchema } from 'domains/tax/schema/tax.schema';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { Product, ProductSchema } from 'domains/product/schema/product.schema';
       { name: Promotion.name, schema: PromotionSchema },
       { name: User.name, schema: UserSchema },
       { name: Product.name, schema: ProductSchema },
+      { name: Tax.name, schema: TaxSchema },
     ]),
     CartModule,
     ProductModule,
