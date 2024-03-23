@@ -3,41 +3,37 @@ import { IsArray, IsBoolean, IsDate, IsNumber, IsOptional, IsString } from 'clas
 
 export class PromotionUpdateREQ {
   @IsOptional()
-  @IsNumber()
-  minSpend?: number;
-
-  @IsOptional()
-  @IsNumber()
-  quantity?: number;
-
-  @IsOptional()
-  @IsNumber()
-  value?: number;
-
-  @IsOptional()
   @IsString()
-  label?: string;
-
-  @IsOptional()
-  @Type(() => String)
-  @IsArray()
-  productLimits?: string[];
+  avatar: string;
 
   @IsOptional()
   @IsNumber()
-  orderLimit?: number;
+  minSpend: number;
+
+  @IsOptional()
+  @IsNumber()
+  quantity: number;
+
+  @IsOptional()
+  @IsNumber()
+  value: number;
+
+  @IsOptional()
+  @IsArray()
+  @Type(() => String)
+  storeIds: string[];
 
   @IsOptional()
   @IsDate()
   @Transform(({ value }) => new Date(value))
-  startTime?: Date;
+  startTime: Date;
 
   @IsOptional()
   @IsDate()
   @Transform(({ value }) => new Date(value))
-  endTime?: Date;
+  endTime: Date;
 
   @IsOptional()
   @IsBoolean()
-  isActive?: boolean;
+  isActive: boolean;
 }

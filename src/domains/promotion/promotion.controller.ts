@@ -50,8 +50,6 @@ export class PromotionController {
     return this.promotionService.getUserUsesPromotion(req.user._id, req.user.role, promotionId, query);
   }
 
-  @Roles(ROLE_NAME.USER)
-  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Get(':storeId')
   getPromotionsByStoreId(@Param('storeId') storeId: string) {
     return this.promotionService.getPromotionsByStoreId(storeId);
