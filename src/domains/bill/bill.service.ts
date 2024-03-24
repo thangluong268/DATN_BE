@@ -23,6 +23,7 @@ import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 import { isBlank } from 'shared/validators/query.validator';
 import { v4 as uuid } from 'uuid';
+import { CartInfoDTO } from './dto/cart-info.dto';
 import { getMonthRevenue } from './helper/get-month-revenue.helper';
 import { BillCreateREQ } from './request/bill-create.request';
 import { BillGetAllByStatusSellerREQ } from './request/bill-get-all-by-status-seller.request';
@@ -35,7 +36,6 @@ import { BillGetTotalByStatusSellerREQ } from './request/bill-get-total-by-statu
 import { BillGetAllByStatusUserRESP } from './response/bill-get-all-by-status-user.response';
 import { GetMyBillRESP } from './response/get-my-bill.response';
 import { Bill } from './schema/bill.schema';
-import { CartInfoDTO } from './dto/cart-info.dto';
 
 @Injectable()
 export class BillService {
@@ -110,7 +110,8 @@ export class BillService {
         }),
       );
       const redisClient = this.redisService.getClient();
-      await redisClient.setex(paymentId, 3600, numOfCoins); // set expire 1 hours
+      await redisClient.setex(paymentId, 3600, JSON.stringify({ numOfCoins, promotionId: body.promotionId })); // set expire 1 hours
+      if (totalPrice !== body.totalPayment) throw new BadRequestException('Tổng tiền không hợp lệ!');
       if (body.paymentMethod === PAYMENT_METHOD.CASH) {
         await this.handleBillSuccess(paymentId);
         await session.commitTransaction();
@@ -159,20 +160,21 @@ export class BillService {
         await this.productService.decreaseQuantity(product.id, product.quantity);
       });
       await this.billModel.findByIdAndUpdate(bill._id, { isPaid: true });
-      await this.promotionModel.findByIdAndUpdate(bill.promotionId, {
-        $inc: { quantity: -1 },
-        $pull: { userSaves: userId },
-      });
-      const isUserUsedPromotion = await this.promotionModel.findOne({ _id: bill.promotionId, userUses: userId }).lean();
-      if (!isUserUsedPromotion) {
-        await this.promotionModel.findByIdAndUpdate(bill.promotionId, { $push: { userUses: userId } });
-      }
       await this.userService.updateWallet(userId, bill.totalPrice, 'plus');
     });
     const userId = bills[0].userId;
     const redisClient = this.redisService.getClient();
-    const numOfCoins = await redisClient.get(paymentId);
+    const data = await redisClient.get(paymentId);
+    const { numOfCoins, promotionId } = JSON.parse(data);
     if (numOfCoins) await this.userModel.findByIdAndUpdate(userId, { $inc: { wallet: -Number(numOfCoins) } });
+    await this.promotionModel.findByIdAndUpdate(promotionId, {
+      $inc: { quantity: -1 },
+      $pull: { userSaves: userId },
+    });
+    const isUserUsedPromotion = await this.promotionModel.findOne({ _id: promotionId, userUses: userId }).lean();
+    if (!isUserUsedPromotion) {
+      await this.promotionModel.findByIdAndUpdate(promotionId, { $push: { userUses: userId } });
+    }
   }
 
   async handleBillFail(paymentId: string) {
