@@ -27,8 +27,16 @@ export class BillCreateREQ {
   giveInfo: GiveInfoDTO | null;
 
   @IsOptional()
+  @IsString()
+  promotionId: string;
+
+  @IsOptional()
   @IsNumber()
   coins: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  totalPayment: number;
 
   static saveData(newBill: Bill, userId: string, body: BillCreateREQ, paymentId: string) {
     newBill.userId = userId;

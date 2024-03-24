@@ -20,10 +20,6 @@ export class CartInfoDTO {
   @IsNumber()
   deliveryFee: number;
 
-  @IsOptional()
-  @IsString()
-  promotionId: string;
-
   @IsNotEmpty()
   @IsNumber()
   totalPrice: number;

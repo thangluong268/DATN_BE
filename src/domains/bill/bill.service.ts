@@ -23,7 +23,6 @@ import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 import { isBlank } from 'shared/validators/query.validator';
 import { v4 as uuid } from 'uuid';
-import { CartInfoDTO } from './dto/cart-info.dto';
 import { getMonthRevenue } from './helper/get-month-revenue.helper';
 import { BillCreateREQ } from './request/bill-create.request';
 import { BillGetAllByStatusSellerREQ } from './request/bill-get-all-by-status-seller.request';
@@ -36,6 +35,7 @@ import { BillGetTotalByStatusSellerREQ } from './request/bill-get-total-by-statu
 import { BillGetAllByStatusUserRESP } from './response/bill-get-all-by-status-user.response';
 import { GetMyBillRESP } from './response/get-my-bill.response';
 import { Bill } from './schema/bill.schema';
+import { CartInfoDTO } from './dto/cart-info.dto';
 
 @Injectable()
 export class BillService {
@@ -77,24 +77,26 @@ export class BillService {
     this.logger.log(`create bill: ${userId}`);
     let totalPrice = 0;
     let numOfCoins = 0;
+    let discountValuePromotion = 0;
     const paymentId = uuid();
     const session = await this.connection.startSession();
     session.startTransaction();
     try {
       // Coins
-      if (body.coins) {
+      if (!isBlank(body.coins)) {
         const user = await this.userService.findById(userId);
         if (user.wallet < body.coins) throw new BadRequestException('Số dư xu không đủ!');
         numOfCoins = body.coins;
       }
       const numOfStore = body.data.length;
       const discountValueCoins = this.calculateDiscountCoins(numOfStore, numOfCoins);
+      if (!isBlank(body.promotionId)) {
+        discountValuePromotion = await this.calculatePromotion(numOfStore, body.promotionId, body.data, userId);
+      }
       const newBills = await Promise.all(
         body.data.map(async (cart) => {
-          // Use discount value
-          await this.usePromotion(cart, userId);
           cart['initTotalPrice'] = cart.totalPrice;
-          cart.totalPrice += cart.deliveryFee - discountValueCoins;
+          cart.totalPrice += cart.deliveryFee - discountValueCoins - discountValuePromotion;
           totalPrice += cart.totalPrice;
           const newBill = await this.billModel.create(cart);
           BillCreateREQ.saveData(newBill, userId, body, paymentId);
@@ -126,29 +128,25 @@ export class BillService {
     }
   }
 
-  calculateDiscountShip(numOfStore: number, promotionShipValue: number) {
-    return promotionShipValue / numOfStore;
-  }
-
   calculateDiscountCoins(numOfStore: number, numOfCoins: number) {
     const coinsValue = numOfCoins * 100; // 1 xu = 100đ
     return Math.floor(coinsValue / numOfStore);
   }
 
-  async usePromotion(cart: CartInfoDTO, userId: string) {
-    if (!isBlank(cart.promotionId)) {
-      const promotion = await this.promotionModel.findOne({
-        _id: cart.promotionId,
-        storeIds: cart.storeId,
-        isActive: true,
-      });
-      if (!promotion) throw new BadRequestException('Khuyến mãi không hợp lệ!');
-      if (promotion.userUses.includes(userId)) throw new BadRequestException('Khuyến mãi đã được sử dụng!');
-      if (promotion.quantity === 0) throw new BadRequestException('Khuyến mãi đã hết!');
-      const discountValue = Math.floor((cart.totalPrice * promotion.value) / 100);
-      if (discountValue > promotion.maxDiscountValue) throw new BadRequestException('Khuyến mãi không hợp lệ!');
-      cart.totalPrice -= discountValue;
-    }
+  async calculatePromotion(numOfStore: number, promotionId: string, carts: CartInfoDTO[], userId: string) {
+    const storeIds = carts.map((cart) => cart.storeId);
+    const totalPrice = carts.reduce((acc, cart) => acc + cart.totalPrice, 0);
+    const promotion = await this.promotionModel.findOne({
+      _id: promotionId,
+      storeIds: { $in: storeIds },
+      isActive: true,
+    });
+    if (!promotion) throw new BadRequestException('Khuyến mãi không hợp lệ!');
+    if (promotion.userUses.includes(userId)) throw new BadRequestException('Khuyến mãi đã được sử dụng!');
+    if (promotion.quantity === 0) throw new BadRequestException('Khuyến mãi đã hết!');
+    let discountValue = Math.floor((totalPrice * promotion.value) / 100);
+    if (discountValue > promotion.maxDiscountValue) discountValue = promotion.maxDiscountValue;
+    return Math.floor(discountValue / numOfStore);
   }
 
   async handleBillSuccess(paymentId: string) {
