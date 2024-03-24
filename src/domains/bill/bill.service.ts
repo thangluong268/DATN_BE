@@ -97,6 +97,7 @@ export class BillService {
         body.data.map(async (cart) => {
           cart['initTotalPrice'] = cart.totalPrice;
           cart.totalPrice += cart.deliveryFee - discountValueCoins - discountValuePromotion;
+          if (cart.totalPrice < 0) cart.totalPrice = 0;
           totalPrice += cart.totalPrice;
           const newBill = await this.billModel.create(cart);
           BillCreateREQ.saveData(newBill, userId, body, paymentId);

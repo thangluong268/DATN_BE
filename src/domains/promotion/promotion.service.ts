@@ -104,11 +104,12 @@ export class PromotionService {
 
   async getPromotionsByUser(userId: string, storeIds: string[]) {
     this.logger.log(`get promotion by user in: ${storeIds}`);
-    const data = await this.promotionModel.aggregate([
+    const promotions = await this.promotionModel.aggregate([
       { $match: { isActive: true, storeIds: { $in: storeIds } } },
       { $addFields: { isSaved: { $in: [userId.toString(), '$userSaves'] } } },
-      { $project: { createdAt: 0, updatedAt: 0, userSaves: 0, userUses: 0, storeIds: 0 } },
+      { $project: { createdAt: 0, updatedAt: 0, userSaves: 0, storeIds: 0 } },
     ]);
+    const data = promotions.map((promotion) => PromotionGetByStoreIdRESP.of(promotion));
     return BaseResponse.withMessage(data, 'Lấy danh sách khuyến mãi thành công!');
   }
 
