@@ -1,22 +1,21 @@
-import { Response } from 'express';
 import { PaymentDTO } from './dto/payment.dto';
 import { PaypalPaymentService } from './paypal/paypal.service';
 import { createVNPayPayment } from './vn-pay/vn-pay.service';
 
 export abstract class PaymentGateway {
-  abstract processPayment(bill: PaymentDTO, res?: Response): any;
+  abstract processPayment(bill: PaymentDTO): any;
 }
 
 export class VNPayGateway implements PaymentGateway {
   async processPayment(bill: PaymentDTO) {
-    await createVNPayPayment(bill);
+    return await createVNPayPayment(bill);
   }
 }
 
 export class PaypalGateway implements PaymentGateway {
   constructor(private readonly paypalPaymentService: PaypalPaymentService) {}
-  async processPayment(bill: PaymentDTO, res: Response) {
-    await this.paypalPaymentService.createPayPalPayment(bill, res);
+  async processPayment(bill: PaymentDTO) {
+    return await this.paypalPaymentService.createPayPalPayment(bill);
   }
 }
 

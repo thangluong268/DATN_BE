@@ -104,10 +104,30 @@ export class PromotionService {
 
   async getPromotionsByUser(userId: string, storeIds: string[]) {
     this.logger.log(`get promotion by user in: ${storeIds}`);
+    const storeObjIds = storeIds.map((id) => new ObjectId(id));
     const data = await this.promotionModel.aggregate([
       { $match: { isActive: true, storeIds: { $in: storeIds } } },
       { $addFields: { isSaved: { $in: [userId.toString(), '$userSaves'] } } },
-      { $project: { createdAt: 0, updatedAt: 0, userSaves: 0, userUses: 0 } },
+      { $addFields: { storeObjIds: storeObjIds } },
+      { $lookup: { from: 'stores', localField: 'storeObjIds', foreignField: '_id', as: 'store' } },
+      { $unwind: '$store' },
+      { $group: { _id: '$store._id', storeName: { $first: '$store.name' }, promotions: { $push: '$$ROOT' } } },
+      {
+        $project: {
+          storeName: 1,
+          'promotions._id': 1,
+          'promotions.avatar': 1,
+          'promotions.voucherCode': 1,
+          'promotions.minSpend': 1,
+          'promotions.quantity': 1,
+          'promotions.value': 1,
+          'promotions.startTime': 1,
+          'promotions.endTime': 1,
+          'promotions.isActive': 1,
+          'promotions.maxDiscountValue': 1,
+          'promotions.isSaved': 1,
+        },
+      },
     ]);
     return BaseResponse.withMessage(data, 'Lấy danh sách khuyến mãi thành công!');
   }

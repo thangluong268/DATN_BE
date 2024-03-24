@@ -21,7 +21,7 @@ export class VNPayController {
 
   @Post()
   // @Redirect('https://sandbox.vnpayment.vn', 302)
-  addVNPay(@Req() req, @Res() res) {
+  addVNPay(@Req() req) {
     const createDate = dayjs(new Date()).format('YYYYMMDDHHmmss');
 
     const ipAddr =
@@ -61,8 +61,8 @@ export class VNPayController {
     vnpUrl += '?' + querystring.stringify(vnp_Params, { encode: false });
 
     console.log(vnpUrl);
-    res.redirect(302, vnpUrl);
-    // return { url: vnpUrl };
+    // res.redirect(302, vnpUrl);
+    return vnpUrl;
   }
 
   @Get('payment/vn-pay/callback')

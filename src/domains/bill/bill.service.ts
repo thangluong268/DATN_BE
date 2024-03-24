@@ -9,7 +9,6 @@ import { StoreService } from 'domains/store/store.service';
 import { Tax } from 'domains/tax/schema/tax.schema';
 import { User } from 'domains/user/schema/user.schema';
 import { UserService } from 'domains/user/user.service';
-import { Response } from 'express';
 import { Connection, Model } from 'mongoose';
 import { PaymentDTO } from 'payment/dto/payment.dto';
 import { PaypalGateway, VNPayGateway } from 'payment/payment.gateway';
@@ -74,7 +73,7 @@ export class BillService {
     this.paymentService.registerPaymentGateway.set(PAYMENT_METHOD.PAYPAL, new PaypalGateway(this.paypalPaymentService));
   }
 
-  async create(userId: string, body: BillCreateREQ, res: Response) {
+  async create(userId: string, body: BillCreateREQ) {
     this.logger.log(`create bill: ${userId}`);
     let totalPrice = 0;
     let numOfCoins = 0;
@@ -117,9 +116,10 @@ export class BillService {
         return newBills.map((bill) => toDocModel(bill));
       }
       const paymentBody = { paymentId, amount: totalPrice } as PaymentDTO;
-      await this.paymentService.processPayment(paymentBody, body.paymentMethod, res);
       await session.commitTransaction();
       session.endSession();
+      const urlPayment = await this.paymentService.processPayment(paymentBody, body.paymentMethod);
+      return BaseResponse.withMessage({ urlPayment }, 'Tạo đường link thanh toán thành công!');
     } catch (err) {
       await session.abortTransaction();
       throw err;

@@ -1,8 +1,6 @@
 import { HOST_URL, PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET } from 'app.config';
 import axios, { Axios, AxiosHeaders } from 'axios';
 import * as CC from 'currency-converter-lt';
-import { BillService } from 'domains/bill/bill.service';
-import { Response } from 'express';
 import { PaymentDTO } from 'payment/dto/payment.dto';
 import { PaymentOrderRto } from './paypal.route';
 
@@ -25,7 +23,7 @@ export class PaypalPaymentService {
     return data.access_token;
   }
 
-  public async createPayPalPayment(bill: PaymentDTO, res: Response) {
+  public async createPayPalPayment(bill: PaymentDTO) {
     const url = 'https://api-m.sandbox.paypal.com/v2/checkout/orders';
     const accessToken = await this.getAccessToken();
     const headers = new AxiosHeaders();
@@ -66,7 +64,7 @@ export class PaypalPaymentService {
     const { data } = await this.axios.post(url, body, { headers });
     const { urlCheckout } = new PaymentOrderRto(data);
     console.log(urlCheckout);
-    res.redirect(urlCheckout);
+    return urlCheckout;
   }
 
   public async capturePayPalPayment(orderId: string) {

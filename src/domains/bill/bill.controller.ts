@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Post, Put, Query, Req, Res, UseGuards } f
 import { Roles } from 'domains/auth/decorators/auth-role.decorator';
 import { AuthJwtATGuard } from 'domains/auth/guards/auth-jwt-at.guard';
 import { AuthRoleGuard } from 'domains/auth/guards/auth-role.guard';
+import { Response } from 'express';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BillService } from './bill.service';
 import { BillCreateREQ } from './request/bill-create.request';
@@ -12,7 +13,6 @@ import { BillGetCalculateTotalByYearREQ } from './request/bill-get-calculate-tot
 import { BillGetCountCharityByYearREQ } from './request/bill-get-count-charity-by-year.request';
 import { BillGetRevenueStoreREQ } from './request/bill-get-revenue-store.request';
 import { BillGetTotalByStatusSellerREQ } from './request/bill-get-total-by-status-seller.request';
-import { Response } from 'express';
 
 @Controller('bill')
 export class BillController {
@@ -91,8 +91,8 @@ export class BillController {
   @Roles(ROLE_NAME.USER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Post('user')
-  create(@Req() req, @Body() body: BillCreateREQ, @Res() res: Response) {
-    return this.billService.create(req.user._id, body, res);
+  create(@Req() req, @Body() body: BillCreateREQ) {
+    return this.billService.create(req.user._id, body);
   }
 
   @Roles(ROLE_NAME.USER)
