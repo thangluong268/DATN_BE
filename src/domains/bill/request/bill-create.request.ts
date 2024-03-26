@@ -1,10 +1,10 @@
+import { TAX_RATE } from 'app.config';
 import { Type } from 'class-transformer';
 import { IsArray, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { PAYMENT_METHOD } from 'shared/enums/bill.enum';
 import { CartInfoDTO } from '../dto/cart-info.dto';
 import { GiveInfoDTO } from '../dto/give-info.dto';
 import { ReceiverInfoDTO } from '../dto/receiver-info.dto';
-import { Bill } from '../schema/bill.schema';
 
 export class BillCreateREQ {
   @IsNotEmpty()
@@ -38,13 +38,53 @@ export class BillCreateREQ {
   @IsNumber()
   totalPayment: number;
 
-  static saveData(newBill: Bill, userId: string, body: BillCreateREQ, paymentId: string) {
-    newBill.userId = userId;
-    newBill.deliveryMethod = body.deliveryMethod;
-    newBill.paymentMethod = body.paymentMethod;
-    newBill.receiverInfo = body.receiverInfo;
-    if (body.giveInfo) newBill.giveInfo = body.giveInfo;
-    newBill.paymentId = paymentId;
-    newBill.save();
+  static toCreateBillSeller(cart: CartInfoDTO, userId: string, body: BillCreateREQ, paymentId: string) {
+    return {
+      userId: userId,
+      storeId: cart.storeId,
+      products: cart.products,
+      notes: cart.notes,
+      deliveryFee: cart.deliveryFee,
+      totalPrice: cart.totalPrice,
+      deliveryMethod: body.deliveryMethod,
+      paymentMethod: body.paymentMethod,
+      receiverInfo: body.receiverInfo,
+      giveInfo: body.giveInfo ? body.giveInfo : undefined,
+      paymentId: paymentId,
+    };
+  }
+
+  static toCreateBillUser(
+    userId: string,
+    body: BillCreateREQ,
+    paymentId: string,
+    totalPrice: number,
+    totalDeliveryFee: number,
+    discountValue: number,
+  ) {
+    return {
+      userId,
+      data: body.data,
+      deliveryMethod: body.deliveryMethod,
+      paymentMethod: body.paymentMethod,
+      receiverInfo: body.receiverInfo,
+      giveInfo: body.giveInfo ? body.giveInfo : undefined,
+      promotionId: body.promotionId ? body.promotionId : undefined,
+      coins: body.coins ? body.coins : 0,
+      initTotalPayment: body['initTotalPayment'],
+      totalPayment: totalPrice,
+      totalDeliveryFee,
+      discountValue,
+      paymentId,
+    };
+  }
+
+  static toCreateTax(storeId: string, totalPrice: number, paymentId: string) {
+    return {
+      storeId,
+      totalPrice,
+      totalTax: totalPrice * TAX_RATE,
+      paymentId,
+    };
   }
 }

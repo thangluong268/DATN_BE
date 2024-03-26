@@ -10,7 +10,7 @@ export class Tax extends Document {
   storeId: string;
 
   @Prop({ type: Number })
-  totalPayment: number;
+  totalPrice: number;
 
   @Prop({ type: Number })
   totalTax: number;

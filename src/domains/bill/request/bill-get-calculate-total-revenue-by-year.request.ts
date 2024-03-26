@@ -1,4 +1,5 @@
 import { IsNotEmpty } from 'class-validator';
+import { BILL_STATUS } from 'shared/enums/bill.enum';
 
 export class BillGetCalculateTotalByYearREQ {
   @IsNotEmpty()
@@ -8,7 +9,7 @@ export class BillGetCalculateTotalByYearREQ {
     return [
       {
         $match: {
-          status: 'DELIVERED',
+          status: BILL_STATUS.DELIVERED,
           createdAt: { $gte: new Date(year, 0, 1), $lt: new Date(year + 1, 0, 1) },
         },
       },
@@ -22,18 +23,6 @@ export class BillGetCalculateTotalByYearREQ {
   }
 
   static toQueryConditionForAllTime() {
-    return [
-      {
-        $match: {
-          status: 'DELIVERED',
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          totalRevenue: { $sum: '$totalPrice' },
-        },
-      },
-    ];
+    return [{ $match: { status: BILL_STATUS.DELIVERED } }, { $group: { _id: null, totalRevenue: { $sum: '$totalPrice' } } }];
   }
 }

@@ -1,4 +1,5 @@
 import { IsNotEmpty, IsString } from 'class-validator';
+import { BILL_STATUS } from 'shared/enums/bill.enum';
 
 export class BillGetRevenueStoreREQ {
   @IsString()
@@ -9,7 +10,7 @@ export class BillGetRevenueStoreREQ {
     return [
       {
         $match: {
-          status: 'DELIVERED',
+          status: BILL_STATUS.DELIVERED,
           storeId: storeId.toString(),
         },
       },

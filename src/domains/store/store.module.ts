@@ -1,7 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BillModule } from 'domains/bill/bill.module';
-import { Bill, BillSchema } from 'domains/bill/schema/bill.schema';
 import { FeedbackModule } from 'domains/feedback/feedback.module';
 import { Feedback, FeedbackSchema } from 'domains/feedback/schema/feedback.schema';
 import { ProductModule } from 'domains/product/product.module';
@@ -11,6 +10,8 @@ import { UserModule } from 'domains/user/user.module';
 import { Store, StoreSchema } from './schema/store.schema';
 import { StoreController } from './store.controller';
 import { StoreService } from './store.service';
+import { BillSeller, BillSellerSchema } from 'domains/bill/schema/bill-seller.schema';
+import { BillUser, BillUserSchema } from 'domains/bill/schema/bill-user.schema';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { StoreService } from './store.service';
       { name: User.name, schema: UserSchema },
       { name: Product.name, schema: ProductSchema },
       { name: Feedback.name, schema: FeedbackSchema },
-      { name: Bill.name, schema: BillSchema },
+      { name: BillSeller.name, schema: BillSellerSchema },
+      { name: BillUser.name, schema: BillUserSchema },
     ]),
     forwardRef(() => ProductModule),
     forwardRef(() => FeedbackModule),

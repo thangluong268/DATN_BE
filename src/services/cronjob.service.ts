@@ -1,14 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { Bill } from 'domains/bill/schema/bill.schema';
+import { Cron } from '@nestjs/schedule';
+import { BillSeller } from 'domains/bill/schema/bill-seller.schema';
+import { BillUser } from 'domains/bill/schema/bill-user.schema';
 import { Product } from 'domains/product/schema/product.schema';
 import { Promotion } from 'domains/promotion/schema/promotion.schema';
 import { Report } from 'domains/report/schema/report.schema';
 import { Store } from 'domains/store/schema/store.schema';
 import { ObjectId } from 'mongodb';
 import { Model } from 'mongoose';
-import { PAYMENT_METHOD } from 'shared/enums/bill.enum';
 import { PolicyType } from 'shared/enums/policy.enum';
 
 @Injectable()
@@ -18,8 +18,11 @@ export class CronjobsService {
     @InjectModel(Product.name)
     private readonly productModel: Model<Product>,
 
-    @InjectModel(Bill.name)
-    private readonly billModel: Model<Bill>,
+    @InjectModel(BillUser.name)
+    private readonly billUserModel: Model<BillUser>,
+
+    @InjectModel(BillSeller.name)
+    private readonly billSellerModel: Model<BillSeller>,
 
     @InjectModel(Promotion.name)
     private readonly promotionModel: Model<Promotion>,
@@ -41,10 +44,10 @@ export class CronjobsService {
     await this.productModel.updateMany({ quantity: { $lte: 0 }, status: true }, { $set: { status: false } });
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-  async cleanupBill() {
-    await this.billModel.deleteMany({ isPaid: false, paymentMethod: { $ne: PAYMENT_METHOD.CASH } });
-  }
+  // @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  // async cleanupBill() {
+  //   await this.billModel.deleteMany({ isPaid: false, paymentMethod: { $ne: PAYMENT_METHOD.CASH } });
+  // }
 
   @Cron('*/1 * * * * *')
   async passEndTimePromotion() {
