@@ -18,21 +18,17 @@ import { BILL_STATUS_TRANSITION } from 'shared/constants/bill.constant';
 import { BILL_STATUS, PAYMENT_METHOD } from 'shared/enums/bill.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationResponse } from 'shared/generics/pagination.response';
-import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { isBlank } from 'shared/validators/query.validator';
 import { v4 as uuid } from 'uuid';
 import { CartInfoDTO } from './dto/cart-info.dto';
 import { getMonthRevenue } from './helper/get-month-revenue.helper';
 import { BillCreateREQ } from './request/bill-create.request';
-import { BillGetAllByStatusSellerREQ } from './request/bill-get-all-by-status-seller.request';
 import { BillGetAllByStatusUserREQ } from './request/bill-get-all-by-status-user.request';
 import { BillGetCalculateRevenueByYearREQ } from './request/bill-get-calculate-revenue-by-year.request';
 import { BillGetCalculateTotalByYearREQ } from './request/bill-get-calculate-total-revenue-by-year.request';
 import { BillGetCountCharityByYearREQ } from './request/bill-get-count-charity-by-year.request';
 import { BillGetRevenueStoreREQ } from './request/bill-get-revenue-store.request';
 import { BillGetTotalByStatusSellerREQ } from './request/bill-get-total-by-status-seller.request';
-import { BillGetAllByStatusUserRESP } from './response/bill-get-all-by-status-user.response';
-import { GetMyBillRESP } from './response/get-my-bill.response';
 import { BillSeller } from './schema/bill-seller.schema';
 import { BillUser } from './schema/bill-user.schema';
 
@@ -106,32 +102,34 @@ export class BillService {
       if (body.paymentMethod === PAYMENT_METHOD.CASH) {
         await this.handleBillSuccess(paymentId);
         await session.commitTransaction();
-        session.endSession();
         return BaseResponse.withMessage({}, 'Đặt hàng thành công!');
       }
       const paymentBody = { paymentId, amount: totalPrice } as PaymentDTO;
-      await session.commitTransaction();
-      session.endSession();
       const urlPayment = await this.paymentService.processPayment(paymentBody, body.paymentMethod);
+      await session.commitTransaction();
       return BaseResponse.withMessage({ urlPayment }, 'Tạo đường link thanh toán thành công!');
     } catch (err) {
       await session.abortTransaction();
+      await session.endSession();
       throw new BadRequestException(err.message);
     }
   }
 
   async calculateDiscount(numOfCoins: number, promotionId: string, carts: CartInfoDTO[], totalPrice: number) {
     const coinsValue = numOfCoins * 100; // 1 xu = 100đ
-    const storeIds = carts.map((cart) => cart.storeId);
-    const promotion = await this.promotionModel.findOne({
-      _id: promotionId,
-      storeIds: { $in: storeIds },
-      isActive: true,
-    });
-    if (!promotion) throw new BadRequestException('Khuyến mãi không hợp lệ!');
-    if (promotion.quantity === 0) throw new BadRequestException('Khuyến mãi đã hết!');
-    let promotionValue = Math.floor((totalPrice * promotion.value) / 100);
-    if (promotionValue > promotion.maxDiscountValue) promotionValue = promotion.maxDiscountValue;
+    let promotionValue = 0;
+    if (promotionId) {
+      const storeIds = carts.map((cart) => cart.storeId);
+      const promotion = await this.promotionModel.findOne({
+        _id: promotionId,
+        storeIds: { $in: storeIds },
+        isActive: true,
+      });
+      if (!promotion) throw new BadRequestException('Khuyến mãi không hợp lệ!');
+      if (promotion.quantity === 0) throw new BadRequestException('Khuyến mãi đã hết!');
+      promotionValue = Math.floor((totalPrice * promotion.value) / 100);
+      if (promotionValue > promotion.maxDiscountValue) promotionValue = promotion.maxDiscountValue;
+    }
     return coinsValue + promotionValue;
   }
 
@@ -284,31 +282,29 @@ export class BillService {
     return BaseResponse.withMessage(response, 'Lấy tổng doanh thu của từng tháng theo năm thành công!');
   }
 
-  // async getAllByStatusUser(userId: string, query: BillGetAllByStatusUserREQ) {
-  //   this.logger.log(`Get All By Status User: ${userId}`);
-  //   const condition = BillGetAllByStatusUserREQ.toQueryCondition(userId, query);
-  //   const { skip, limit } = QueryPagingHelper.queryPaging(query);
-  //   const total = await this.billModel.countDocuments(condition);
-  //   const bills = await this.billModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).limit(limit).skip(skip);
-  //   const fullData = await Promise.all(
-  //     bills.map(async (bill) => {
-  //       const productsFullInfo = await Promise.all(
-  //         bill.products.map(async (product) => {
-  //           const productFullInfo = await this.productService.findById(product.id);
-  //           const productData = {
-  //             product: productFullInfo,
-  //             subInfo: { quantity: product.quantity },
-  //           };
-  //           return productData;
-  //         }),
-  //       );
-  //       const storeInfo = await this.storeService.findById(bill.storeId);
-  //       const userInfo = await this.userService.findById(bill.userId);
-  //       return BillGetAllByStatusUserRESP.of(bill, storeInfo, productsFullInfo, userInfo);
-  //     }),
-  //   );
-  //   return PaginationResponse.ofWithTotalAndMessage(fullData, total, 'Lấy danh sách đơn hàng thành công!');
-  // }
+  async getAllByStatusUser(userId: string, query: BillGetAllByStatusUserREQ) {
+    this.logger.log(`Get All By Status User: ${userId}`);
+    const totalCount = await this.billUserModel.aggregate(BillGetAllByStatusUserREQ.toCount(userId, query));
+    const data = await this.billUserModel.aggregate(BillGetAllByStatusUserREQ.toFind(userId, query));
+    await Promise.all(
+      data.map(async (bill) => {
+        await Promise.all(
+          bill.data.map(async (data) => {
+            await Promise.all(
+              data.products.map(async (product) => {
+                const productInfo = await this.productService.findById(product.id);
+                product.avatar = productInfo.avatar;
+                product.name = productInfo.name;
+                product.oldPrice = productInfo.oldPrice;
+                product.newPrice = productInfo.newPrice;
+              }),
+            );
+          }),
+        );
+      }),
+    );
+    return PaginationResponse.ofWithTotalAndMessage(data, totalCount[0].total || 0, 'Lấy danh sách đơn hàng thành công!');
+  }
 
   // async getAllByStatusSeller(userId: string, query: BillGetAllByStatusSellerREQ) {
   //   this.logger.log(`Get All By Status Seller: ${userId}`);

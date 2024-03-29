@@ -1,5 +1,5 @@
 import { IsNotEmpty } from 'class-validator';
-import { PRODUCT_TYPE } from 'shared/enums/bill.enum';
+import { BILL_STATUS, PRODUCT_TYPE } from 'shared/enums/bill.enum';
 
 export class BillGetCountCharityByYearREQ {
   @IsNotEmpty()
@@ -10,7 +10,7 @@ export class BillGetCountCharityByYearREQ {
       {
         $match: {
           storeId: storeId.toString(),
-          status: 'DELIVERED',
+          status: BILL_STATUS.DELIVERED,
           createdAt: { $gte: new Date(year, 0, 1), $lt: new Date(year + 1, 0, 1) },
         },
       },
@@ -35,7 +35,7 @@ export class BillGetCountCharityByYearREQ {
     return [
       {
         $match: {
-          status: 'DELIVERED',
+          status: BILL_STATUS.DELIVERED,
           storeId: storeId.toString(),
         },
       },
