@@ -1,8 +1,7 @@
-import { Body, Controller, Get, Param, Post, Put, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { Roles } from 'domains/auth/decorators/auth-role.decorator';
 import { AuthJwtATGuard } from 'domains/auth/guards/auth-jwt-at.guard';
 import { AuthRoleGuard } from 'domains/auth/guards/auth-role.guard';
-import { Response } from 'express';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BillService } from './bill.service';
 import { BillCreateREQ } from './request/bill-create.request';
@@ -64,7 +63,7 @@ export class BillController {
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Get('seller')
   getAllByStatusSeller(@Req() req, @Query() query: BillGetAllByStatusSellerREQ) {
-    return this.billService.getAllByStatusSeller(req.user._id, query);
+    // return this.billService.getAllByStatusSeller(req.user._id, query);
   }
 
   @Roles(ROLE_NAME.ADMIN)
@@ -85,7 +84,7 @@ export class BillController {
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Get('user/:id')
   getMyBill(@Req() req, @Param('id') id: string) {
-    return this.billService.getMyBill(req.user._id, id);
+    // return this.billService.getMyBill(req.user._id, id);
   }
 
   @Roles(ROLE_NAME.USER)
@@ -99,7 +98,7 @@ export class BillController {
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Put('user/:id')
   updateStatusBillUser(@Param('id') id: string, @Query('status') status: string) {
-    return this.billService.updateStatusBillUser(id, status);
+    // return this.billService.updateStatusBillUser(id, status);
   }
 
   @Roles(ROLE_NAME.SELLER)

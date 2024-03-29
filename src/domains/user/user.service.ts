@@ -10,7 +10,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { SALT_ROUNDS } from 'app.config';
 import * as bcrypt from 'bcrypt';
 import { BillService } from 'domains/bill/bill.service';
-import { Bill } from 'domains/bill/schema/bill.schema';
 import { Store } from 'domains/store/schema/store.schema';
 import { Model } from 'mongoose';
 import { SOCIAL_APP } from 'shared/constants/user.constant';
@@ -27,6 +26,7 @@ import { UserGetPagingREQ } from './request/user-get-paging.resquest';
 import { UserUpdateREQ } from './request/user-update.request';
 import { UserCreateRESP } from './response/user-create.response';
 import { User } from './schema/user.schema';
+import { BillUser } from 'domains/bill/schema/bill-user.schema';
 
 @Injectable()
 export class UserService {
@@ -38,8 +38,8 @@ export class UserService {
     @InjectModel(Store.name)
     private readonly storeModel: Model<Store>,
 
-    @InjectModel(Bill.name)
-    private readonly billModel: Model<Bill>,
+    @InjectModel(BillUser.name)
+    private readonly billUserModel: Model<BillUser>,
     private readonly billService: BillService,
   ) {}
 
@@ -117,10 +117,10 @@ export class UserService {
     this.logger.log(`Get Detail: ${id}`);
     const user = await this.findById(id);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng này!');
-    const billsOfUser = await this.billModel.find({ userId: id }).lean();
+    const billsOfUser = await this.billUserModel.find({ userId: id }).lean();
     const totalBills = billsOfUser.length;
-    const totalPricePaid = billsOfUser.reduce((total, bill) => total + bill.totalPrice, 0);
-    const totalReceived = billsOfUser.filter((bill) => bill.totalPrice === 0).length;
+    const totalPricePaid = billsOfUser.reduce((total, bill) => total + bill.totalPayment, 0);
+    const totalReceived = billsOfUser.filter((bill) => bill.totalPayment === 0).length;
     const data = { ...user, totalBills, totalPricePaid, totalReceived };
     return BaseResponse.withMessage(data, 'Lấy thông tin thành công!');
   }
@@ -173,10 +173,10 @@ export class UserService {
       users.map(async (item) => {
         const user = await this.userModel.findById(item._id).lean();
         if (!user) return;
-        const billsOfUser = await this.billModel.find({ userId: user._id }).lean();
+        const billsOfUser = await this.billUserModel.find({ userId: user._id }).lean();
         const totalBills = billsOfUser.length;
-        const totalPricePaid = billsOfUser.reduce((total, bill) => total + bill.totalPrice, 0);
-        const totalReceived = billsOfUser.filter((bill) => bill.totalPrice === 0).length;
+        const totalPricePaid = billsOfUser.reduce((total, bill) => total + bill.totalPayment, 0);
+        const totalReceived = billsOfUser.filter((bill) => bill.totalPayment === 0).length;
         return { ...user, totalBills, totalPricePaid, totalReceived };
       }),
     );

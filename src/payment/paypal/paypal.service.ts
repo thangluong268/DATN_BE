@@ -1,6 +1,6 @@
 import { HOST_URL, PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET } from 'app.config';
 import axios, { Axios, AxiosHeaders } from 'axios';
-import * as CC from 'currency-converter-lt';
+import { Convert } from 'easy-currencies';
 import { PaymentDTO } from 'payment/dto/payment.dto';
 import { PaymentOrderRto } from './paypal.route';
 
@@ -30,10 +30,7 @@ export class PaypalPaymentService {
     headers.set('Content-Type', 'application/json');
     headers.set('Authorization', `Bearer ${accessToken}`);
     headers.set('Paypal-Request-Id', bill.paymentId);
-
-    const currencyConverter = new CC();
-    const amountUSD = await currencyConverter.from('VND').to('USD').amount(bill.amount).convert();
-
+    const amountUSD = Number((await Convert(bill.amount).from('VND').to('USD')).toFixed(2));
     const body = {
       intent: 'CAPTURE',
       purchase_units: [
@@ -60,6 +57,8 @@ export class PaypalPaymentService {
         },
       },
     };
+
+    console.log(body);
 
     const { data } = await this.axios.post(url, body, { headers });
     const { urlCheckout } = new PaymentOrderRto(data);

@@ -4,11 +4,16 @@ export class BillGetTotalByStatusSellerREQ {
   @IsOptional()
   year: number;
 
-  static toQueryCondition(storeId: string, status: string, year: number) {
-    const query: any = { storeId, status };
-    if (year) {
-      query.$expr = { $eq: [{ $year: '$createdAt' }, { $year: new Date(year) }] };
-    }
-    return { ...query };
+  static toQueryCondition(storeId: string, year: number) {
+    return [
+      {
+        $match: {
+          storeId,
+          ...(year ? { createdAt: { $expr: { $eq: [{ $year: '$createdAt' }, { $year: new Date(year) }] } } } : {}),
+        },
+      },
+      { $group: { _id: '$status', count: { $sum: 1 } } },
+      { $project: { _id: 0, status: '$_id', count: 1 } },
+    ];
   }
 }
