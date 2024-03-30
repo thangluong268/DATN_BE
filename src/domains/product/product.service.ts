@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { BillService } from 'domains/bill/bill.service';
+import { BillUser } from 'domains/bill/schema/bill-user.schema';
 import { EvaluationService } from 'domains/evaluation/evaluation.service';
 import { Evaluation } from 'domains/evaluation/schema/evaluation.schema';
 import { Feedback } from 'domains/feedback/schema/feedback.schema';
@@ -35,7 +36,6 @@ import { ProductGetRandomREQ } from './request/product-get-random.request';
 import { ProductsGetREQ } from './request/product-get.request';
 import { ProductUpdateREQ } from './request/product-update.request';
 import { Product } from './schema/product.schema';
-import { BillUser } from 'domains/bill/schema/bill-user.schema';
 
 @Injectable()
 export class ProductService {
@@ -341,39 +341,19 @@ export class ProductService {
 
   async getProductsWithDetailByManager() {
     this.logger.log(`Get Products With Detail By Manager`);
-    const products = await this.productModel.find().lean().limit(30);
+    const products = await this.productModel.find().sort({ createdAt: -1 }).limit(100).lean();
     const data = await Promise.all(
       products.map(async (item) => {
-        const product = await this.productModel.findById(item._id, {}, { lean: true });
-        if (!product) return;
-        const evaluation = await this.evaluationModel.findOne({ productId: item._id }).lean();
+        const productId = item._id.toString();
+        const product = await this.productModel.findById(productId).lean();
+        const evaluation = await this.evaluationModel.findOne({ productId }).lean();
         if (!evaluation) return;
-        const total = evaluation.emojis.length;
-        const emoji = { Haha: 0, Love: 0, Wow: 0, Sad: 0, Angry: 0, like: 0 };
+        const emoji = { total: evaluation.emojis.length, Haha: 0, Love: 0, Wow: 0, Sad: 0, Angry: 0, like: 0 };
         evaluation.emojis.forEach((e) => {
-          switch (e.name) {
-            case 'Haha':
-              emoji.Haha++;
-              break;
-            case 'Love':
-              emoji.Love++;
-              break;
-            case 'Wow':
-              emoji.Wow++;
-              break;
-            case 'Sad':
-              emoji.Sad++;
-              break;
-            case 'Angry':
-              emoji.Angry++;
-              break;
-            case 'like':
-              emoji.like++;
-              break;
-          }
+          emoji[e.name]++;
         });
         const emojis = {
-          total,
+          total: emoji.total,
           haha: emoji.Haha,
           love: emoji.Love,
           wow: emoji.Wow,
@@ -381,25 +361,22 @@ export class ProductService {
           angry: emoji.Angry,
           like: emoji.like,
         };
-        const feedbacks = await this.feedbackModel.find({ productId: item._id }).sort({ createdAt: -1 }).lean();
-        const star = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-        const starPercent = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-        let averageStar = 0;
-        if (feedbacks.length > 0) {
-          feedbacks.forEach((feedback) => {
-            star[feedback.star]++;
-          });
-          Object.keys(star).forEach((key) => {
-            starPercent[key] = Math.round((star[key] / feedbacks.length) * 100);
-          });
-          Object.keys(star).forEach((key) => {
-            averageStar += star[key] * Number(key);
-          });
-          averageStar = Number((averageStar / feedbacks.length).toFixed(2));
+        const feedbacks = await this.feedbackModel.find({ productId }).sort({ createdAt: -1 }).lean();
+        const totalFeedback = feedbacks.length;
+        const star = feedbacks.reduce(
+          (acc, feedback) => {
+            acc[feedback.star]++;
+            return acc;
+          },
+          { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+        );
+        const starPercent = {};
+        for (const key in star) {
+          starPercent[key] = Math.round((star[key] / totalFeedback) * 100);
         }
-        const totalFeedback = await this.feedbackModel.countDocuments({ productId: item._id });
+        const totalStars = Object.keys(star).reduce((acc, key) => acc + star[key] * Number(key), 0);
+        const averageStar = totalFeedback > 0 ? Number((totalStars / totalFeedback).toFixed(2)) : 0;
         const store = await this.storeService.findById(item.storeId);
-        if (!store) return;
         const category = await this.categoryService.findOne(product.categoryId);
         const quantitySold = await this.billService.countProductDelivered(item._id, PRODUCT_TYPE.SELL, BILL_STATUS.DELIVERED);
         const quantityGive = await this.billService.countProductDelivered(item._id, PRODUCT_TYPE.GIVE, BILL_STATUS.DELIVERED);
@@ -435,40 +412,20 @@ export class ProductService {
     );
   }
 
-  async getProductByManager(id: string) {
-    this.logger.log(`Get Product By Manager: ${id}`);
-    const product = await this.productModel.findById(id).lean();
+  async getProductByManager(productId: string) {
+    this.logger.log(`Get Product By Manager: ${productId}`);
+    const product = await this.productModel.findById(productId).lean();
     if (!product) throw new NotFoundException('Không tìm thấy sản phẩm này!');
     const type = product.newPrice === 0 ? PRODUCT_TYPE.GIVE : PRODUCT_TYPE.SELL;
-    const quantityDelivered = await this.billService.countProductDelivered(id, type, BILL_STATUS.DELIVERED);
-    const evaluation = await this.evaluationModel.findOne({ productId: id }).lean();
+    const quantityDelivered = await this.billService.countProductDelivered(productId, type, BILL_STATUS.DELIVERED);
+    const evaluation = await this.evaluationModel.findOne({ productId }).lean();
     if (!evaluation) throw new NotFoundException('Không tìm thấy đánh giá của sản phẩm này!');
-    const total = evaluation.emojis.length;
-    const emoji = { Haha: 0, Love: 0, Wow: 0, Sad: 0, Angry: 0, like: 0 };
+    const emoji = { total: evaluation.emojis.length, Haha: 0, Love: 0, Wow: 0, Sad: 0, Angry: 0, like: 0 };
     evaluation.emojis.forEach((e) => {
-      switch (e.name) {
-        case 'Haha':
-          emoji.Haha++;
-          break;
-        case 'Love':
-          emoji.Love++;
-          break;
-        case 'Wow':
-          emoji.Wow++;
-          break;
-        case 'Sad':
-          emoji.Sad++;
-          break;
-        case 'Angry':
-          emoji.Angry++;
-          break;
-        case 'like':
-          emoji.like++;
-          break;
-      }
+      emoji[e.name]++;
     });
     const emojis = {
-      total,
+      total: emoji.total,
       haha: emoji.Haha,
       love: emoji.Love,
       wow: emoji.Wow,
@@ -476,21 +433,21 @@ export class ProductService {
       angry: emoji.Angry,
       like: emoji.like,
     };
-    const feedbacks = await this.feedbackModel.find({ productId: id }).sort({ createdAt: -1 }).lean();
-    const star = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    const starPercent = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    let averageStar = 0;
-    feedbacks.forEach((feedback) => {
-      star[feedback.star]++;
-    });
-    Object.keys(star).forEach((key) => {
-      starPercent[key] = Math.round((star[key] / feedbacks.length) * 100);
-    });
-    Object.keys(star).forEach((key) => {
-      averageStar += star[key] * Number(key);
-    });
-    averageStar = Number((averageStar / feedbacks.length).toFixed(2));
-    const totalFeedback = await this.feedbackModel.countDocuments({ productId: id });
+    const feedbacks = await this.feedbackModel.find({ productId }).sort({ createdAt: -1 }).lean();
+    const totalFeedback = feedbacks.length;
+    const star = feedbacks.reduce(
+      (acc, feedback) => {
+        acc[feedback.star]++;
+        return acc;
+      },
+      { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+    );
+    const starPercent = {};
+    for (const key in star) {
+      starPercent[key] = Math.round((star[key] / totalFeedback) * 100);
+    }
+    const totalStars = Object.keys(star).reduce((acc, key) => acc + star[key] * Number(key), 0);
+    const averageStar = totalFeedback > 0 ? Number((totalStars / totalFeedback).toFixed(2)) : 0;
     return BaseResponse.withMessage(
       { product, quantityDelivered, emojis, starPercent, averageStar, totalFeedback },
       'Lấy thông tin sản phẩm bởi Manager thành công!',
@@ -532,7 +489,7 @@ export class ProductService {
     if (isPurchased) throw new BadRequestException('Sản phẩm này đã được mua, không thể xóa!');
     if (!(userRole.includes(ROLE_NAME.MANAGER) || userRole.includes(ROLE_NAME.ADMIN))) {
       const store = await this.storeService.findByUserId(userId);
-      if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
+      if (!store) throw new NotFoundException('Xóa sản phẩm thất bại!');
       if (product.storeId.toString() !== store._id.toString())
         throw new ForbiddenException('Bạn không có quyền xóa sản phẩm này!');
     }
