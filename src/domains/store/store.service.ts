@@ -1,6 +1,7 @@
 import { ConflictException, Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { BillService } from 'domains/bill/bill.service';
+import { BillSeller } from 'domains/bill/schema/bill-seller.schema';
 import { Feedback } from 'domains/feedback/schema/feedback.schema';
 import { Product } from 'domains/product/schema/product.schema';
 import { Model } from 'mongoose';
@@ -18,7 +19,6 @@ import { GetStoresByAdminREQ } from './request/store-get-all-admin.request';
 import { StoreGetHaveMostProductREQ } from './request/store-get-have-most-product.request';
 import { StoreUpdateREQ } from './request/store-update.request';
 import { Store } from './schema/store.schema';
-import { BillSeller } from 'domains/bill/schema/bill-seller.schema';
 
 @Injectable()
 export class StoreService {
@@ -75,28 +75,15 @@ export class StoreService {
     this.logger.log(`Get Store Reputation: ${storeId}`);
     const store = await this.storeModel.findById(storeId, {}, { lean: true });
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
-    const products = await this.productModel.find({ storeId }, {}, { lean: true });
+    const productIds = (await this.productModel.find({ storeId }, { _id: 1 }).lean()).map((item) => item._id.toString());
+    const feedbacks = await this.feedbackModel.find({ productId: { $in: productIds } }, { star: 1 }).lean();
     let totalFeedback = 0;
-    let totalProductsHasFeedback = 0;
     let totalAverageStar = 0;
-    let averageStar = 0;
-    products.forEach(async (product) => {
-      const feedbacks = await this.feedbackModel.find({ productId: product._id }, {}, { lean: true }).sort({ createdAt: -1 });
-      if (feedbacks.length === 0) return;
-      totalFeedback += feedbacks.length;
-      const star = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-      feedbacks.forEach((feedback) => {
-        star[feedback.star]++;
-      });
-      let averageStar = 0;
-      Object.keys(star).forEach((key) => {
-        averageStar += star[key] * Number(key);
-      });
-      averageStar = Number((averageStar / feedbacks.length).toFixed(2));
-      totalAverageStar += averageStar;
-      totalProductsHasFeedback++;
-    });
-    if (totalProductsHasFeedback !== 0) averageStar = Number((totalAverageStar / totalProductsHasFeedback).toFixed(2));
+    for (const feedback of feedbacks) {
+      totalFeedback++;
+      totalAverageStar += feedback.star;
+    }
+    const averageStarOfStore = totalFeedback > 0 ? Number((totalAverageStar / totalFeedback).toFixed(2)) : 0;
     const totalFollow = await this.userModel.countDocuments({ followStores: storeId });
     let isFollow = false;
     if (userReq) {
@@ -104,7 +91,7 @@ export class StoreService {
       isFollow = user.followStores.includes(storeId);
     }
     return BaseResponse.withMessage(
-      { averageStar, totalFeedback, totalFollow, isFollow },
+      { averageStar: averageStarOfStore, totalFeedback, totalFollow, isFollow },
       'Lấy thông tin độ uy tín cửa hàng thành công!',
     );
   }
@@ -126,70 +113,44 @@ export class StoreService {
     this.logger.log(`Get Store By Manager: ${storeId}`);
     const store = await this.storeModel.findById(storeId).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
-    const products = await this.productModel.find({ storeId }).lean();
+    const productIds = (await this.productModel.find({ storeId }, { _id: 1 }).lean()).map((item) => item._id.toString());
+    const feedbacks = await this.feedbackModel.find({ productId: { $in: productIds } }, { star: 1 }).lean();
     let totalFeedback = 0;
-    let totalProductsHasFeedback = 0;
     let totalAverageStar = 0;
-    let averageStar = 0;
-    for (const product of products) {
-      const feedbacks = await this.feedbackModel.find({ productId: product._id }).sort({ createdAt: -1 });
-      if (feedbacks.length === 0) continue;
-      totalFeedback += feedbacks.length;
-      const star = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-      feedbacks.forEach((feedback) => {
-        star[feedback.star]++;
-      });
-      let averageStar = 0;
-      Object.keys(star).forEach((key) => {
-        averageStar += star[key] * Number(key);
-      });
-      averageStar = Number((averageStar / feedbacks.length).toFixed(2));
-      totalAverageStar += averageStar;
-      totalProductsHasFeedback++;
+    for (const feedback of feedbacks) {
+      totalFeedback++;
+      totalAverageStar += feedback.star;
     }
-    if (totalProductsHasFeedback !== 0) averageStar = Number((totalAverageStar / totalProductsHasFeedback).toFixed(2));
+    const averageStarOfStore = totalFeedback > 0 ? Number((totalAverageStar / totalFeedback).toFixed(2)) : 0;
     const totalFollow = await this.userModel.countDocuments({ followStores: storeId });
     const totalRevenue = await this.billService.calculateRevenueAllTimeByStoreId(storeId);
     const totalDelivered = await this.billSellerModel.countDocuments({ storeId, status: BILL_STATUS.DELIVERED });
     return BaseResponse.withMessage(
-      { store, averageStar, totalFeedback, totalFollow, totalRevenue, totalDelivered },
+      { store, averageStar: averageStarOfStore, totalFeedback, totalFollow, totalRevenue, totalDelivered },
       'Lấy thông tin cửa hàng thành công!',
     );
   }
 
   async getStoresByManager() {
     this.logger.log(`Get Stores By Manager`);
-    const stores = await this.storeModel.find().limit(50).lean();
+    const stores = await this.storeModel.find().lean();
     const data = await Promise.all(
       stores.map(async (item) => {
-        const store = await this.storeModel.findById(item._id).lean();
-        if (!store) return;
-        const products = await this.productModel.find({ storeId: item._id }).lean();
+        const storeId = item._id.toString();
+        const store = await this.storeModel.findById(storeId).lean();
+        const productIds = (await this.productModel.find({ storeId }, { _id: 1 }).lean()).map((item) => item._id.toString());
+        const feedbacks = await this.feedbackModel.find({ productId: { $in: productIds } }, { star: 1 }).lean();
         let totalFeedback = 0;
-        let totalProductsHasFeedback = 0;
         let totalAverageStar = 0;
-        let averageStar = 0;
-        for (const product of products) {
-          const feedbacks = await this.feedbackModel.find({ productId: product._id }).sort({ createdAt: -1 }).lean();
-          if (feedbacks.length === 0) continue;
-          totalFeedback += feedbacks.length;
-          const star = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-          feedbacks.forEach((feedback) => {
-            star[feedback.star]++;
-          });
-          let averageStar = 0;
-          Object.keys(star).forEach((key) => {
-            averageStar += star[key] * Number(key);
-          });
-          averageStar = Number((averageStar / feedbacks.length).toFixed(2));
-          totalAverageStar += averageStar;
-          totalProductsHasFeedback++;
+        for (const feedback of feedbacks) {
+          totalFeedback++;
+          totalAverageStar += feedback.star;
         }
-        if (totalProductsHasFeedback !== 0) averageStar = Number((totalAverageStar / totalProductsHasFeedback).toFixed(2));
-        const totalFollow = await this.userModel.countDocuments({ followStores: item._id });
-        const totalRevenue = await this.billService.calculateRevenueAllTimeByStoreId(item._id);
-        const totalDelivered = await this.billSellerModel.countDocuments({ storeId: item._id, status: BILL_STATUS.DELIVERED });
-        return { store, averageStar, totalFeedback, totalFollow, totalRevenue, totalDelivered };
+        const averageStarOfStore = totalFeedback > 0 ? Number((totalAverageStar / totalFeedback).toFixed(2)) : 0;
+        const totalFollow = await this.userModel.countDocuments({ followStores: storeId });
+        const totalRevenue = await this.billService.calculateRevenueAllTimeByStoreId(storeId);
+        const totalDelivered = await this.billSellerModel.countDocuments({ storeId, status: BILL_STATUS.DELIVERED });
+        return { store, averageStar: averageStarOfStore, totalFeedback, totalFollow, totalRevenue, totalDelivered };
       }),
     );
     return BaseResponse.withMessage(data, 'Lấy danh sách cửa hàng thành công!');
@@ -199,33 +160,20 @@ export class StoreService {
     this.logger.log(`Get Store By Id: ${storeId}`);
     const store = await this.storeModel.findOne({ _id: storeId, status: true }).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
-    const products = await this.productModel.find({ storeId }).lean();
+    const productIds = (await this.productModel.find({ storeId }, { _id: 1 }).lean()).map((item) => item._id.toString());
+    const feedbacks = await this.feedbackModel.find({ productId: { $in: productIds } }, { star: 1 }).lean();
     let totalFeedback = 0;
-    let totalProductsHasFeedback = 0;
     let totalAverageStar = 0;
-    let averageStar = 0;
-    for (const product of products) {
-      const feedbacks = await this.feedbackModel.find({ productId: product._id }).sort({ createdAt: -1 }).lean();
-      if (feedbacks.length === 0) continue;
-      totalFeedback += feedbacks.length;
-      const star = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-      feedbacks.forEach((feedback) => {
-        star[feedback.star]++;
-      });
-      let averageStar = 0;
-      Object.keys(star).forEach((key) => {
-        averageStar += star[key] * Number(key);
-      });
-      averageStar = Number((averageStar / feedbacks.length).toFixed(2));
-      totalAverageStar += averageStar;
-      totalProductsHasFeedback++;
+    for (const feedback of feedbacks) {
+      totalFeedback++;
+      totalAverageStar += feedback.star;
     }
-    if (totalProductsHasFeedback !== 0) averageStar = Number((totalAverageStar / totalProductsHasFeedback).toFixed(2));
+    const averageStarOfStore = totalFeedback > 0 ? Number((totalAverageStar / totalFeedback).toFixed(2)) : 0;
     const totalFollow = await this.userModel.countDocuments({ followStores: storeId });
     const totalRevenue = await this.billService.calculateRevenueAllTimeByStoreId(storeId);
-    const totalDelivered = await this.billSellerModel.countDocuments({ storeId: storeId, status: BILL_STATUS.DELIVERED });
+    const totalDelivered = await this.billSellerModel.countDocuments({ storeId, status: BILL_STATUS.DELIVERED });
     return BaseResponse.withMessage(
-      { store, averageStar, totalFeedback, totalFollow, totalRevenue, totalDelivered },
+      { store, averageStar: averageStarOfStore, totalFeedback, totalFollow, totalRevenue, totalDelivered },
       'Lấy thông tin cửa hàng thành công!',
     );
   }

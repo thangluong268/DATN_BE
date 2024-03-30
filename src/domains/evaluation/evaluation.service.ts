@@ -76,29 +76,13 @@ export class EvaluationService {
     const evaluation = await this.evaluationModel.findOne({ productId });
     if (!evaluation) throw new NotFoundException('Không tìm thấy sản phẩm này!');
     const total = evaluation.emojis.length;
-    const emoji = { Haha: 0, Love: 0, Wow: 0, Sad: 0, Angry: 0, like: 0 };
-    evaluation.emojis.forEach((e) => {
-      switch (e.name) {
-        case 'Haha':
-          emoji.Haha++;
-          break;
-        case 'Love':
-          emoji.Love++;
-          break;
-        case 'Wow':
-          emoji.Wow++;
-          break;
-        case 'Sad':
-          emoji.Sad++;
-          break;
-        case 'Angry':
-          emoji.Angry++;
-          break;
-        case 'like':
-          emoji.like++;
-          break;
-      }
-    });
+    const emoji = evaluation.emojis.reduce(
+      (acc, e) => {
+        acc[e.name]++;
+        return acc;
+      },
+      { Haha: 0, Love: 0, Wow: 0, Sad: 0, Angry: 0, like: 0 },
+    );
     let isReaction = false;
     let isPurchased = false;
     if (user) {
