@@ -15,7 +15,6 @@ export class PayPalController {
     const orderId = req.query.token;
     const data = await this.paypalPaymentService.capturePayPalPayment(orderId);
     const paymentId = data.purchase_units[0].reference_id;
-    console.log(paymentId);
     if (data.status !== 'COMPLETED') {
       await this.billService.handleBillFail(paymentId);
       res.redirect(`${HOST_URL}/payment/fail`);

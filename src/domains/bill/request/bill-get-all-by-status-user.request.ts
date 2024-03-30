@@ -62,13 +62,7 @@ export class BillGetAllByStatusUserREQ extends PaginationREQ {
                   '$$d',
                   {
                     $arrayElemAt: [
-                      {
-                        $filter: {
-                          input: '$billsellers',
-                          as: 'bs',
-                          cond: { $eq: ['$$bs.storeId', '$$d.storeId'] },
-                        },
-                      },
+                      { $filter: { input: '$billsellers', as: 'bs', cond: { $eq: ['$$bs.storeId', '$$d.storeId'] } } },
                       0,
                     ],
                   },
@@ -92,7 +86,7 @@ export class BillGetAllByStatusUserREQ extends PaginationREQ {
       { $unwind: '$promotion' },
       { $unset: 'billsellers' },
       { $unset: 'stores' },
-      { $project: { _id: 0, userId: 0, promotionId: 0, paymentId: 0, updatedAt: 0 } },
+      { $project: { _id: 0, userId: 0, promotionId: 0, paymentId: 0 } },
       { $match: { data: { $elemMatch: { status: query.status } } } },
     ];
   }
@@ -103,6 +97,11 @@ export class BillGetAllByStatusUserREQ extends PaginationREQ {
 
   static toFind(userId: string, query: BillGetAllByStatusUserREQ) {
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
-    return [...BillGetAllByStatusUserREQ.toPipeline(userId, query), { $skip: skip }, { $limit: limit }];
+    return [
+      ...BillGetAllByStatusUserREQ.toPipeline(userId, query),
+      { $sort: { updatedAt: -1 } },
+      { $skip: skip },
+      { $limit: limit },
+    ];
   }
 }
