@@ -6,7 +6,7 @@ import * as compression from 'compression';
 import * as cookieParser from 'cookie-parser';
 import { cleanEnv, port, str } from 'envalid';
 import helmet from 'helmet';
-
+import { LoggingInterceptor } from 'interceptors/logging.interceptor';
 import { APP_SECRET, CREDENTIALS, HOST, NODE_ENV, ORIGIN, PORT } from './app.config';
 import { AppModule } from './app.module';
 import { SocketIoAdapter } from './domains/conversations/conversation.adapter';
@@ -17,7 +17,7 @@ async function bootstrap() {
   try {
     validateEnv();
     const app = await NestFactory.create(AppModule, {
-      logger: ['error', 'warn', 'log', 'verbose'],
+      logger: ['error', 'warn', 'log', 'verbose', 'debug'],
       cors: {
         origin: ORIGIN,
         credentials: CREDENTIALS,
@@ -37,6 +37,7 @@ async function bootstrap() {
         parameterLimit: 50000,
       }),
     );
+    app.useGlobalInterceptors(new LoggingInterceptor());
     app.useGlobalPipes(ValidationCustomPipe.compactVersion());
     app.useGlobalFilters(new HttpExceptionMiddleware());
     app.setGlobalPrefix('api');

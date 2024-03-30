@@ -59,9 +59,6 @@ export class VNPayController {
     vnp_Params['vnp_SecureHash'] = signed;
     let vnpUrl = VN_PAY_PAYMENT_URL;
     vnpUrl += '?' + querystring.stringify(vnp_Params, { encode: false });
-
-    console.log(vnpUrl);
-    // res.redirect(302, vnpUrl);
     return vnpUrl;
   }
 
@@ -82,7 +79,6 @@ export class VNPayController {
     const paymentId = vnp_Params['vnp_TxnRef'];
     if (secureHash === signed) {
       const code = vnp_Params['vnp_ResponseCode'];
-      console.log(paymentId);
       if (code !== '00') {
         await this.billService.handleBillFail(paymentId);
         res.redirect(`${HOST_URL}/payment/fail`);

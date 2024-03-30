@@ -31,6 +31,7 @@ export class PaypalPaymentService {
     headers.set('Authorization', `Bearer ${accessToken}`);
     headers.set('Paypal-Request-Id', bill.paymentId);
     const amountUSD = Number((await Convert(bill.amount).from('VND').to('USD')).toFixed(2));
+    // const amountUSD = await Convert(bill.amount).from('VND').to('USD');
     const body = {
       intent: 'CAPTURE',
       purchase_units: [
@@ -58,11 +59,8 @@ export class PaypalPaymentService {
       },
     };
 
-    console.log(body);
-
     const { data } = await this.axios.post(url, body, { headers });
     const { urlCheckout } = new PaymentOrderRto(data);
-    console.log(urlCheckout);
     return urlCheckout;
   }
 
