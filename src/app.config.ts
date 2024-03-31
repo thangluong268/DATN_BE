@@ -50,4 +50,5 @@ export const {
   REDIS_PORT,
   REDIS_USERNAME,
   REDIS_PASSWORD,
+  URL_FE,
 } = process.env;

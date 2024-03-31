@@ -6,11 +6,11 @@ export class CountTotalByStatusUserRESP {
   status: BILL_STATUS;
   count: number;
 
-  static of(data: any): CountTotalByStatusUserRESP {
+  static of(status: string, data: any): CountTotalByStatusUserRESP {
     return {
-      title: BILL_STATUS_TRANSITION[data.status],
-      status: data.status,
-      count: data.count,
+      title: BILL_STATUS_TRANSITION[status],
+      status: status as BILL_STATUS,
+      count: data.find((item) => item.status === status)?.count || 0,
     };
   }
 }

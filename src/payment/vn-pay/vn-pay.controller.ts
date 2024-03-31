@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Req, Res } from '@nestjs/common';
 import {
   HOST_URL,
+  URL_FE,
   VN_PAY_COMMAND,
   VN_PAY_CURRENCY_VND,
   VN_PAY_LOCALE_VN,
@@ -81,14 +82,14 @@ export class VNPayController {
       const code = vnp_Params['vnp_ResponseCode'];
       if (code !== '00') {
         await this.billService.handleBillFail(paymentId);
-        res.redirect(`${HOST_URL}/payment/fail`);
+        res.redirect(`${URL_FE}/error`);
       } else {
         await this.billService.handleBillSuccess(paymentId);
-        res.redirect(`${HOST_URL}/payment/success`);
+        res.redirect(`${URL_FE}/user/invoice`);
       }
     } else {
       await this.billService.handleBillFail(paymentId);
-      res.redirect(`${HOST_URL}/payment/fail`);
+      res.redirect(`${URL_FE}/error`);
     }
   }
 }

@@ -102,9 +102,9 @@ export class BillService {
       );
       if (totalPrice !== body.totalPayment) throw new BadRequestException('Tổng tiền không hợp lệ!');
       if (body.paymentMethod === PAYMENT_METHOD.CASH) {
-        await this.handleBillSuccess(paymentId);
         await session.commitTransaction();
-        return BaseResponse.withMessage({}, 'Đặt hàng thành công!');
+        await this.handleBillSuccess(paymentId);
+        return BaseResponse.withMessage({}, 'Thanh toán thành công!');
       }
       const paymentBody = { paymentId, amount: totalPrice } as PaymentDTO;
       const urlPayment = await this.paymentService.processPayment(paymentBody, body.paymentMethod);
@@ -183,7 +183,8 @@ export class BillService {
       { $project: { _id: 0, status: '$_id', count: 1 } },
     ]);
     return BaseResponse.withMessage(
-      data.map((item) => CountTotalByStatusUserRESP.of(item)),
+      Object.keys(BILL_STATUS).map((status) => CountTotalByStatusUserRESP.of(status, data)),
+      // data.map((item) => CountTotalByStatusUserRESP.of(item)),
       'Lấy tổng số lượng các đơn theo trạng thái thành công!',
     );
   }
@@ -289,7 +290,7 @@ export class BillService {
 
   async getAllByStatusUser(userId: string, query: BillGetAllByStatusUserREQ) {
     this.logger.log(`Get All By Status User: ${userId}`);
-    const totalCount = await this.billUserModel.aggregate(BillGetAllByStatusUserREQ.toCount(userId, query));
+    const totalCount = await this.billUserModel.aggregate(BillGetAllByStatusUserREQ.toCount(userId, query) as any);
     const data = await this.billUserModel.aggregate(BillGetAllByStatusUserREQ.toFind(userId, query) as any);
     await Promise.all(
       data.map(async (bill) => {
