@@ -86,7 +86,7 @@ export class BillGetAllByStatusUserREQ extends PaginationREQ {
       { $unwind: '$promotion' },
       { $unset: 'billsellers' },
       { $unset: 'stores' },
-      { $project: { _id: 0, userId: 0, promotionId: 0, paymentId: 0 } },
+      { $project: { promotionId: 0, paymentId: 0 } },
       { $match: { data: { $elemMatch: { status: query.status } } } },
     ];
   }
