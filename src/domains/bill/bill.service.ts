@@ -29,7 +29,7 @@ import { BillGetCalculateTotalByYearREQ } from './request/bill-get-calculate-tot
 import { BillGetCountCharityByYearREQ } from './request/bill-get-count-charity-by-year.request';
 import { BillGetRevenueStoreREQ } from './request/bill-get-revenue-store.request';
 import { BillGetTotalByStatusSellerREQ } from './request/bill-get-total-by-status-seller.request';
-import { CountTotalByStatusUserRESP } from './response/bill-count-total-by-status-user.response';
+import { CountTotalByStatusRESP } from './response/bill-count-total-by-status.response';
 import { BillSeller } from './schema/bill-seller.schema';
 import { BillUser } from './schema/bill-user.schema';
 
@@ -172,7 +172,10 @@ export class BillService {
     const store = await this.storeService.findByUserId(userId);
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const data = await this.billSellerModel.aggregate(BillGetTotalByStatusSellerREQ.toQueryCondition(store._id, year));
-    return BaseResponse.withMessage(data, 'Lấy tổng số lượng các đơn theo trạng thái thành công!');
+    return BaseResponse.withMessage(
+      Object.keys(BILL_STATUS).map((status) => CountTotalByStatusRESP.of(status, data)),
+      'Lấy tổng số lượng các đơn theo trạng thái thành công!',
+    );
   }
 
   async countTotalByStatusUser(userId: string) {
@@ -183,8 +186,7 @@ export class BillService {
       { $project: { _id: 0, status: '$_id', count: 1 } },
     ]);
     return BaseResponse.withMessage(
-      Object.keys(BILL_STATUS).map((status) => CountTotalByStatusUserRESP.of(status, data)),
-      // data.map((item) => CountTotalByStatusUserRESP.of(item)),
+      Object.keys(BILL_STATUS).map((status) => CountTotalByStatusRESP.of(status, data)),
       'Lấy tổng số lượng các đơn theo trạng thái thành công!',
     );
   }

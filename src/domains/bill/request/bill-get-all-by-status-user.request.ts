@@ -10,19 +10,21 @@ export class BillGetAllByStatusUserREQ extends PaginationREQ {
   static toPipeline(userId: string, query: BillGetAllByStatusUserREQ) {
     return [
       { $match: { userId: userId.toString() } },
-      { $addFields: { updateDate: { $toDate: '$updatedAt' } } },
       {
         $lookup: {
           from: 'billsellers',
-          localField: 'paymentId',
-          foreignField: 'paymentId',
+          let: { paymentId: '$paymentId' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$paymentId', '$$paymentId'] } } },
+            { $project: { storeId: 1, paymentId: 1, status: 1 } },
+          ],
           as: 'billsellers',
         },
       },
       {
         $lookup: {
           from: 'stores',
-          let: { storeIds: '$data.storeId' },
+          let: { storeIds: '$billsellers.storeId' },
           pipeline: [
             {
               $match: {
@@ -31,11 +33,11 @@ export class BillGetAllByStatusUserREQ extends PaginationREQ {
                 },
               },
             },
+            { $project: { name: 1, avatar: 1 } },
           ],
           as: 'stores',
         },
       },
-      { $unwind: '$stores' },
       {
         $addFields: {
           billsellers: {
@@ -44,9 +46,10 @@ export class BillGetAllByStatusUserREQ extends PaginationREQ {
               as: 'bs',
               in: {
                 storeId: '$$bs.storeId',
+                paymentId: '$$bs.paymentId',
                 status: '$$bs.status',
-                storeName: '$stores.name',
-                avatar: '$stores.avatar',
+                storeName: { $first: '$stores.name' },
+                storeAvatar: { $first: '$stores.avatar' },
               },
             },
           },
@@ -67,9 +70,7 @@ export class BillGetAllByStatusUserREQ extends PaginationREQ {
                         $filter: {
                           input: '$billsellers',
                           as: 'bs',
-                          cond: {
-                            $and: [{ $eq: ['$$bs.storeId', '$$d.storeId'] }, { $eq: ['$$bs.paymentId', '$$d.paymentId'] }],
-                          },
+                          cond: { $and: [{ $eq: ['$$bs.storeId', '$$d.storeId'] }] },
                         },
                       },
                       0,
@@ -92,11 +93,12 @@ export class BillGetAllByStatusUserREQ extends PaginationREQ {
           as: 'promotion',
         },
       },
-      { $unwind: '$promotion' },
+      { $addFields: { promotion: { $first: '$promotion' } } },
       { $unset: 'billsellers' },
       { $unset: 'stores' },
-      { $project: { promotionId: 0, paymentId: 0 } },
+      { $project: { promotionId: 0, paymentId: 0, 'data.paymentId': 0 } },
       { $match: { data: { $elemMatch: { status: query.status } } } },
+      { $sort: { updatedAt: -1 } },
     ];
   }
 
