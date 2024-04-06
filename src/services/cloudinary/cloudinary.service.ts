@@ -2,7 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { v2 as cloudinary } from 'cloudinary';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const streamifier = require('streamifier');
-import 'multer';
+import { Express } from 'express';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { Multer } from 'multer';
 
 import { UploadApiErrorResponse, UploadApiResponse } from 'cloudinary';
 
