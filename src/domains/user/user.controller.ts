@@ -50,11 +50,18 @@ export class UserController {
     return this.userService.getDetail(id);
   }
 
-  @Roles(ROLE_NAME.ADMIN)
+  @Roles(ROLE_NAME.ADMIN, ROLE_NAME.MANAGER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Get('has-store')
   getUsersHasStore(@Query() query: PaginationREQ) {
     return this.userService.getUsersHasStore(query);
+  }
+
+  @Roles(ROLE_NAME.ADMIN, ROLE_NAME.MANAGER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Get('has-been-warning')
+  getUsersHasBeenWarning(@Query() query: PaginationREQ) {
+    return this.userService.getUsersHasBeenWarning(query);
   }
 
   @Roles(ROLE_NAME.ADMIN)

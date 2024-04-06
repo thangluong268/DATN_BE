@@ -254,6 +254,19 @@ export class UserService {
     );
   }
 
+  async getUsersHasBeenWarning(query: PaginationREQ) {
+    this.logger.log(`Get Users Has Been Warning`);
+    const { skip, limit } = QueryPagingHelper.queryPaging(query);
+    const [data, total] = await Promise.all([
+      this.userModel
+        .find({ warningCount: { $gt: 0 } }, { socialApp: 0, socialId: 0 }, { lean: true })
+        .limit(limit)
+        .skip(skip),
+      this.userModel.countDocuments({ warningCount: { $gt: 0 } }),
+    ]);
+    return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách người dùng bị cảnh cáo thành công!');
+  }
+
   /**
    * Seed data
    */
