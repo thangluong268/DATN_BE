@@ -24,9 +24,13 @@ import { UserOTPModule } from './domains/user-otp/user-otp.module';
 import { UserTokenModule } from './domains/user-token/user-token.module';
 import { UserModule } from './domains/user/user.module';
 import { SeederService } from './services/seeder.service';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     ScheduleModule.forRoot(),
     RedisModule,
     DatabaseModule,
