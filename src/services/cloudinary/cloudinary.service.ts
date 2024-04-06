@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { v2 as cloudinary } from 'cloudinary';
 import { Express } from 'express';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Multer } from 'multer';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const streamifier = require('streamifier');
