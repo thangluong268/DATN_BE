@@ -91,6 +91,11 @@ export class ProductController {
     return this.productService.getProductsLoveByUser(req.user._id, query);
   }
 
+  @Get('products/select')
+  getProductsSelect(@Query('storeId') storeId: string) {
+    return this.productService.getProductsSelect(storeId);
+  }
+
   @Get('product/:id')
   getProductById(@Param('id') id: string) {
     return this.productService.getProductById(id);

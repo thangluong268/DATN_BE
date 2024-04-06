@@ -61,6 +61,11 @@ export class StoreController {
     return this.storeService.getStoresBanned(query);
   }
 
+  @Get('stores/select')
+  getStoresSelect() {
+    return this.storeService.getStoresSelect();
+  }
+
   @Get('store/:id')
   getStoreById(@Param('id') id: string) {
     return this.storeService.getStoreById(id);

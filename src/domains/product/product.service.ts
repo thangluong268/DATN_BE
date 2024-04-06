@@ -496,4 +496,10 @@ export class ProductService {
     await this.productModel.findByIdAndUpdate(id, { status: false });
     return BaseResponse.withMessage({}, 'Xóa sản phẩm thành công!');
   }
+
+  async getProductsSelect(storeId: string) {
+    this.logger.log(`Get Products Select By StoreId: ${storeId}`);
+    const products = await this.productModel.find({ storeId, status: true }).select('_id name').lean();
+    return BaseResponse.withMessage(products, 'Lấy danh sách sản phẩm thành công!');
+  }
 }

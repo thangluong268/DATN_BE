@@ -214,6 +214,16 @@ export class StoreService {
     return await this.storeModel.countDocuments();
   }
 
+  async getStoresSelect() {
+    this.logger.log(`Get Stores Select`);
+    const stores = await this.storeModel.find({ status: true }, { name: 1, _id: 1 }).lean();
+    return BaseResponse.withMessage(stores, 'Lấy danh sách cửa hàng thành công!');
+  }
+
+  /**
+   * This is part of scraping data
+   */
+
   async scrapingData() {
     this.logger.log(`Seed Data Store`);
     const users = await this.userModel.find({}, { _id: 1, phone: 1 }, { lean: true }).skip(1).limit(10);

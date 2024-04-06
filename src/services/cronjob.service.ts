@@ -79,10 +79,6 @@ export class CronjobsService {
   @Cron('*/1 * * * * *')
   async handleProductIfStoreUnBanned() {
     const storeActiveIds = (await this.storeModel.find({ status: true }, { _id: 1 }).lean()).map((store) => store._id.toString());
-    await this.productModel.updateMany(
-      { storeId: { $in: storeActiveIds }, status: false, quantity: { $gt: 0 } },
-      { $set: { status: true } },
-    );
     const productReportedIds = Array.from(
       new Set([
         ...(await this.reportModel.find({ status: true, type: PolicyType.PRODUCT }, { subjectId: 1 }).lean()).map(
@@ -90,6 +86,9 @@ export class CronjobsService {
         ),
       ]),
     );
-    await this.productModel.updateMany({ _id: { $in: productReportedIds }, status: true }, { $set: { status: false } });
+    await this.productModel.updateMany(
+      { _id: { $nin: productReportedIds }, storeId: { $in: storeActiveIds }, status: false, quantity: { $gt: 0 } },
+      { $set: { status: true } },
+    );
   }
 }
