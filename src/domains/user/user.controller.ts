@@ -9,6 +9,7 @@ import { UserGetFollowStoreREQ } from './request/user-get-follow-store.request';
 import { UserGetPagingREQ } from './request/user-get-paging.resquest';
 import { UserUpdateREQ } from './request/user-update.request';
 import { UserService } from './user.service';
+import { UsersHaveStoreREQ } from './request/user-have-store.request';
 
 @Controller('user')
 export class UserController {
@@ -52,7 +53,7 @@ export class UserController {
   @Roles(ROLE_NAME.MANAGER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Get('has-store')
-  getUsersHasStore(@Query() query: PaginationREQ) {
+  getUsersHasStore(@Query() query: UsersHaveStoreREQ) {
     return this.userService.getUsersHasStore(query);
   }
 

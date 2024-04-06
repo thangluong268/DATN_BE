@@ -10,6 +10,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { SALT_ROUNDS } from 'app.config';
 import * as bcrypt from 'bcrypt';
 import { BillService } from 'domains/bill/bill.service';
+import { BillSeller } from 'domains/bill/schema/bill-seller.schema';
 import { BillUser } from 'domains/bill/schema/bill-user.schema';
 import { Store } from 'domains/store/schema/store.schema';
 import { Model } from 'mongoose';
@@ -26,10 +27,10 @@ import { USER_DATA } from './data/sample.data';
 import { UserCreateREQ } from './request/user-create.request';
 import { UserGetFollowStoreREQ } from './request/user-get-follow-store.request';
 import { UserGetPagingREQ } from './request/user-get-paging.resquest';
+import { UsersHaveStoreREQ } from './request/user-have-store.request';
 import { UserUpdateREQ } from './request/user-update.request';
 import { UserCreateRESP } from './response/user-create.response';
 import { User } from './schema/user.schema';
-import { BillSeller } from 'domains/bill/schema/bill-seller.schema';
 
 @Injectable()
 export class UserService {
@@ -260,26 +261,10 @@ export class UserService {
     return BaseResponse.withMessage({}, index == -1 ? 'Kết bạn thành công!' : 'Hủy kết bạn thành công!');
   }
 
-  async getUsersHasStore(query: PaginationREQ) {
+  async getUsersHasStore(query: UsersHaveStoreREQ) {
     this.logger.log(`Get Users Has Store`);
-    const { skip, limit } = QueryPagingHelper.queryPaging(query);
-    const pipeline = [
-      { $addFields: { idString: { $toString: '$_id' } } },
-      {
-        $lookup: {
-          from: 'stores',
-          localField: 'idString',
-          foreignField: 'userId',
-          as: 'store',
-        },
-      },
-      { $match: { store: { $ne: [] } } },
-      { $project: { store: 0, socialApp: 0, socialId: 0, idString: 0 } },
-    ];
-    const [data, total] = await Promise.all([
-      this.userModel.aggregate([...pipeline, { $limit: limit }, { $skip: skip }]),
-      this.userModel.aggregate([...pipeline, { $count: 'total' }]),
-    ]);
+    const data = await this.userModel.aggregate(UsersHaveStoreREQ.toFind(query));
+    const total = await this.userModel.aggregate(UsersHaveStoreREQ.toCount());
     return PaginationResponse.ofWithTotalAndMessage(
       data,
       total[0]?.total || 0,
