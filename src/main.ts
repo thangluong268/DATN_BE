@@ -47,7 +47,7 @@ async function bootstrap() {
     await app.listen(PORT || 5000);
 
     NODE_ENV !== 'production'
-      ? Logger.log(`🪭  Server ready at http://${chalk.hex('#e5ff00').bold(`${HOST}`)}`)
+      ? Logger.log(`🪭  Server ready at ${chalk.hex('#e5ff00').bold(`${HOST}`)}`)
       : Logger.log(`🪽 Server is listening on port ${chalk.hex('#87e8de').bold(`${PORT}`)}`);
   } catch (error) {
     Logger.error(`❌  Error starting server, ${error}`);

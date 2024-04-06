@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthRoleGuard } from 'domains/auth/guards/auth-role.guard';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
+import { PaginationREQ } from 'shared/generics/pagination.request';
 import { Roles } from '../auth/decorators/auth-role.decorator';
 import { AuthJwtATGuard } from '../auth/guards/auth-jwt-at.guard';
 import { UserCreateREQ } from './request/user-create.request';
@@ -8,8 +9,6 @@ import { UserGetFollowStoreREQ } from './request/user-get-follow-store.request';
 import { UserGetPagingREQ } from './request/user-get-paging.resquest';
 import { UserUpdateREQ } from './request/user-update.request';
 import { UserService } from './user.service';
-import { query } from 'express';
-import { PaginationREQ } from 'shared/generics/pagination.request';
 
 @Controller('user')
 export class UserController {

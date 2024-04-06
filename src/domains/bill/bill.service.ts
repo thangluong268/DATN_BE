@@ -417,15 +417,6 @@ export class BillService {
     return bill ? true : false;
   }
 
-  async getUsersHaveMostBill(limit: number) {
-    this.logger.log(`Get Users Have Most Bill: ${limit}`);
-    return await this.billUserModel.aggregate([
-      { $group: { _id: '$userId', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: Number(limit) },
-    ]);
-  }
-
   async calculateRevenueAllTimeByStoreId(storeId: string) {
     const result = await this.billSellerModel.aggregate([
       { $match: { status: BILL_STATUS.DELIVERED, storeId: storeId.toString() } },

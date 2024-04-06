@@ -14,6 +14,7 @@ import { BillUser } from 'domains/bill/schema/bill-user.schema';
 import { Store } from 'domains/store/schema/store.schema';
 import { Model } from 'mongoose';
 import { SOCIAL_APP } from 'shared/constants/user.constant';
+import { BILL_STATUS } from 'shared/enums/bill.enum';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationREQ } from 'shared/generics/pagination.request';
@@ -28,6 +29,7 @@ import { UserGetPagingREQ } from './request/user-get-paging.resquest';
 import { UserUpdateREQ } from './request/user-update.request';
 import { UserCreateRESP } from './response/user-create.response';
 import { User } from './schema/user.schema';
+import { BillSeller } from 'domains/bill/schema/bill-seller.schema';
 
 @Injectable()
 export class UserService {
@@ -42,6 +44,9 @@ export class UserService {
     @InjectModel(BillUser.name)
     private readonly billUserModel: Model<BillUser>,
     private readonly billService: BillService,
+
+    @InjectModel(BillSeller.name)
+    private readonly billSellerModel: Model<BillSeller>,
   ) {}
 
   async createUserSystem(body: AuthSignUpREQ) {
@@ -139,18 +144,46 @@ export class UserService {
 
   async getUsersHaveMostBill(limit: number = 5) {
     this.logger.log(`Get Users Have Most Bill: ${limit}`);
-    const bills = await this.billService.getUsersHaveMostBill(Number(limit));
-    const data = await Promise.all(
-      bills.map(async (item: any) => {
-        const user = await this.userModel.findById(
-          item._id,
-          { status: 0, updatedAt: 0, socialApp: 0, socialId: 0 },
-          { lean: true },
-        );
-        if (!user) return;
-        return { user, totalBills: item.count };
-      }),
-    );
+    const data = await this.billSellerModel.aggregate([
+      { $match: { status: BILL_STATUS.DELIVERED } },
+      { $group: { _id: '$userId', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: Number(limit) },
+      { $addFields: { userObjId: { $toObjectId: '$_id' } } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userObjId',
+          foreignField: '_id',
+          as: 'user',
+        },
+      },
+      { $addFields: { totalBills: '$count', user: { $arrayElemAt: ['$user', 0] } } },
+      {
+        $project: {
+          _id: 0,
+          user: {
+            _id: 1,
+            avatar: 1,
+            fullName: 1,
+            email: 1,
+            password: 1,
+            address: 1,
+            phone: 1,
+            gender: 1,
+            birthday: 1,
+            role: 1,
+            friends: 1,
+            followStores: 1,
+            wallet: 1,
+            warningCount: 1,
+            createdAt: 1,
+            updatedAt: 1,
+          },
+          totalBills: 1,
+        },
+      },
+    ]);
     return BaseResponse.withMessage(data, 'Lấy thông tin danh sách người dùng mua hàng nhiều nhất thành công!');
   }
 
