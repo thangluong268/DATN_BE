@@ -1,5 +1,5 @@
 # Stage 1: Build the application
-FROM node:16 AS build
+FROM node:18 AS build
 
 # Set the working directory in the container
 WORKDIR /app
@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Create a production-ready image
-FROM node:16
+FROM node:18
 
 # Set the working directory in the container
 WORKDIR /app
@@ -29,7 +29,7 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 
 # Expose the port used by your NestJS application
-EXPOSE 9200
+EXPOSE 5000
 
 # Start your NestJS application in production mode
 CMD ["npm", "run", "start:prod"]

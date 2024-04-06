@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Req, Res } from '@nestjs/common';
 import {
-  HOST_URL,
+  HOST,
   URL_FE,
   VN_PAY_COMMAND,
   VN_PAY_CURRENCY_VND,
@@ -45,7 +45,7 @@ export class VNPayController {
     vnp_Params['vnp_OrderInfo'] = 'Thanh toan cho ma GD: ' + orderId;
     vnp_Params['vnp_OrderType'] = 'other';
     vnp_Params['vnp_Amount'] = amount * 100;
-    vnp_Params['vnp_ReturnUrl'] = `${HOST_URL}/api/vn-pay/payment/vn-pay/callback`;
+    vnp_Params['vnp_ReturnUrl'] = `${HOST}/api/vn-pay/payment/vn-pay/callback`;
     vnp_Params['vnp_IpAddr'] = ipAddr;
     vnp_Params['vnp_CreateDate'] = createDate;
     if (bankCode !== null && bankCode !== '') {

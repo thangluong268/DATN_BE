@@ -1,12 +1,12 @@
 import { ConflictException } from '@nestjs/common';
-import { HOST_URL } from 'app.config';
+import { HOST } from 'app.config';
 import axios from 'axios';
 import { PaymentDTO } from 'payment/dto/payment.dto';
 
 export const createVNPayPayment = async (body: PaymentDTO) => {
   try {
     const res = await axios({
-      url: `${HOST_URL}/api/vn-pay`,
+      url: `${HOST}/api/vn-pay`,
       method: 'post',
       data: {
         amount: body.amount,

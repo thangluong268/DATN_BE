@@ -1,16 +1,14 @@
 import { config } from 'dotenv';
-config({ path: `.env` });
+config({ path: process.env.NODE_ENV === 'development' ? `.env.dev` : `.env.prod` });
 
 export const CREDENTIALS = process.env.CREDENTIALS === 'true';
 export const NODE_ENV = process.env.NODE_ENV;
 export const SALT_ROUNDS = Number(process.env.SALT_ROUNDS);
 export const TAX_RATE = Number(process.env.TAX_RATE);
-export const HOST_URL = process.env.NODE_ENV === 'production' ? process.env.HOST_PRODUCT : process.env.HOST_DEV;
 
 export const {
-  DATABASE_URL_DEV,
+  DATABASE_URL,
   PORT,
-  HOST,
   ORIGIN,
   APP_SECRET,
   JWT_ACCESS_TOKEN_SECRET,
@@ -51,4 +49,5 @@ export const {
   REDIS_USERNAME,
   REDIS_PASSWORD,
   URL_FE,
+  HOST,
 } = process.env;

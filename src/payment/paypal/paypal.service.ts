@@ -1,4 +1,4 @@
-import { HOST_URL, PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET } from 'app.config';
+import { HOST, PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET } from 'app.config';
 import axios, { Axios, AxiosHeaders } from 'axios';
 import { Convert } from 'easy-currencies';
 import { PaymentDTO } from 'payment/dto/payment.dto';
@@ -52,8 +52,8 @@ export class PaypalPaymentService {
             locale: 'en-US',
             shipping_preference: 'NO_SHIPPING',
             user_action: 'PAY_NOW',
-            return_url: `${HOST_URL}/api/paypal/payment/callback`,
-            cancel_url: `${HOST_URL}/cancelUrl`,
+            return_url: `${HOST}/api/paypal/payment/callback`,
+            cancel_url: `${HOST}/cancelUrl`,
           },
         },
       },

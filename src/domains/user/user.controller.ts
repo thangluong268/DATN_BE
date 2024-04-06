@@ -8,6 +8,8 @@ import { UserGetFollowStoreREQ } from './request/user-get-follow-store.request';
 import { UserGetPagingREQ } from './request/user-get-paging.resquest';
 import { UserUpdateREQ } from './request/user-update.request';
 import { UserService } from './user.service';
+import { query } from 'express';
+import { PaginationREQ } from 'shared/generics/pagination.request';
 
 @Controller('user')
 export class UserController {
@@ -46,6 +48,13 @@ export class UserController {
   @Get('user/:id')
   getProfile(@Param('id') id: string) {
     return this.userService.getDetail(id);
+  }
+
+  @Roles(ROLE_NAME.ADMIN)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Get('has-store')
+  getUsersHasStore(@Query() query: PaginationREQ) {
+    return this.userService.getUsersHasStore(query);
   }
 
   @Roles(ROLE_NAME.ADMIN)

@@ -10,11 +10,13 @@ import { InjectModel } from '@nestjs/mongoose';
 import { SALT_ROUNDS } from 'app.config';
 import * as bcrypt from 'bcrypt';
 import { BillService } from 'domains/bill/bill.service';
+import { BillUser } from 'domains/bill/schema/bill-user.schema';
 import { Store } from 'domains/store/schema/store.schema';
 import { Model } from 'mongoose';
 import { SOCIAL_APP } from 'shared/constants/user.constant';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BaseResponse } from 'shared/generics/base.response';
+import { PaginationREQ } from 'shared/generics/pagination.request';
 import { PaginationResponse } from 'shared/generics/pagination.response';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { ForgetPassREQ } from '../auth/request/forget-password.request';
@@ -26,7 +28,6 @@ import { UserGetPagingREQ } from './request/user-get-paging.resquest';
 import { UserUpdateREQ } from './request/user-update.request';
 import { UserCreateRESP } from './response/user-create.response';
 import { User } from './schema/user.schema';
-import { BillUser } from 'domains/bill/schema/bill-user.schema';
 
 @Injectable()
 export class UserService {
@@ -168,12 +169,14 @@ export class UserService {
 
   async getUsersNoPaging(limit: number = 50) {
     this.logger.log(`Get Users No Paging: ${limit}`);
-    const users = await this.userModel.find({}, { socialApp: 0, socialId: 0 }, { lean: true }).limit(Number(limit));
+    const users = await this.userModel
+      .find({ role: { $nin: [ROLE_NAME.ADMIN, ROLE_NAME.MANAGER] } }, { socialApp: 0, socialId: 0 }, { lean: true })
+      .limit(Number(limit));
     const data = await Promise.all(
       users.map(async (item) => {
         const user = await this.userModel.findById(item._id).lean();
         if (!user) return;
-        const billsOfUser = await this.billUserModel.find({ userId: user._id }).lean();
+        const billsOfUser = await this.billUserModel.find({ userId: user._id.toString() }).lean();
         const totalBills = billsOfUser.length;
         const totalPricePaid = billsOfUser.reduce((total, bill) => total + bill.totalPayment, 0);
         const totalReceived = billsOfUser.filter((bill) => bill.totalPayment === 0).length;
@@ -223,6 +226,37 @@ export class UserService {
     await this.userModel.findByIdAndUpdate(userIdSend, { friends: userSend.friends });
     return BaseResponse.withMessage({}, index == -1 ? 'Kết bạn thành công!' : 'Hủy kết bạn thành công!');
   }
+
+  async getUsersHasStore(query: PaginationREQ) {
+    this.logger.log(`Get Users Has Store`);
+    const { skip, limit } = QueryPagingHelper.queryPaging(query);
+    const pipeline = [
+      { $addFields: { idString: { $toString: '$_id' } } },
+      {
+        $lookup: {
+          from: 'stores',
+          localField: 'idString',
+          foreignField: 'userId',
+          as: 'store',
+        },
+      },
+      { $match: { store: { $ne: [] } } },
+      { $project: { store: 0, socialApp: 0, socialId: 0, idString: 0 } },
+    ];
+    const [data, total] = await Promise.all([
+      this.userModel.aggregate([...pipeline, { $limit: limit }, { $skip: skip }]),
+      this.userModel.aggregate([...pipeline, { $count: 'total' }]),
+    ]);
+    return PaginationResponse.ofWithTotalAndMessage(
+      data,
+      total[0]?.total || 0,
+      'Lấy danh sách người dùng có cửa hàng thành công!',
+    );
+  }
+
+  /**
+   * Seed data
+   */
 
   async seedData() {
     await this.userModel.insertMany(USER_DATA);
