@@ -13,10 +13,13 @@ export class Tax extends Document {
   totalPrice: number;
 
   @Prop({ type: Number })
-  totalTax: number;
+  taxFee: number;
 
   @Prop({ type: String })
   paymentId: string;
+
+  @Prop({ type: Boolean, default: false })
+  isSuccess: boolean;
 }
 
 export const TaxSchema = SchemaFactory.createForClass(Tax);

@@ -15,6 +15,7 @@ import { BillController } from './bill.controller';
 import { BillService } from './bill.service';
 import { BillSeller, BillSellerSchema } from './schema/bill-seller.schema';
 import { BillUser, BillUserSchema } from './schema/bill-user.schema';
+import { Bill, BillSchema } from './schema/bill.schema';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { BillUser, BillUserSchema } from './schema/bill-user.schema';
     MongooseModule.forFeature([
       { name: BillUser.name, schema: BillUserSchema },
       { name: BillSeller.name, schema: BillSellerSchema },
+      { name: Bill.name, schema: BillSchema },
       { name: Promotion.name, schema: PromotionSchema },
       { name: User.name, schema: UserSchema },
       { name: Product.name, schema: ProductSchema },

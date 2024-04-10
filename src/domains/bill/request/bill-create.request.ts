@@ -1,4 +1,3 @@
-import { TAX_RATE } from 'app.config';
 import { Type } from 'class-transformer';
 import { IsArray, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { PAYMENT_METHOD } from 'shared/enums/bill.enum';
@@ -38,52 +37,19 @@ export class BillCreateREQ {
   @IsNumber()
   totalPayment: number;
 
-  static toCreateBillSeller(cart: CartInfoDTO, userId: string, body: BillCreateREQ, paymentId: string) {
+  static toCreateBill(cart: CartInfoDTO, userId: string, body: BillCreateREQ, paymentId: string) {
     return {
-      userId: userId,
+      userId,
       storeId: cart.storeId,
       products: cart.products,
       notes: cart.notes,
       deliveryFee: cart.deliveryFee,
-      totalPrice: cart.totalPrice,
+      totalPriceInit: cart.totalPrice + cart.deliveryFee,
+      totalPricePayment: cart['totalPricePayment'],
       deliveryMethod: body.deliveryMethod,
       paymentMethod: body.paymentMethod,
       receiverInfo: body.receiverInfo,
       giveInfo: body.giveInfo ? body.giveInfo : undefined,
-      paymentId: paymentId,
-    };
-  }
-
-  static toCreateBillUser(
-    userId: string,
-    body: BillCreateREQ,
-    paymentId: string,
-    totalPrice: number,
-    totalDeliveryFee: number,
-    discountValue: number,
-  ) {
-    return {
-      userId,
-      data: body.data,
-      deliveryMethod: body.deliveryMethod,
-      paymentMethod: body.paymentMethod,
-      receiverInfo: body.receiverInfo,
-      giveInfo: body.giveInfo ? body.giveInfo : undefined,
-      promotionId: body.promotionId ? body.promotionId : undefined,
-      coins: body.coins ? body.coins : 0,
-      initTotalPayment: body['initTotalPayment'],
-      totalPayment: totalPrice,
-      totalDeliveryFee,
-      discountValue,
-      paymentId,
-    };
-  }
-
-  static toCreateTax(storeId: string, totalPrice: number, paymentId: string) {
-    return {
-      storeId,
-      totalPrice,
-      totalTax: totalPrice * TAX_RATE,
       paymentId,
     };
   }
