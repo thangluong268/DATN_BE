@@ -19,6 +19,8 @@ export class UsersHaveStoreREQ extends PaginationREQ {
         },
       },
       { $addFields: { storeId: { $arrayElemAt: ['$store._id', 0] } } },
+      { $addFields: { storeName: { $arrayElemAt: ['$store.name', 0] } } },
+      { $addFields: { storeAvatar: { $arrayElemAt: ['$store.avatar', 0] } } },
       { $addFields: { joinDate: { $arrayElemAt: ['$store.createdAt', 0] } } },
       { $match: { store: { $ne: [] } } },
       { $project: { store: 0, socialApp: 0, socialId: 0, idString: 0 } },
