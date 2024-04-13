@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import * as bcrypt from 'bcrypt';
 import { User } from 'domains/user/schema/user.schema';
@@ -14,6 +14,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
   async validate(email: string, password: string): Promise<User> {
     const user = await this.userService.findOneByEmailSystem(email);
     if (!user) throw new BadRequestException('Email hoặc mật khẩu không chính xác!');
+    if (!user.status) throw new ForbiddenException('Tài khoản của bạn đã bị vô hiệu hóa!');
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new BadRequestException('Email hoặc mật khẩu không chính xác!');
     return user;

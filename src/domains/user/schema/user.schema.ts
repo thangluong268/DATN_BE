@@ -62,11 +62,8 @@ export class User extends Document {
   @Prop({ type: Number, default: 0 })
   warningCount: number;
 
-  @Prop({ type: String, default: 'true' })
-  status: string;
-
   @Prop({ type: Boolean, default: true })
-  isActive: boolean;
+  status: boolean;
 
   @Prop({ type: String })
   socialId: string;

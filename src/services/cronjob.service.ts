@@ -96,13 +96,13 @@ export class CronjobsService {
     );
   }
 
-  // @Cron('*/1 * * * * *')
-  // async handleBanUser() {
-  //   await this.userModel.updateMany({ warningCount: { $gte: 3 } }, { $set: { isActive: false } });
-  // }
+  @Cron('*/1 * * * * *')
+  async handleBanUser() {
+    await this.userModel.updateMany({ warningCount: { $gte: 3 } }, { $set: { status: false } });
+  }
 
-  // @Cron('*/1 * * * * *')
-  // async handleUnBanUser() {
-  //   await this.userModel.updateMany({ warningCount: { $eq: 0 } }, { $set: { isActive: true } });
-  // }
+  @Cron('*/1 * * * * *')
+  async handleUnBanUser() {
+    await this.userModel.updateMany({ warningCount: { $lt: 3 } }, { $set: { status: true } });
+  }
 }

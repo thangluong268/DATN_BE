@@ -7,13 +7,21 @@ import { AuthJwtATGuard } from '../auth/guards/auth-jwt-at.guard';
 import { UserCreateREQ } from './request/user-create.request';
 import { UserGetFollowStoreREQ } from './request/user-get-follow-store.request';
 import { UserGetPagingREQ } from './request/user-get-paging.resquest';
+import { UsersHaveStoreREQ } from './request/user-have-store.request';
 import { UserUpdateREQ } from './request/user-update.request';
 import { UserService } from './user.service';
-import { UsersHaveStoreREQ } from './request/user-have-store.request';
+import { UserBannedGetREQ } from './request/user-banned-get.request';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Roles(ROLE_NAME.MANAGER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Get('banned')
+  getUsersBanned(@Query() query: UserBannedGetREQ) {
+    return this.userService.getUsersBanned(query);
+  }
 
   @Roles(ROLE_NAME.MANAGER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)

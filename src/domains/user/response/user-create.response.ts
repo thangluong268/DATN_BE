@@ -9,7 +9,7 @@ export class UserCreateRESP {
   followStores: string[];
   wallet: number;
   warningCount: number;
-  status: string;
+  status: boolean;
   _id: string;
   createdAt: Date;
   updatedAt: Date;

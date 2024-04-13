@@ -24,6 +24,7 @@ import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { ForgetPassREQ } from '../auth/request/forget-password.request';
 import { AuthSignUpREQ } from '../auth/request/sign-up.request';
 import { USER_DATA } from './data/sample.data';
+import { UserBannedGetREQ } from './request/user-banned-get.request';
 import { UserCreateREQ } from './request/user-create.request';
 import { UserGetFollowStoreREQ } from './request/user-get-follow-store.request';
 import { UserGetPagingREQ } from './request/user-get-paging.resquest';
@@ -283,6 +284,21 @@ export class UserService {
       this.userModel.countDocuments({ warningCount: { $gt: 0 } }),
     ]);
     return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách người dùng bị cảnh cáo thành công!');
+  }
+
+  async getUsersBanned(query: UserBannedGetREQ) {
+    this.logger.log(`Get Users Banned`);
+    const { skip, limit } = QueryPagingHelper.queryPaging(query);
+    const condition = UserBannedGetREQ.toCondition(query);
+    const [data, total] = await Promise.all([
+      this.userModel
+        .find(condition, { socialApp: 0, socialId: 0 }, { lean: true })
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      this.userModel.countDocuments(condition),
+    ]);
+    return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách người dùng bị vô hiệu hóa thành công!');
   }
 
   /**
