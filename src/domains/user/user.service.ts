@@ -16,6 +16,7 @@ import { Store } from 'domains/store/schema/store.schema';
 import { Model } from 'mongoose';
 import { SOCIAL_APP } from 'shared/constants/user.constant';
 import { BILL_STATUS } from 'shared/enums/bill.enum';
+import { PolicyType } from 'shared/enums/policy.enum';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationREQ } from 'shared/generics/pagination.request';
@@ -277,10 +278,32 @@ export class UserService {
     this.logger.log(`Get Users Has Been Warning`);
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const [data, total] = await Promise.all([
-      this.userModel
-        .find({ warningCount: { $gt: 0 } }, { socialApp: 0, socialId: 0 }, { lean: true })
-        .limit(limit)
-        .skip(skip),
+      this.userModel.aggregate([
+        { $match: { warningCount: { $gt: 0 } } },
+        {
+          $lookup: {
+            from: 'reports',
+            let: { userId: { $toString: '$_id' } },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ['$subjectId', '$$userId'] },
+                  type: PolicyType.USER,
+                },
+              },
+              { $sort: { createdAt: -1 } },
+              { $limit: 1 },
+              { $project: { _id: 1, createdAt: 1 } },
+            ],
+            as: 'reports',
+          },
+        },
+        { $addFields: { latestReport: { $first: '$reports' } } },
+        { $sort: { 'latestReport.createdAt': -1 } },
+        { $project: { socialApp: 0, socialId: 0, reports: 0, latestReport: 0 } },
+        { $skip: skip },
+        { $limit: limit },
+      ]),
       this.userModel.countDocuments({ warningCount: { $gt: 0 } }),
     ]);
     return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách người dùng bị cảnh cáo thành công!');
