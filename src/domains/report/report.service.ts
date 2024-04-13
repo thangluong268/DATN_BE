@@ -1,4 +1,11 @@
-import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Product } from 'domains/product/schema/product.schema';
 import { Store } from 'domains/store/schema/store.schema';
@@ -6,6 +13,7 @@ import { User } from 'domains/user/schema/user.schema';
 import { Model } from 'mongoose';
 import { MailService } from 'services/mail/mail.service';
 import { PolicyType } from 'shared/enums/policy.enum';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationResponse } from 'shared/generics/pagination.response';
 import { toDocModel } from 'shared/helpers/to-doc-model.helper';
@@ -194,5 +202,17 @@ export class ReportService {
     if (!report) throw new NotFoundException('Báo cáo không tồn tại!');
     await this.reportModel.findByIdAndDelete(id);
     return BaseResponse.withMessage({}, 'Xóa báo cáo thành công!');
+  }
+
+  async getReportsByUserId(currentUser: User, userId: string) {
+    this.logger.log(`get reports by user id: ${userId}`);
+    if (currentUser.role.includes(ROLE_NAME.USER) && currentUser._id.toString() !== userId) {
+      throw new ForbiddenException('Bạn không có quyền xem báo cáo của người khác!');
+    }
+    const data = await this.reportModel
+      .find({ subjectId: userId, type: PolicyType.USER }, { updatedAt: 0, status: 0, userId: 0 })
+      .lean()
+      .sort({ createdAt: -1 });
+    return BaseResponse.withMessage(data, 'Lấy danh sách báo cáo của người dùng thành công!');
   }
 }
