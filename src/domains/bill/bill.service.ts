@@ -1,5 +1,6 @@
 import { BadRequestException, Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { TAX_RATE } from 'app.config';
 import { CartService } from 'domains/cart/cart.service';
 import { ProductService } from 'domains/product/product.service';
 import { Product } from 'domains/product/schema/product.schema';
@@ -8,7 +9,7 @@ import { StoreService } from 'domains/store/store.service';
 import { Tax } from 'domains/tax/schema/tax.schema';
 import { User } from 'domains/user/schema/user.schema';
 import { UserService } from 'domains/user/user.service';
-import { Connection, Model } from 'mongoose';
+import { ClientSession, Connection, Model } from 'mongoose';
 import { PaymentDTO } from 'payment/dto/payment.dto';
 import { PaypalGateway, VNPayGateway } from 'payment/payment.gateway';
 import { PaymentService } from 'payment/payment.service';
@@ -32,15 +33,20 @@ import { BillGetTotalByStatusSellerREQ } from './request/bill-get-total-by-statu
 import { CountTotalByStatusRESP } from './response/bill-count-total-by-status.response';
 import { BillSeller } from './schema/bill-seller.schema';
 import { BillUser } from './schema/bill-user.schema';
+import { Bill } from './schema/bill.schema';
 
 @Injectable()
 export class BillService {
   private readonly logger = new Logger(BillService.name);
   constructor(
+    @InjectModel(Bill.name)
+    private readonly billModel: Model<Bill>,
+
     @InjectModel(BillUser.name)
     private readonly billUserModel: Model<BillUser>,
     @InjectModel(BillSeller.name)
     private readonly billSellerModel: Model<BillSeller>,
+
     @InjectConnection()
     private readonly connection: Connection,
 
@@ -73,9 +79,8 @@ export class BillService {
 
   async create(userId: string, body: BillCreateREQ) {
     this.logger.log(`create bill: ${userId}`);
-    let totalPrice = 0;
     let numOfCoins = 0;
-    let totalDeliveryFee = 0;
+    let totalPrice = 0;
     const paymentId = uuid();
     const session = await this.connection.startSession();
     session.startTransaction();
@@ -86,20 +91,17 @@ export class BillService {
         if (user.wallet < body.coins) throw new BadRequestException('Số dư xu không đủ!');
         numOfCoins = body.coins;
       }
+      await this.calculateDiscount(numOfCoins, body.promotionId, body.data);
+      await this.calculateTax(body.data, paymentId, session);
+
+      const redisClient = this.redisService.getClient();
+      await redisClient.setex(paymentId, 86400, JSON.stringify({ numOfCoins, promotionId: body.promotionId }));
+
       for (const cart of body.data) {
-        totalPrice += cart.totalPrice;
-        totalDeliveryFee += cart.deliveryFee;
-        await this.billSellerModel.create([BillCreateREQ.toCreateBillSeller(cart, userId, body, paymentId)], { session });
-        await this.taxModel.create([BillCreateREQ.toCreateTax(cart.storeId, cart.totalPrice, paymentId)], { session });
+        totalPrice += cart['totalPricePayment'];
+        await this.billModel.create([BillCreateREQ.toCreateBill(cart, userId, body, paymentId)], { session });
       }
-      const discountValue = await this.calculateDiscount(numOfCoins, body.promotionId, body.data, totalPrice);
-      body['initTotalPayment'] = totalPrice;
-      totalPrice += totalDeliveryFee - discountValue;
-      if (totalPrice < 0) totalPrice = 0;
-      await this.billUserModel.create(
-        [BillCreateREQ.toCreateBillUser(userId, body, paymentId, totalPrice, totalDeliveryFee, discountValue)],
-        { session },
-      );
+      console.log(totalPrice);
       if (totalPrice !== body.totalPayment) throw new BadRequestException('Tổng tiền không hợp lệ!');
       if (body.paymentMethod === PAYMENT_METHOD.CASH) {
         await session.commitTransaction();
@@ -118,8 +120,19 @@ export class BillService {
     }
   }
 
-  async calculateDiscount(numOfCoins: number, promotionId: string, carts: CartInfoDTO[], totalPrice: number) {
+  async calculateTax(carts: CartInfoDTO[], paymentId: string, session: ClientSession) {
+    for (const [index, cart] of carts.entries()) {
+      const taxFee = Math.ceil(carts[index]['totalPricePayment'] * TAX_RATE);
+      const totalPrice = carts[index]['totalPricePayment'];
+      carts[index]['totalPricePayment'] -= taxFee;
+      await this.taxModel.create([{ storeId: cart.storeId, totalPrice, taxFee, paymentId }], { session });
+    }
+  }
+
+  async calculateDiscount(numOfCoins: number, promotionId: string, carts: CartInfoDTO[]) {
     const coinsValue = numOfCoins * 100; // 1 xu = 100đ
+    const totalPrice = carts.reduce((acc, cart) => acc + (cart.totalPrice + cart.deliveryFee), 0);
+    const numOfStores = carts.length;
     let promotionValue = 0;
     if (promotionId) {
       const storeIds = carts.map((cart) => cart.storeId);
@@ -132,38 +145,78 @@ export class BillService {
       if (promotion.quantity === 0) throw new BadRequestException('Khuyến mãi đã hết!');
       promotionValue = Math.floor((totalPrice * promotion.value) / 100);
       if (promotionValue > promotion.maxDiscountValue) promotionValue = promotion.maxDiscountValue;
+      const discountValuePerStore = Math.floor((coinsValue + promotionValue) / numOfStores);
+      let discountRemain = 0;
+      for (const [index, cart] of carts.entries()) {
+        if (discountValuePerStore > cart.totalPrice + cart.deliveryFee) {
+          discountRemain += discountValuePerStore - (cart.totalPrice + cart.deliveryFee);
+          carts[index]['totalPricePayment'] = 0;
+          continue;
+        }
+        carts[index]['totalPricePayment'] = cart.totalPrice + cart.deliveryFee - discountValuePerStore;
+      }
+      if (discountRemain > 0) {
+        const numOfStore = carts.filter((cart) => cart['totalPricePayment'] > 0).length;
+        const discountValuePerStore = Math.floor(discountRemain / numOfStore);
+        this.calculatorDiscountRemain(carts, discountValuePerStore);
+      }
     }
-    return coinsValue + promotionValue;
+  }
+
+  private calculatorDiscountRemain(carts: CartInfoDTO[], discountValuePerStore: number) {
+    let discountRemain = 0;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for (const [index, cart] of carts.entries()) {
+      if (carts[index]['totalPricePayment'] === 0) continue;
+      if (discountValuePerStore > carts[index]['totalPricePayment']) {
+        discountRemain += discountValuePerStore - carts[index]['totalPricePayment'];
+        carts[index]['totalPricePayment'] = 0;
+        continue;
+      }
+      carts[index]['totalPricePayment'] -= discountValuePerStore;
+    }
+    if (discountRemain > 0) {
+      const numOfStore = carts.filter((cart) => cart['totalPricePayment'] > 0).length;
+      const discountValuePerStore = Math.floor(discountRemain / numOfStore);
+      this.calculatorDiscountRemain(carts, discountValuePerStore);
+    }
   }
 
   async handleBillSuccess(paymentId: string) {
     this.logger.log(`Handle Bill Success: ${paymentId}`);
-    const billSellers = await this.billSellerModel.find({ paymentId }).lean();
-    billSellers.forEach(async (bill) => {
+    let totalPrice = 0;
+    let userId = null;
+    const bills = await this.billModel.find({ paymentId }).lean();
+    bills.forEach(async (bill) => {
+      totalPrice += bill.totalPricePayment;
+      userId = bill.userId;
       await this.cartService.removeMultiProductInCart(bill.userId, bill.storeId, bill.products);
       bill.products.forEach(async (product) => {
         await this.productService.decreaseQuantity(product.id, product.quantity);
       });
-      await this.billSellerModel.findByIdAndUpdate(bill._id, {
+      await this.billModel.findByIdAndUpdate(bill._id, {
         isPaid: bill.paymentMethod === PAYMENT_METHOD.CASH ? false : true,
       });
-    });
-    const billUser = await this.billUserModel.findOne({ paymentId }).lean();
-    const userId = billUser.userId;
-    const promotionId = billUser.promotionId;
-    await this.userService.updateWallet(userId, billUser.totalPayment, 'plus');
-    await this.userModel.findByIdAndUpdate(userId, { $inc: { wallet: -billUser.coins } });
-    await this.promotionModel.findByIdAndUpdate(promotionId, { $inc: { quantity: -1 }, $pull: { userSaves: userId } });
-    const isUserUsedPromotion = await this.promotionModel.findOne({ _id: promotionId, userUses: userId }).lean();
-    if (!isUserUsedPromotion) {
-      await this.promotionModel.findByIdAndUpdate(promotionId, { $push: { userUses: userId } });
+    }),
+      await this.userService.updateWallet(userId, totalPrice, 'plus');
+    await this.taxModel.updateMany({ paymentId }, { isSuccess: true });
+    const redisClient = this.redisService.getClient();
+    const data = await redisClient.get(paymentId);
+    if (data) {
+      const { numOfCoins, promotionId } = JSON.parse(data);
+      await this.userModel.findByIdAndUpdate(userId, { $inc: { wallet: -numOfCoins } });
+      if (!paymentId) return;
+      await this.promotionModel.findByIdAndUpdate(promotionId, { $inc: { quantity: -1 }, $pull: { userSaves: userId } });
+      const isUserUsedPromotion = await this.promotionModel.findOne({ _id: promotionId, userUses: userId }).lean();
+      if (!isUserUsedPromotion) {
+        await this.promotionModel.findByIdAndUpdate(promotionId, { $push: { userUses: userId } });
+      }
     }
   }
 
   async handleBillFail(paymentId: string) {
     this.logger.log(`Handle Bill Fail: ${paymentId}`);
-    await this.billSellerModel.deleteMany({ paymentId });
-    await this.billUserModel.deleteOne({ paymentId });
+    await this.billModel.deleteMany({ paymentId });
     await this.taxModel.deleteMany({ paymentId });
   }
 
@@ -292,26 +345,11 @@ export class BillService {
 
   async getAllByStatusUser(userId: string, query: BillGetAllByStatusUserREQ) {
     this.logger.log(`Get All By Status User: ${userId}`);
-    const totalCount = await this.billUserModel.aggregate(BillGetAllByStatusUserREQ.toCount(userId, query) as any);
-    const data = await this.billUserModel.aggregate(BillGetAllByStatusUserREQ.toFind(userId, query) as any);
-    await Promise.all(
-      data.map(async (bill) => {
-        await Promise.all(
-          bill.data.map(async (data) => {
-            await Promise.all(
-              data.products.map(async (product) => {
-                const productInfo = await this.productService.findById(product.id);
-                product.avatar = productInfo.avatar;
-                product.name = productInfo.name;
-                product.oldPrice = productInfo.oldPrice;
-                product.newPrice = productInfo.newPrice;
-              }),
-            );
-          }),
-        );
-      }),
-    );
-    return PaginationResponse.ofWithTotalAndMessage(data, totalCount[0]?.total || 0, 'Lấy danh sách đơn hàng thành công!');
+    const [data, total] = await Promise.all([
+      this.billModel.aggregate(BillGetAllByStatusUserREQ.toFind(userId, query) as any),
+      this.billModel.countDocuments(BillGetAllByStatusUserREQ.toCount(userId, query)),
+    ]);
+    return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách đơn hàng thành công!');
   }
 
   async getAllByStatusSeller(userId: string, query: BillGetAllByStatusSellerREQ) {
