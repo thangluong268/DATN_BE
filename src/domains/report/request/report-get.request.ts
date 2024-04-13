@@ -50,6 +50,7 @@ export class ReportGetREQ extends PaginationREQ {
       },
       { $unwind: '$user' },
       { $unwind: '$subject' },
+      { $sort: { updatedAt: -1 } },
       {
         $project: {
           _id: '$_id',
@@ -59,7 +60,6 @@ export class ReportGetREQ extends PaginationREQ {
           createdAt: '$createdAt',
         },
       },
-      { $sort: { createdAt: -1 } },
       { $skip: skip },
       { $limit: limit },
     ];

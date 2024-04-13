@@ -52,8 +52,10 @@ export class ReportService {
     this.logger.log(`get reports: ${JSON.stringify(query)}`);
     const conditionTotal = ReportGetREQ.toQueryCondition(query);
     const conditionFind = ReportGetREQ.toFind(query);
-    const total = await this.reportModel.countDocuments(conditionTotal);
-    const data = await this.reportModel.aggregate(conditionFind as any);
+    const [data, total] = await Promise.all([
+      this.reportModel.aggregate(conditionFind as any),
+      this.reportModel.countDocuments(conditionTotal),
+    ]);
     return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách báo cáo thành công!');
   }
 
@@ -215,7 +217,7 @@ export class ReportService {
     const data = await this.reportModel
       .find({ subjectId: userId, type: PolicyType.USER }, { updatedAt: 0, status: 0, userId: 0 })
       .lean()
-      .sort({ createdAt: -1 });
+      .sort({ updatedAt: -1 });
     return BaseResponse.withMessage(data, 'Lấy danh sách báo cáo của người dùng thành công!');
   }
 }
