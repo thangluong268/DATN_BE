@@ -11,7 +11,7 @@ import { ReportGetREQ } from './request/report-get.request';
 export class ReportController {
   constructor(private readonly reportService: ReportService) {}
 
-  @Roles(ROLE_NAME.ADMIN, ROLE_NAME.MANAGER, ROLE_NAME.USER)
+  @Roles(ROLE_NAME.MANAGER, ROLE_NAME.USER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Get('reports')
   getReportsByUserId(@Req() req, @Query('userId') userId: string) {

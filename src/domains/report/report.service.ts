@@ -200,6 +200,9 @@ export class ReportService {
     this.logger.log(`Delete report: ${id}`);
     const report = await this.reportModel.findById(id).lean();
     if (!report) throw new NotFoundException('Báo cáo không tồn tại!');
+    if (report.type === PolicyType.USER) {
+      await this.userModel.findByIdAndUpdate(report.subjectId, { $inc: { warningCount: -1 } });
+    }
     await this.reportModel.findByIdAndDelete(id);
     return BaseResponse.withMessage({}, 'Xóa báo cáo thành công!');
   }
