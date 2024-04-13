@@ -65,6 +65,9 @@ export class User extends Document {
   @Prop({ type: String, default: 'true' })
   status: string;
 
+  @Prop({ type: Boolean, default: true })
+  isActive: boolean;
+
   @Prop({ type: String })
   socialId: string;
 

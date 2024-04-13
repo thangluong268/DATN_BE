@@ -65,10 +65,11 @@ export class StoreService {
   async getStores(query: GetStoresByAdminREQ) {
     this.logger.log(`Get Stores: ${JSON.stringify(query)}`);
     const condition = GetStoresByAdminREQ.toQueryCondition(query);
-    const { skip, limit } = QueryPagingHelper.queryPaging(query);
-    const total = await this.storeModel.countDocuments(condition);
-    const stores = await this.storeModel.find(condition).sort({ createdAt: -1 }).limit(limit).skip(skip).lean();
-    return PaginationResponse.ofWithTotalAndMessage(stores, total, 'Lấy danh sách cửa hàng thành công!');
+    const [data, total] = await Promise.all([
+      this.storeModel.aggregate(GetStoresByAdminREQ.toFind(query) as any),
+      this.storeModel.countDocuments(condition),
+    ]);
+    return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách cửa hàng thành công!');
   }
 
   async getStoreReputation(userReq: any, storeId: string) {

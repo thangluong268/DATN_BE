@@ -7,6 +7,7 @@ import { Product } from 'domains/product/schema/product.schema';
 import { Promotion } from 'domains/promotion/schema/promotion.schema';
 import { Report } from 'domains/report/schema/report.schema';
 import { Store } from 'domains/store/schema/store.schema';
+import { User } from 'domains/user/schema/user.schema';
 import { ObjectId } from 'mongodb';
 import { Model } from 'mongoose';
 import { PolicyType } from 'shared/enums/policy.enum';
@@ -32,6 +33,9 @@ export class CronjobsService {
 
     @InjectModel(Report.name)
     private readonly reportModel: Model<Report>,
+
+    @InjectModel(User.name)
+    private readonly userModel: Model<User>,
   ) {}
 
   @Cron('0 * * * * *')
@@ -91,4 +95,14 @@ export class CronjobsService {
       { $set: { status: true } },
     );
   }
+
+  // @Cron('*/1 * * * * *')
+  // async handleBanUser() {
+  //   await this.userModel.updateMany({ warningCount: { $gte: 3 } }, { $set: { isActive: false } });
+  // }
+
+  // @Cron('*/1 * * * * *')
+  // async handleUnBanUser() {
+  //   await this.userModel.updateMany({ warningCount: { $eq: 0 } }, { $set: { isActive: true } });
+  // }
 }
