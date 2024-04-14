@@ -18,6 +18,20 @@ export class StoreController {
   constructor(private readonly storeService: StoreService) {}
 
   @Roles(ROLE_NAME.MANAGER)
+  @Get('stores/excel/banned')
+  async downloadExcelStoresBanned(@Res() response: Response) {
+    const book = await this.storeService.downloadExcelStoresBanned();
+    await parseExcelResponse(response, book, `DTEX_Stores_Banned_${dayjs().format('YYYY-MM-DD_HH:mm:ss')}`);
+  }
+
+  @Roles(ROLE_NAME.MANAGER)
+  @Get('stores/excel/being-warned')
+  async downloadExcelStoresBeingWarned(@Res() response: Response) {
+    const book = await this.storeService.downloadExcelStoresBeingWarned();
+    await parseExcelResponse(response, book, `DTEX_Stores_Being_Warned_${dayjs().format('YYYY-MM-DD_HH:mm:ss')}`);
+  }
+
+  @Roles(ROLE_NAME.MANAGER)
   @Get('stores/excel')
   async downloadExcelStores(@Res() response: Response) {
     const book = await this.storeService.downloadExcelStores();

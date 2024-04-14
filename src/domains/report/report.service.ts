@@ -20,6 +20,9 @@ import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 import { ReportCreateREQ } from './request/report-create.request';
 import { ReportGetREQ } from './request/report-get.request';
 import { Report } from './schema/report.schema';
+import { ReportDownloadExcelDTO } from './dto/report-download-excel.dto';
+import { createExcelFile } from 'shared/helpers/excel.helper';
+import * as dayjs from 'dayjs';
 
 @Injectable()
 export class ReportService {
@@ -219,5 +222,24 @@ export class ReportService {
       .lean()
       .sort({ updatedAt: -1 });
     return BaseResponse.withMessage(data, 'Lấy danh sách báo cáo của người dùng thành công!');
+  }
+
+  /**
+   * Excel Download
+   */
+
+  async downloadExcelReportsApproval() {
+    this.logger.log('download excel reports approval');
+    const reportTypes = [PolicyType.PRODUCT, PolicyType.STORE, PolicyType.USER];
+    const reports = [];
+    await Promise.all(
+      reportTypes.map(async (type) => {
+        const data = await this.reportModel.aggregate(ReportGetREQ.toExport(type) as any);
+        reports.push(...data);
+      }),
+    );
+    const headers = ReportDownloadExcelDTO.getSheetValue();
+    const dataRows = reports.map(ReportDownloadExcelDTO.fromEntity);
+    return createExcelFile<ReportDownloadExcelDTO>(`Reports Approval - ${dayjs().format('YYYY-MM-DD')}`, headers, dataRows);
   }
 }
