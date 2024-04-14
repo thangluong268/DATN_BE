@@ -20,6 +20,13 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Roles(ROLE_NAME.MANAGER)
+  @Get('excel/users-being-warned')
+  async downloadExcelUsersBeingWarned(@Res() response: Response) {
+    const book = await this.userService.downloadExcelUsersBeingWarned();
+    await parseExcelResponse(response, book, `DTEX_Users_Being_Warned_${dayjs().format('YYYY-MM-DD_HH:mm:ss')}`);
+  }
+
+  @Roles(ROLE_NAME.MANAGER)
   @Get('excel/users-have-store')
   async downloadExcelUsersHaveStore(@Res() response: Response) {
     const book = await this.userService.downloadExcelUsersHaveStore();
