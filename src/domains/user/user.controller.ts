@@ -20,6 +20,13 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Roles(ROLE_NAME.MANAGER)
+  @Get('excel/deactivated')
+  async downloadExcelUsersDeactivated(@Res() response: Response) {
+    const book = await this.userService.downloadExcelUsersDeactivated();
+    await parseExcelResponse(response, book, `DTEX_Users_Deactivated_${dayjs().format('YYYY-MM-DD_HH:mm:ss')}`);
+  }
+
+  @Roles(ROLE_NAME.MANAGER)
   @Get('excel/users-being-warned')
   async downloadExcelUsersBeingWarned(@Res() response: Response) {
     const book = await this.userService.downloadExcelUsersBeingWarned();

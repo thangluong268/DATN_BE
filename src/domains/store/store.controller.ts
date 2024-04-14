@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Put, Query, Req, UseGuards, Res } from '@nestjs/common';
 import { AuthRoleGuard } from 'domains/auth/guards/auth-role.guard';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { Roles } from '../auth/decorators/auth-role.decorator';
@@ -9,10 +9,20 @@ import { StoreGetHaveMostProductREQ } from './request/store-get-have-most-produc
 import { StoreUpdateREQ } from './request/store-update.request';
 import { StoreService } from './store.service';
 import { PaginationREQ } from 'shared/generics/pagination.request';
+import { Response } from 'express';
+import { parseExcelResponse } from 'shared/helpers/excel.helper';
+import * as dayjs from 'dayjs';
 
 @Controller()
 export class StoreController {
   constructor(private readonly storeService: StoreService) {}
+
+  @Roles(ROLE_NAME.MANAGER)
+  @Get('stores/excel')
+  async downloadExcelStores(@Res() response: Response) {
+    const book = await this.storeService.downloadExcelStores();
+    await parseExcelResponse(response, book, `DTEX_Stores_${dayjs().format('YYYY-MM-DD_HH:mm:ss')}`);
+  }
 
   @Roles(ROLE_NAME.SELLER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
