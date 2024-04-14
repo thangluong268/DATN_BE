@@ -1,5 +1,6 @@
 import { ConflictException, Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import * as dayjs from 'dayjs';
 import { BillService } from 'domains/bill/bill.service';
 import { BillSeller } from 'domains/bill/schema/bill-seller.schema';
 import { Feedback } from 'domains/feedback/schema/feedback.schema';
@@ -10,18 +11,17 @@ import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationREQ } from 'shared/generics/pagination.request';
 import { PaginationResponse } from 'shared/generics/pagination.response';
+import { createExcelFile } from 'shared/helpers/excel.helper';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { User } from '../user/schema/user.schema';
 import { UserService } from '../user/user.service';
 import { STORE_DATA } from './data/sample.data';
+import { StoreDownloadExcelDTO } from './dto/store-download-excel.dto';
 import { StoreCreateREQ } from './request/store-create.request';
 import { GetStoresByAdminREQ } from './request/store-get-all-admin.request';
 import { StoreGetHaveMostProductREQ } from './request/store-get-have-most-product.request';
 import { StoreUpdateREQ } from './request/store-update.request';
 import { Store } from './schema/store.schema';
-import { StoreDownloadExcelDTO } from './dto/store-download-excel.dto';
-import { createExcelFile } from 'shared/helpers/excel.helper';
-import * as dayjs from 'dayjs';
 
 @Injectable()
 export class StoreService {
@@ -240,6 +240,36 @@ export class StoreService {
     const headers = StoreDownloadExcelDTO.getSheetValue();
     const dataRows = stores.map(StoreDownloadExcelDTO.fromEntity);
     return createExcelFile<StoreDownloadExcelDTO>(`Stores - ${dayjs().format('YYYY-MM-DD')}`, headers, dataRows);
+  }
+
+  async downloadExcelStoresBeingWarned() {
+    this.logger.log(`Download Excel Stores Being Warned`);
+    const stores = await this.storeModel.aggregate([
+      { $match: { warningCount: { $gt: 0, $lt: 3 } } },
+      { $addFields: { userObjId: { $toObjectId: '$userId' } } },
+      { $lookup: { from: 'users', localField: 'userObjId', foreignField: '_id', as: 'user' } },
+      { $addFields: { userName: { $first: '$user.fullName' } } },
+      { $sort: { createdAt: -1 } },
+      { $project: { userObjId: 0, user: 0 } },
+    ]);
+    const headers = StoreDownloadExcelDTO.getSheetValue();
+    const dataRows = stores.map(StoreDownloadExcelDTO.fromEntity);
+    return createExcelFile<StoreDownloadExcelDTO>(`Stores Being Warned - ${dayjs().format('YYYY-MM-DD')}`, headers, dataRows);
+  }
+
+  async downloadExcelStoresBanned() {
+    this.logger.log(`Download Excel Stores Banned`);
+    const stores = await this.storeModel.aggregate([
+      { $match: { status: false } },
+      { $addFields: { userObjId: { $toObjectId: '$userId' } } },
+      { $lookup: { from: 'users', localField: 'userObjId', foreignField: '_id', as: 'user' } },
+      { $addFields: { userName: { $first: '$user.fullName' } } },
+      { $sort: { createdAt: -1 } },
+      { $project: { userObjId: 0, user: 0 } },
+    ]);
+    const headers = StoreDownloadExcelDTO.getSheetValue();
+    const dataRows = stores.map(StoreDownloadExcelDTO.fromEntity);
+    return createExcelFile<StoreDownloadExcelDTO>(`Stores Banned - ${dayjs().format('YYYY-MM-DD')}`, headers, dataRows);
   }
 
   /**
