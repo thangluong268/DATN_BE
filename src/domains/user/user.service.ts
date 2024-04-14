@@ -28,6 +28,7 @@ import { ForgetPassREQ } from '../auth/request/forget-password.request';
 import { AuthSignUpREQ } from '../auth/request/sign-up.request';
 import { USER_DATA } from './data/sample.data';
 import { UserDownloadExcelDTO } from './dto/user-download-excel.dto';
+import { UsersHaveStoreDownloadExcelDTO } from './dto/users-have-store-download-excel.dto';
 import { UserBannedGetREQ } from './request/user-banned-get.request';
 import { UserCreateREQ } from './request/user-create.request';
 import { UserGetFollowStoreREQ } from './request/user-get-follow-store.request';
@@ -36,7 +37,6 @@ import { UsersHaveStoreREQ } from './request/user-have-store.request';
 import { UserUpdateREQ } from './request/user-update.request';
 import { UserCreateRESP } from './response/user-create.response';
 import { User } from './schema/user.schema';
-import { UsersHaveStoreDownloadExcelDTO } from './dto/users-have-store-download-excel.dto';
 
 @Injectable()
 export class UserService {
@@ -329,10 +329,11 @@ export class UserService {
   }
 
   /**
-   * Excel export
+   * Excel download
    */
 
   async downloadExcelUsers() {
+    this.logger.log(`Download Excel Users`);
     const users = await this.userModel.find(
       { role: { $nin: [ROLE_NAME.ADMIN, ROLE_NAME.MANAGER] } },
       { password: 0, friends: 0, followStores: 0 },
@@ -344,6 +345,7 @@ export class UserService {
   }
 
   async downloadExcelUsersHaveStore() {
+    this.logger.log(`Download Excel Users Have Store`);
     const pipeline = UsersHaveStoreREQ.toPipeline() as any[];
     pipeline.push({ $sort: { joinDate: -1 } });
     const users = await this.userModel.aggregate(pipeline);
@@ -354,6 +356,18 @@ export class UserService {
       headers,
       dataRows,
     );
+  }
+
+  async downloadExcelUsersBeingWarned() {
+    this.logger.log(`Download Excel Users Being Warned`);
+    const users = await this.userModel.find(
+      { role: { $nin: [ROLE_NAME.ADMIN, ROLE_NAME.MANAGER] }, warningCount: { $gt: 0, $lt: 3 } },
+      { password: 0, friends: 0, followStores: 0 },
+      { lean: true },
+    );
+    const headers = UserDownloadExcelDTO.getSheetValue();
+    const dataRows = users.map(UserDownloadExcelDTO.fromEntity);
+    return createExcelFile<UserDownloadExcelDTO>(`Users Being Warned - ${dayjs().format('YYYY-MM-DD')}`, headers, dataRows);
   }
 
   /**
