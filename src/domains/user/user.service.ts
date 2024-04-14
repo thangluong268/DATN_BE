@@ -36,6 +36,7 @@ import { UsersHaveStoreREQ } from './request/user-have-store.request';
 import { UserUpdateREQ } from './request/user-update.request';
 import { UserCreateRESP } from './response/user-create.response';
 import { User } from './schema/user.schema';
+import { UsersHaveStoreDownloadExcelDTO } from './dto/users-have-store-download-excel.dto';
 
 @Injectable()
 export class UserService {
@@ -340,6 +341,19 @@ export class UserService {
     const headers = UserDownloadExcelDTO.getSheetValue();
     const dataRows = users.map(UserDownloadExcelDTO.fromEntity);
     return createExcelFile<UserDownloadExcelDTO>(`Users - ${dayjs().format('YYYY-MM-DD')}`, headers, dataRows);
+  }
+
+  async downloadExcelUsersHaveStore() {
+    const pipeline = UsersHaveStoreREQ.toPipeline() as any[];
+    pipeline.push({ $sort: { joinDate: -1 } });
+    const users = await this.userModel.aggregate(pipeline);
+    const headers = UsersHaveStoreDownloadExcelDTO.getSheetValue();
+    const dataRows = users.map(UsersHaveStoreDownloadExcelDTO.fromEntity);
+    return createExcelFile<UsersHaveStoreDownloadExcelDTO>(
+      `Users have store - ${dayjs().format('YYYY-MM-DD')}`,
+      headers,
+      dataRows,
+    );
   }
 
   /**
