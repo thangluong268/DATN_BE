@@ -370,6 +370,18 @@ export class UserService {
     return createExcelFile<UserDownloadExcelDTO>(`Users Being Warned - ${dayjs().format('YYYY-MM-DD')}`, headers, dataRows);
   }
 
+  async downloadExcelUsersDeactivated() {
+    this.logger.log(`Download Excel Users Deactivated`);
+    const users = await this.userModel.find(
+      { role: { $nin: [ROLE_NAME.ADMIN, ROLE_NAME.MANAGER] }, status: false },
+      { password: 0, friends: 0, followStores: 0 },
+      { lean: true },
+    );
+    const headers = UserDownloadExcelDTO.getSheetValue();
+    const dataRows = users.map(UserDownloadExcelDTO.fromEntity);
+    return createExcelFile<UserDownloadExcelDTO>(`Users Deactivated - ${dayjs().format('YYYY-MM-DD')}`, headers, dataRows);
+  }
+
   /**
    * Seed data
    */

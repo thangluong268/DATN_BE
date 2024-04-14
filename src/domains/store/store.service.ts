@@ -19,6 +19,9 @@ import { GetStoresByAdminREQ } from './request/store-get-all-admin.request';
 import { StoreGetHaveMostProductREQ } from './request/store-get-have-most-product.request';
 import { StoreUpdateREQ } from './request/store-update.request';
 import { Store } from './schema/store.schema';
+import { StoreDownloadExcelDTO } from './dto/store-download-excel.dto';
+import { createExcelFile } from 'shared/helpers/excel.helper';
+import * as dayjs from 'dayjs';
 
 @Injectable()
 export class StoreService {
@@ -219,6 +222,24 @@ export class StoreService {
     this.logger.log(`Get Stores Select`);
     const stores = await this.storeModel.find({ status: true }, { name: 1, _id: 1 }).lean();
     return BaseResponse.withMessage(stores, 'Lấy danh sách cửa hàng thành công!');
+  }
+
+  /**
+   * Excel Download
+   */
+
+  async downloadExcelStores() {
+    this.logger.log(`Download Excel Stores`);
+    const stores = await this.storeModel.aggregate([
+      { $addFields: { userObjId: { $toObjectId: '$userId' } } },
+      { $lookup: { from: 'users', localField: 'userObjId', foreignField: '_id', as: 'user' } },
+      { $addFields: { userName: { $first: '$user.fullName' } } },
+      { $sort: { createdAt: -1 } },
+      { $project: { userObjId: 0, user: 0 } },
+    ]);
+    const headers = StoreDownloadExcelDTO.getSheetValue();
+    const dataRows = stores.map(StoreDownloadExcelDTO.fromEntity);
+    return createExcelFile<StoreDownloadExcelDTO>(`Stores - ${dayjs().format('YYYY-MM-DD')}`, headers, dataRows);
   }
 
   /**
