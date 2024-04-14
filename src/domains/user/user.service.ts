@@ -9,6 +9,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { SALT_ROUNDS } from 'app.config';
 import * as bcrypt from 'bcrypt';
+import * as dayjs from 'dayjs';
 import { BillService } from 'domains/bill/bill.service';
 import { BillSeller } from 'domains/bill/schema/bill-seller.schema';
 import { BillUser } from 'domains/bill/schema/bill-user.schema';
@@ -21,10 +22,12 @@ import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationREQ } from 'shared/generics/pagination.request';
 import { PaginationResponse } from 'shared/generics/pagination.response';
+import { createExcelFile } from 'shared/helpers/excel.helper';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { ForgetPassREQ } from '../auth/request/forget-password.request';
 import { AuthSignUpREQ } from '../auth/request/sign-up.request';
 import { USER_DATA } from './data/sample.data';
+import { UserDownloadExcelDTO } from './dto/user-download-excel.dto';
 import { UserBannedGetREQ } from './request/user-banned-get.request';
 import { UserCreateREQ } from './request/user-create.request';
 import { UserGetFollowStoreREQ } from './request/user-get-follow-store.request';
@@ -322,6 +325,21 @@ export class UserService {
       this.userModel.countDocuments(condition),
     ]);
     return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách người dùng bị vô hiệu hóa thành công!');
+  }
+
+  /**
+   * Excel export
+   */
+
+  async downloadExcelUsers() {
+    const users = await this.userModel.find(
+      { role: { $nin: [ROLE_NAME.ADMIN, ROLE_NAME.MANAGER] } },
+      { password: 0, friends: 0, followStores: 0 },
+      { lean: true },
+    );
+    const headers = UserDownloadExcelDTO.getSheetValue();
+    const dataRows = users.map(UserDownloadExcelDTO.fromEntity);
+    return createExcelFile<UserDownloadExcelDTO>(`Users - ${dayjs().format('YYYY-MM-DD')}`, headers, dataRows);
   }
 
   /**

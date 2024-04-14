@@ -1,20 +1,30 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Put, Query, Req, Res, UseGuards } from '@nestjs/common';
+import * as dayjs from 'dayjs';
 import { AuthRoleGuard } from 'domains/auth/guards/auth-role.guard';
+import { Response } from 'express';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { PaginationREQ } from 'shared/generics/pagination.request';
+import { parseExcelResponse } from 'shared/helpers/excel.helper';
 import { Roles } from '../auth/decorators/auth-role.decorator';
 import { AuthJwtATGuard } from '../auth/guards/auth-jwt-at.guard';
+import { UserBannedGetREQ } from './request/user-banned-get.request';
 import { UserCreateREQ } from './request/user-create.request';
 import { UserGetFollowStoreREQ } from './request/user-get-follow-store.request';
 import { UserGetPagingREQ } from './request/user-get-paging.resquest';
 import { UsersHaveStoreREQ } from './request/user-have-store.request';
 import { UserUpdateREQ } from './request/user-update.request';
 import { UserService } from './user.service';
-import { UserBannedGetREQ } from './request/user-banned-get.request';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Roles(ROLE_NAME.MANAGER)
+  @Get('excel')
+  async downloadExcelUsers(@Res() response: Response) {
+    const book = await this.userService.downloadExcelUsers();
+    await parseExcelResponse(response, book, `DTEX_Users_${dayjs().format('YYYY-MM-DD_HH:mm:ss')}`);
+  }
 
   @Roles(ROLE_NAME.MANAGER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
