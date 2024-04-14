@@ -20,6 +20,13 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Roles(ROLE_NAME.MANAGER)
+  @Get('excel/users-have-store')
+  async downloadExcelUsersHaveStore(@Res() response: Response) {
+    const book = await this.userService.downloadExcelUsersHaveStore();
+    await parseExcelResponse(response, book, `DTEX_Users_Have_Store_${dayjs().format('YYYY-MM-DD_HH:mm:ss')}`);
+  }
+
+  @Roles(ROLE_NAME.MANAGER)
   @Get('excel')
   async downloadExcelUsers(@Res() response: Response) {
     const book = await this.userService.downloadExcelUsers();
