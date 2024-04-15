@@ -8,5 +8,6 @@ import { Policy, PolicySchema } from './schema/policy.schema';
   imports: [MongooseModule.forFeature([{ name: Policy.name, schema: PolicySchema }])],
   controllers: [PolicyController],
   providers: [PolicyService],
+  exports: [PolicyService, MongooseModule],
 })
 export class PolicyModule {}

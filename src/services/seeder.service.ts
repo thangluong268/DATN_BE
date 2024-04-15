@@ -3,6 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { EMAIL_ADMIN, PASSWORD_ADMIN, SALT_ROUNDS } from 'app.config';
 import * as bcrypt from 'bcrypt';
 import { Category } from 'domains/category/schema/category.schema';
+import { seedDataPolicy } from 'domains/policy/data-seed/data-seed';
+import { Policy } from 'domains/policy/schema/policy.schema';
 import { User } from 'domains/user/schema/user.schema';
 import { Model } from 'mongoose';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
@@ -15,6 +17,9 @@ export class SeederService {
 
     @InjectModel(Category.name)
     private readonly categoryModel: Model<Category>,
+
+    @InjectModel(Policy.name)
+    private readonly policyModel: Model<Policy>,
   ) {}
 
   async onModuleInit() {
@@ -26,6 +31,11 @@ export class SeederService {
     const categoriesExists = await this.categoryModel.countDocuments();
     if (categoriesExists === 0) {
       this.seedCategories();
+    }
+
+    const policyExists = await this.policyModel.countDocuments();
+    if (policyExists === 0) {
+      this.seedPolicy();
     }
   }
 
@@ -89,5 +99,9 @@ export class SeederService {
         url: 'https://lighthouse.chotot.com/_next/image?url=https%3A%2F%2Fstatic.chotot.com%2Fstorage%2Fchapy-pro%2Fnewcats%2Fv8%2Fcho-tang-mien-phi.png&w=256&q=95',
       },
     ]);
+  }
+
+  async seedPolicy() {
+    await this.policyModel.create(seedDataPolicy());
   }
 }

@@ -25,8 +25,16 @@ export class PolicyService {
   async findAllByObject(query: PolicyFindAllByObjectREQ) {
     this.logger.log(`find all policy by object: ${JSON.stringify(query)}`);
     const conditions = PolicyFindAllByObjectREQ.toQueryCondition(query);
-    const policies = await this.policyModel.find(conditions, { _id: 1, name: 1, content: 1, policyObject: 1 }, { lean: true });
-    return BaseResponse.withMessage(policies, 'Lấy danh sách chính sách thành công!');
+    const policies = await this.policyModel.find(conditions, { _id: 1, name: 1, content: 1 }, { lean: true });
+    const data = {};
+    policies.forEach((policy) => {
+      if (data.hasOwnProperty(policy.name)) {
+        data[policy.name].content += `\n${policy.content}`;
+      } else {
+        data[policy.name] = policy;
+      }
+    });
+    return BaseResponse.withMessage(Object.values(data), 'Lấy danh sách chính sách thành công!');
   }
 
   async update(id: string, body: PolicyUpdateREQ) {
