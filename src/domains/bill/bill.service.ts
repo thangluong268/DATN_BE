@@ -9,6 +9,7 @@ import { StoreService } from 'domains/store/store.service';
 import { Tax } from 'domains/tax/schema/tax.schema';
 import { User } from 'domains/user/schema/user.schema';
 import { UserService } from 'domains/user/user.service';
+import { ObjectId } from 'mongodb';
 import { ClientSession, Connection, Model } from 'mongoose';
 import { PaymentDTO } from 'payment/dto/payment.dto';
 import { PaypalGateway, VNPayGateway } from 'payment/payment.gateway';
@@ -95,7 +96,7 @@ export class BillService {
       await this.calculateTax(body.data, paymentId, session);
 
       const redisClient = this.redisService.getClient();
-      await redisClient.setex(paymentId, 86400, JSON.stringify({ numOfCoins, promotionId: body.promotionId }));
+      await redisClient.set(paymentId, JSON.stringify({ numOfCoins, promotionId: body.promotionId }));
 
       for (const cart of body.data) {
         totalPrice += cart['totalPricePayment'];
@@ -122,10 +123,7 @@ export class BillService {
 
   async calculateTax(carts: CartInfoDTO[], paymentId: string, session: ClientSession) {
     for (const [index, cart] of carts.entries()) {
-      console.log(carts[index]['totalPricePayment']);
-      console.log(TAX_RATE);
       const taxFee = Math.ceil(carts[index]['totalPricePayment'] * TAX_RATE);
-      console.log(taxFee);
       const totalPrice = carts[index]['totalPricePayment'];
       carts[index]['totalPricePayment'] -= taxFee;
       await this.taxModel.create([{ storeId: cart.storeId, totalPrice, taxFee, paymentId }], { session });
@@ -209,7 +207,7 @@ export class BillService {
     if (data) {
       const { numOfCoins, promotionId } = JSON.parse(data);
       await this.userModel.findByIdAndUpdate(userId, { $inc: { wallet: -numOfCoins } });
-      if (!paymentId) return;
+      if (!promotionId) return;
       await this.promotionModel.findByIdAndUpdate(promotionId, { $inc: { quantity: -1 }, $pull: { userSaves: userId } });
       const isUserUsedPromotion = await this.promotionModel.findOne({ _id: promotionId, userUses: userId }).lean();
       if (!isUserUsedPromotion) {
@@ -429,39 +427,53 @@ export class BillService {
   }
 
   async cancelBill(userId: string, billId: string) {
-    // this.logger.log(`Cancel Bill: ${billId}`);
-    // const bill = await this.billModel.findOne({ _id: new ObjectId(billId), userId }).lean();
-    // if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
-    // if (bill.status !== BILL_STATUS.NEW) throw new BadRequestException('Không thể hủy đơn hàng này!');
-    // const session = await this.connection.startSession();
-    // session.startTransaction();
-    // try {
-    //   await this.billModel.findByIdAndUpdate([billId, { status: 'CANCELLED' }], { session });
-    //   bill.products.forEach(async (product) => {
-    //     await this.productModel.findByIdAndUpdate([product.id, { $inc: { quantity: product.quantity } }], { session });
-    //   });
-    //   if (bill.promotionId) {
-    //     await this.promotionModel.findByIdAndUpdate(bill.promotionId, {
-    //       $inc: { quantity: 1 },
-    //       $push: { userSaves: bill.userId },
-    //       $pull: { userUses: bill.userId },
-    //     });
-    //   }
-    //   /**
-    //    * check tất cả bill có cùng paymentId đều có status = CANCELLED -> mới hoàn lại coins và promotion
-    //    * hoặc tổng số lượng bill có cùng paymentId = 1
-    //    */
-    //   await this.userService.updateWallet(bill.userId, bill.totalPrice, 'minus');
-    //   const numOfSameOrder = await this.billModel.countDocuments({ paymentId: bill.paymentId });
-    //   const redisClient = this.redisService.getClient();
-    //   const coinsUsed = await redisClient.get(bill.paymentId);
-    //   const coins = Number(coinsUsed) / numOfSameOrder;
-    //   await this.userModel.findByIdAndUpdate(bill.userId, { $inc: { wallet: coins } });
-    //   await session.commitTransaction();
-    //   session.endSession();
-    // } catch (err) {
-    //   await session.abortTransaction();
-    //   throw err;
-    // }
+    this.logger.log(`Cancel Bill: ${billId}`);
+    const bill = await this.billModel.findOne({ _id: new ObjectId(billId), userId }).lean();
+    if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
+    if (bill.status !== BILL_STATUS.NEW && bill.status === BILL_STATUS.CANCELLED)
+      throw new BadRequestException('Không thể hủy đơn hàng này!');
+    const redisClient = this.redisService.getClient();
+    const session = await this.connection.startSession();
+    session.startTransaction();
+    try {
+      for (const product of bill.products) {
+        await this.productModel.findByIdAndUpdate(product.id, { $inc: { quantity: product.quantity } }, { session });
+      }
+      const coinsRefund = Math.floor((bill.totalPricePayment * 0.2) / 1000);
+      await this.userModel.findByIdAndUpdate(bill.userId, { $inc: { wallet: -coinsRefund } }, { session });
+      /**
+       * check tất cả bill có cùng paymentId đều có status = CANCELLED -> mới hoàn lại coins và promotion
+       * hoặc tổng số lượng bill có cùng paymentId = 1
+       */
+      const totalOrder = await this.billModel.countDocuments({ paymentId: bill.paymentId });
+      const numOfCancelOrder = await this.billModel.countDocuments({ paymentId: bill.paymentId, status: BILL_STATUS.CANCELLED });
+      if (totalOrder === 1 || numOfCancelOrder === totalOrder - 1) {
+        const data = await redisClient.get(bill.paymentId);
+        if (data) {
+          const { numOfCoins, promotionId } = JSON.parse(data);
+          if (promotionId) {
+            await this.promotionModel.findByIdAndUpdate(
+              promotionId,
+              {
+                $inc: { quantity: 1 },
+                $push: { userSaves: bill.userId },
+                $pull: { userUses: bill.userId },
+              },
+              { session },
+            );
+          }
+          await this.userModel.findByIdAndUpdate(bill.userId, { $inc: { wallet: numOfCoins } }, { session });
+        }
+      }
+      await this.billModel.findByIdAndUpdate(billId, { status: BILL_STATUS.CANCELLED }, { session });
+      await session.commitTransaction();
+      await redisClient.del(bill.paymentId);
+      return BaseResponse.withMessage({}, 'Hủy đơn hàng thành công!');
+    } catch (err) {
+      await session.abortTransaction();
+      throw new BadRequestException(err.message);
+    } finally {
+      await session.endSession();
+    }
   }
 }
