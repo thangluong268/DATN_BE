@@ -122,7 +122,10 @@ export class BillService {
 
   async calculateTax(carts: CartInfoDTO[], paymentId: string, session: ClientSession) {
     for (const [index, cart] of carts.entries()) {
+      console.log(carts[index]['totalPricePayment']);
+      console.log(TAX_RATE);
       const taxFee = Math.ceil(carts[index]['totalPricePayment'] * TAX_RATE);
+      console.log(taxFee);
       const totalPrice = carts[index]['totalPricePayment'];
       carts[index]['totalPricePayment'] -= taxFee;
       await this.taxModel.create([{ storeId: cart.storeId, totalPrice, taxFee, paymentId }], { session });
@@ -135,6 +138,7 @@ export class BillService {
     const numOfStores = carts.length;
     let promotionValue = 0;
     if (promotionId) {
+      console.log(promotionId);
       const storeIds = carts.map((cart) => cart.storeId);
       const promotion = await this.promotionModel.findOne({
         _id: promotionId,
@@ -145,21 +149,21 @@ export class BillService {
       if (promotion.quantity === 0) throw new BadRequestException('Khuyến mãi đã hết!');
       promotionValue = Math.floor((totalPrice * promotion.value) / 100);
       if (promotionValue > promotion.maxDiscountValue) promotionValue = promotion.maxDiscountValue;
-      const discountValuePerStore = Math.floor((coinsValue + promotionValue) / numOfStores);
-      let discountRemain = 0;
-      for (const [index, cart] of carts.entries()) {
-        if (discountValuePerStore > cart.totalPrice + cart.deliveryFee) {
-          discountRemain += discountValuePerStore - (cart.totalPrice + cart.deliveryFee);
-          carts[index]['totalPricePayment'] = 0;
-          continue;
-        }
-        carts[index]['totalPricePayment'] = cart.totalPrice + cart.deliveryFee - discountValuePerStore;
+    }
+    const discountValuePerStore = Math.floor((coinsValue + promotionValue) / numOfStores);
+    let discountRemain = 0;
+    for (const [index, cart] of carts.entries()) {
+      if (discountValuePerStore > cart.totalPrice + cart.deliveryFee) {
+        discountRemain += discountValuePerStore - (cart.totalPrice + cart.deliveryFee);
+        carts[index]['totalPricePayment'] = 0;
+        continue;
       }
-      if (discountRemain > 0) {
-        const numOfStore = carts.filter((cart) => cart['totalPricePayment'] > 0).length;
-        const discountValuePerStore = Math.floor(discountRemain / numOfStore);
-        this.calculatorDiscountRemain(carts, discountValuePerStore);
-      }
+      carts[index]['totalPricePayment'] = cart.totalPrice + cart.deliveryFee - discountValuePerStore;
+    }
+    if (discountRemain > 0) {
+      const numOfStore = carts.filter((cart) => cart['totalPricePayment'] > 0).length;
+      const discountValuePerStore = Math.floor(discountRemain / numOfStore);
+      this.calculatorDiscountRemain(carts, discountValuePerStore);
     }
   }
 
@@ -386,45 +390,6 @@ export class BillService {
     );
   }
 
-  // async getMyBill(userId: string, billId: string) {
-  //   this.logger.log(`Get My Bill: ${userId}`);
-  //   const bill = await this.billModel.findOne({ _id: billId, userId }, {}, { lean: true });
-  //   if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
-  //   const listProductsFullInfo = await Promise.all(
-  //     bill.products.map(async (product) => {
-  //       const productFullInfo = await this.productService.findById(product.id);
-  //       const productData = {
-  //         product: productFullInfo,
-  //         subInfo: { quantity: product.quantity },
-  //       };
-  //       return productData;
-  //     }),
-  //   );
-  //   const store = await this.storeService.findById(bill.storeId);
-  //   const user = await this.userService.findById(bill.userId);
-  //   return BaseResponse.withMessage(
-  //     GetMyBillRESP.of(bill, store, user, listProductsFullInfo),
-  //     'Lấy thông tin đơn hàng thành công!',
-  //   );
-  // }
-
-  // async updateStatusBillUser(billId: string, status: string) {
-  //   this.logger.log(`Update Status Bill User: ${billId}`);
-  //   if (status !== BILL_STATUS.CANCELLED && status !== BILL_STATUS.RETURNED)
-  //     throw new BadRequestException('Trạng thái không hợp lệ!');
-  //   const bill = await this.billModel.findById(billId);
-  //   if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
-  //   await this.billModel.findByIdAndUpdate({ _id: billId }, { status }, { new: true });
-  //   if (status === 'CANCELLED') {
-  //     await this.userService.updateWallet(bill.userId, bill.totalPrice, 'sub');
-  //   }
-  //   if (status === 'RETURNED') {
-  //     await this.userService.updateWallet(bill.userId, bill.totalPrice, 'sub');
-  //     await this.userService.updateWallet(bill.userId, bill.totalPrice * 5, 'plus');
-  //   }
-  //   return BaseResponse.withMessage({}, 'Cập nhật trạng thái đơn hàng thành công!');
-  // }
-
   async updateStatusBillSeller(billId: string, status: string) {
     this.logger.log(`Update Status Bill Seller: ${billId}`);
     const bill = await this.billSellerModel.findById(billId, {}, { lean: true });
@@ -463,36 +428,40 @@ export class BillService {
     return result[0]?.totalRevenue || 0;
   }
 
-  // async cancelBill(billId: string) {
-  //   this.logger.log(`Cancel Bill: ${billId}`);
-  //   const bill = await this.billModel.findById(billId).lean();
-  //   if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
-  //   if (bill.status !== BILL_STATUS.NEW) throw new BadRequestException('Không thể hủy đơn hàng này!');
-  //   const session = await this.connection.startSession();
-  //   session.startTransaction();
-  //   try {
-  //     await this.billModel.findByIdAndUpdate(billId, { status: 'CANCELLED' });
-  //     bill.products.forEach(async (product) => {
-  //       await this.productModel.findByIdAndUpdate(product.id, { $inc: { quantity: product.quantity } });
-  //     });
-  //     if (bill.promotionId) {
-  //       await this.promotionModel.findByIdAndUpdate(bill.promotionId, {
-  //         $inc: { quantity: 1 },
-  //         $push: { userSaves: bill.userId },
-  //         $pull: { userUses: bill.userId },
-  //       });
-  //     }
-  //     await this.userService.updateWallet(bill.userId, bill.totalPrice, 'minus');
-  //     const numOfSameOrder = await this.billModel.countDocuments({ paymentId: bill.paymentId });
-  //     const redisClient = this.redisService.getClient();
-  //     const coinsUsed = await redisClient.get(bill.paymentId);
-  //     const coins = Number(coinsUsed) / numOfSameOrder;
-  //     await this.userModel.findByIdAndUpdate(bill.userId, { $inc: { wallet: coins } });
-  //     await session.commitTransaction();
-  //     session.endSession();
-  //   } catch (err) {
-  //     await session.abortTransaction();
-  //     throw err;
-  //   }
-  // }
+  async cancelBill(userId: string, billId: string) {
+    // this.logger.log(`Cancel Bill: ${billId}`);
+    // const bill = await this.billModel.findOne({ _id: new ObjectId(billId), userId }).lean();
+    // if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
+    // if (bill.status !== BILL_STATUS.NEW) throw new BadRequestException('Không thể hủy đơn hàng này!');
+    // const session = await this.connection.startSession();
+    // session.startTransaction();
+    // try {
+    //   await this.billModel.findByIdAndUpdate([billId, { status: 'CANCELLED' }], { session });
+    //   bill.products.forEach(async (product) => {
+    //     await this.productModel.findByIdAndUpdate([product.id, { $inc: { quantity: product.quantity } }], { session });
+    //   });
+    //   if (bill.promotionId) {
+    //     await this.promotionModel.findByIdAndUpdate(bill.promotionId, {
+    //       $inc: { quantity: 1 },
+    //       $push: { userSaves: bill.userId },
+    //       $pull: { userUses: bill.userId },
+    //     });
+    //   }
+    //   /**
+    //    * check tất cả bill có cùng paymentId đều có status = CANCELLED -> mới hoàn lại coins và promotion
+    //    * hoặc tổng số lượng bill có cùng paymentId = 1
+    //    */
+    //   await this.userService.updateWallet(bill.userId, bill.totalPrice, 'minus');
+    //   const numOfSameOrder = await this.billModel.countDocuments({ paymentId: bill.paymentId });
+    //   const redisClient = this.redisService.getClient();
+    //   const coinsUsed = await redisClient.get(bill.paymentId);
+    //   const coins = Number(coinsUsed) / numOfSameOrder;
+    //   await this.userModel.findByIdAndUpdate(bill.userId, { $inc: { wallet: coins } });
+    //   await session.commitTransaction();
+    //   session.endSession();
+    // } catch (err) {
+    //   await session.abortTransaction();
+    //   throw err;
+    // }
+  }
 }
