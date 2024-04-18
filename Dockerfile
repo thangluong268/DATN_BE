@@ -21,7 +21,7 @@ COPY tsconfig*.json ./
 RUN yarn build
 
 # Stage 2: Create a production-ready image
-FROM node:18.20-alpine3.18
+FROM node:18-slim
 
 # Set the working directory in the container
 WORKDIR /app
