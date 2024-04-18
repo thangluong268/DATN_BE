@@ -21,7 +21,7 @@ COPY tsconfig*.json ./
 RUN npm run build
 
 # Stage 2: Create a production-ready image
-FROM node:18-slim
+FROM node:lts-bookworm-slim
 
 # Set the working directory in the container
 WORKDIR /app
