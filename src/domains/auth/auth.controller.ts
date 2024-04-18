@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, HttpStatus, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { BaseResponse } from 'shared/generics/base.response';
 import { ROLE_NAME } from '../../shared/enums/role-name.enum';
 import { User } from '../user/schema/user.schema';
 import { AuthService } from './auth.service';
@@ -22,6 +23,12 @@ export class AuthController {
   refreshToken(@Req() req) {
     const { userId, refreshToken } = req.user;
     return this.authService.refreshToken(userId, refreshToken);
+  }
+
+  @Get('test')
+  @UseGuards(GoogleOAuthGuard)
+  async test(): Promise<any> {
+    return BaseResponse.ok();
   }
 
   @Get('login/google')

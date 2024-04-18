@@ -28,6 +28,11 @@ jobs:
     - run: |
         npm ci
         npm run build
+
+  deploy:
+    runs-on: self-hosted
+    needs: build
+    steps:
     - run: |
         docker stop dtexbe || true
         docker rm dtexbe || true
