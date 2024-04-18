@@ -25,9 +25,6 @@ jobs:
     - run: |
          touch .env.prod
          echo "${{ secrets.ENV_FILE_PROD }}" > .env.prod
-    - run: |
-        npm ci
-        npm run build
 
   deploy:
     runs-on: self-hosted
@@ -37,4 +34,5 @@ jobs:
         docker stop dtexbe || true
         docker rm dtexbe || true
         docker-compose -f docker-compose.yml up -d
+        docker image prune -f
         
