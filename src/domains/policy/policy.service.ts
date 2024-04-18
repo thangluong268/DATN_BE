@@ -18,7 +18,7 @@ export class PolicyService {
 
   async create(body: PolicyCreateREQ) {
     this.logger.log(`create policy: ${JSON.stringify(body)}`);
-    const policy = await this.policyModel.findOne({ name: body.name });
+    const policy = await this.policyModel.findOne({ name: body.name, type: body.type });
     if (policy) throw new ConflictException(`Chính sách: ${body.name} đã tồn tại!`);
     const newPolicy = await this.policyModel.create(body);
     return BaseResponse.withMessage(toDocModel(newPolicy), 'Tạo chính sách thành công!');
