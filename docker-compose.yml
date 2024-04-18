@@ -1,60 +1,17 @@
-version: '3.6'
+version: '3.7'
 services:
-  dtexapp:
+  dtexbe:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: dtexapp
-    image: dtexapp
+    container_name: dtexbe
+    image: dtexbe
     restart: always
     ports:
       - "5000:5000"
-    environment:
-      SERVICE_NAME: dtexapp
-      SERVICE_ES_HOST: 9200:9200
-      ELASTICSEARCH_URL: http://elasticsearch:9200/
     networks:
-      - dtex-app
-
-  Elasticsearch:
-    image: elasticsearch:8.13.0
-    container_name: elasticsearch
-    restart: always
-    volumes:
-    - elastic_data:/usr/share/elasticsearch/data/
-    environment:
-      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
-      discovery.type: single-node
-      xpack.security.enabled: false
-      xpack.security.enrollment.enabled: false
-      node.name: elasticsearch
-      http.port: 9200
-      http.host: 0.0.0.0
-      transport.host: 127.0.0.1
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    ports:
-    - '9200:9200'
-    networks:
-      - dtex-app
-
-  Kibana:
-    image: kibana:8.13.0
-    container_name: kibana
-    restart: always       
-    ports:
-    - '5601:5601'
-    environment:
-      - ELASTICSEARCH_URL=http://elasticsearch:9200  
-    depends_on:
-      - Elasticsearch  
-    networks:
-      - dtex-app
-volumes:
-  elastic_data: {}
+      - dtex-be
 
 networks:
-  dtex-app:
+  dtex-be:
     driver: bridge
