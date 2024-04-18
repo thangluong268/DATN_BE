@@ -26,7 +26,6 @@ export class AuthController {
   }
 
   @Get('test')
-  @UseGuards(GoogleOAuthGuard)
   async test(): Promise<any> {
     return BaseResponse.ok();
   }
