@@ -28,12 +28,8 @@ jobs:
     - run: |
         npm ci
         npm run build
-
-  deploy:
-    runs-on: self-hosted
-    steps:
     - run: |
         docker stop dtexbe || true
         docker rm dtexbe || true
-        docker-compose up -d
+        docker-compose -f docker-compose.yml up -d
         
