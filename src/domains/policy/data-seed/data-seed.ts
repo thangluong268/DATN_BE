@@ -53,54 +53,7 @@ export const seedDataPolicy = () => [
   {
     name: 'Nghiêm cấm hành vi',
     content:
-      'Phản động, chống phá, bài xích tôn giáo, khiêu dâm, bạo lực, đi ngược lại thuần phong mỹ tục, truyền thống và văn hóa Việt Nam, xâm phạm chủ quyền, toàn vẹn lãnh thổ, an ninh quốc gia của Việt Nam;',
-    type: PolicyType.PRODUCT,
-  },
-  {
-    name: 'Nghiêm cấm hành vi',
-    content: 'Đăng thông tin rác, phá rối hay làm mất uy tín của các dịch vụ do Shopee cung cấp;',
-    type: PolicyType.PRODUCT,
-  },
-  {
-    name: 'Nghiêm cấm hành vi',
-    content: 'Xúc phạm, khích bác đến người khác dưới bất kỳ hình thức nào;',
-    type: PolicyType.PRODUCT,
-  },
-  {
-    name: 'Nghiêm cấm hành vi',
-    content:
-      'Tuyên truyền về những thông tin mà pháp luật nghiêm cấm như: sử dụng heroin, thuốc lắc, giết người, cướp của,vv… (Ví dụ: sản phẩm in hình lá cần sa, shisha);',
-    type: PolicyType.PRODUCT,
-  },
-  {
-    name: 'Nghiêm cấm hành vi',
-    content: 'Khuyến khích, quảng cáo cho việc sử dụng các sản phẩm độc hại (VD: thuốc lá, rượu, cần sa);',
-    type: PolicyType.PRODUCT,
-  },
-  {
-    name: 'Nghiêm cấm hành vi',
-    content: 'Các sản phẩm văn hóa đồi trụy (băng đĩa, sách báo, vật phẩm);',
-    type: PolicyType.PRODUCT,
-  },
-  {
-    name: 'Nghiêm cấm hành vi',
-    content: 'Tài liệu bí mật quốc gia, bí mật nhà nước, bí mật kinh doanh, bí mật cá nhân;',
-    type: PolicyType.PRODUCT,
-  },
-  {
-    name: 'Nghiêm cấm hành vi',
-    content: 'Con người và/hoặc các bộ phận của cơ thể con người;',
-    type: PolicyType.PRODUCT,
-  },
-  {
-    name: 'Nghiêm cấm hành vi',
-    content:
-      'Động vật và chế phẩm từ động vật (bao gồm động vật hoang dã) như: chó, mèo, cá, ốc, chuột, nhím, ốc mượn hồn, hamster, ngà voi, sừng tê giác, cao hổ, da/ lông động vật,...',
-    type: PolicyType.PRODUCT,
-  },
-  {
-    name: 'Nghiêm cấm hành vi',
-    content: 'Những sản phẩm có tính chất phân biệt chủng tộc, xúc phạm đến dân tộc hoặc quốc gia nào đó;',
+      'Phản động, chống phá, bài xích tôn giáo, khiêu dâm, bạo lực, đi ngược lại thuần phong mỹ tục, truyền thống và văn hóa Việt Nam, xâm phạm chủ quyền, toàn vẹn lãnh thổ, an ninh quốc gia của Việt Nam;\n\nĐăng thông tin rác, phá rối hay làm mất uy tín của các dịch vụ do Shopee cung cấp;\n\nXúc phạm, khích bác đến người khác dưới bất kỳ hình thức nào;\n\nTuyên truyền về những thông tin mà pháp luật nghiêm cấm như: sử dụng heroin, thuốc lắc, giết người, cướp của,vv… (Ví dụ: sản phẩm in hình lá cần sa, shisha);\n\nKhuyến khích, quảng cáo cho việc sử dụng các sản phẩm độc hại (VD: thuốc lá, rượu, cần sa);\n\nCác sản phẩm văn hóa đồi trụy (băng đĩa, sách báo, vật phẩm);\n\nTài liệu bí mật quốc gia, bí mật nhà nước, bí mật kinh doanh, bí mật cá nhân;\n\nCon người và/hoặc các bộ phận của cơ thể con người;\n\nĐộng vật và chế phẩm từ động vật (bao gồm động vật hoang dã) như: chó, mèo, cá, ốc, chuột, nhím, ốc mượn hồn, hamster, ngà voi, sừng tê giác, cao hổ, da/ lông động vật,...\n\nNhững sản phẩm có tính chất phân biệt chủng tộc, xúc phạm đến dân tộc hoặc quốc gia nào đó;',
     type: PolicyType.PRODUCT,
   },
 
@@ -108,19 +61,7 @@ export const seedDataPolicy = () => [
   {
     name: 'Chính sách hoàn trả',
     content:
-      'Người dùng được quyền hoàn trả lại đơn hàng trong vòng 3 ngày kể từ lúc nhận hàng thành công. Ngoài thời gian trên hệ thống sẽ không đáp ứng nhu cầu hoàn trả đơn của người dùng.',
-    type: PolicyType.USER,
-  },
-  {
-    name: 'Chính sách hoàn trả',
-    content:
-      'Trong trường hợp người dùng đặt nhiều đơn hàng cùng một lúc thuộc một cửa hàng, nếu muốn hoàn trả lại một trong số những sản phẩm đó. Vui lòng liên hệ để trao đổi trực tiếp với cửa hàng.',
-    type: PolicyType.USER,
-  },
-  {
-    name: 'Chính sách hoàn trả',
-    content:
-      'Đối với trường hợp người dùng đặt hàng, nhận hàng thành công và sau đó hoàn lại đơn hàng liên tiếp 3 lần. Hệ thống sẽ hạn chế quyền sử dụng khuyến mãi của hệ thống trong vòng 30 ngày.',
+      'Người dùng được quyền hoàn trả lại đơn hàng trong vòng 3 ngày kể từ lúc nhận hàng thành công. Ngoài thời gian trên hệ thống sẽ không đáp ứng nhu cầu hoàn trả đơn của người dùng.\n\nTrong trường hợp người dùng đặt nhiều đơn hàng cùng một lúc thuộc một cửa hàng, nếu muốn hoàn trả lại một trong số những sản phẩm đó. Vui lòng liên hệ để trao đổi trực tiếp với cửa hàng.\n\nĐối với trường hợp người dùng đặt hàng, nhận hàng thành công và sau đó hoàn lại đơn hàng liên tiếp 3 lần. Hệ thống sẽ hạn chế quyền sử dụng khuyến mãi của hệ thống trong vòng 30 ngày.',
     type: PolicyType.USER,
   },
   {
