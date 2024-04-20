@@ -9,6 +9,7 @@ import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationREQ } from 'shared/generics/pagination.request';
 import { PaginationResponse } from 'shared/generics/pagination.response';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
+import { isBlank } from 'shared/validators/query.validator';
 import { PromotionCreateREQ } from './request/promotion-create.request';
 import { PromotionGetByManagerFilterREQ } from './request/promotion-get-by-manager-filter.request';
 import { PromotionGetByStore } from './request/promotion-get-by-store.request';
@@ -57,7 +58,7 @@ export class PromotionService {
     const total = await this.promotionModel.countDocuments(condition);
     const data = await this.promotionModel
       .find(condition, { createdAt: 0, updatedAt: 0 })
-      .sort({ createdAt: -1 })
+      .sort({ isActive: -1, createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
@@ -76,9 +77,31 @@ export class PromotionService {
 
   async getPromotion(promotionId: string) {
     this.logger.log(`get detail promotionId: ${promotionId}`);
-    const promotion = await this.promotionModel.findById(promotionId).lean();
-    if (!promotion) throw new NotFoundException('Không tìm thấy khuyến mãi!');
-    return BaseResponse.withMessage(PromotionGetDetailRESP.of(promotion), 'Lấy thông tin chi tiết khuyến mãi thành công!');
+    const promotion = await this.promotionModel.aggregate([
+      { $match: { _id: new ObjectId(promotionId) } },
+      {
+        $lookup: {
+          from: 'stores',
+          let: { storeIds: '$storeIds' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $in: [
+                    { $toObjectId: '$_id' },
+                    { $map: { input: '$$storeIds', as: 'storeId', in: { $toObjectId: '$$storeId' } } },
+                  ],
+                },
+              },
+            },
+            { $project: { _id: 1, name: 1, avatar: 1 } },
+          ],
+          as: 'stores',
+        },
+      },
+    ]);
+    if (isBlank(promotion)) throw new NotFoundException('Không tìm thấy khuyến mãi!');
+    return BaseResponse.withMessage(PromotionGetDetailRESP.of(promotion[0]), 'Lấy thông tin chi tiết khuyến mãi thành công!');
   }
 
   async getUserUsesPromotion(userId: string, userRole: string[], promotionId: string, query: PromotionGetUserUsesREQ) {
