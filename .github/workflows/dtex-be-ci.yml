@@ -33,6 +33,6 @@ jobs:
     - run: |
         docker stop dtexbe || true
         docker rm dtexbe || true
-        docker-compose -f docker-compose.yml up -d
+        docker-compose up -d
         docker image prune -f
         
