@@ -1,5 +1,11 @@
 import { Promotion } from '../schema/promotion.schema';
 
+interface StorePromotionRESP {
+  id: string;
+  name: string;
+  avatar: string;
+}
+
 export class PromotionGetDetailRESP {
   id: string;
   avatar: string;
@@ -8,11 +14,11 @@ export class PromotionGetDetailRESP {
   quantity: number;
   value: number;
   maxDiscountValue: number;
-  storeIds: string[];
   startTime: Date;
   endTime: Date;
   isActive: boolean;
-  static of(promotion: Promotion): PromotionGetDetailRESP {
+  stores: StorePromotionRESP[];
+  static of(promotion: any): PromotionGetDetailRESP {
     return {
       id: promotion._id,
       avatar: promotion.avatar,
@@ -21,10 +27,14 @@ export class PromotionGetDetailRESP {
       quantity: promotion.quantity,
       value: promotion.value,
       maxDiscountValue: promotion.maxDiscountValue,
-      storeIds: promotion.storeIds,
       startTime: promotion.startTime,
       endTime: promotion.endTime,
       isActive: promotion.isActive,
+      stores: promotion.stores.map((store) => ({
+        id: store._id,
+        name: store.name,
+        avatar: store.avatar,
+      })),
     };
   }
 }
