@@ -31,8 +31,9 @@ jobs:
     needs: build
     steps:
     - run: |
-        docker stop dtexbe || true
-        docker rm dtexbe || true
+        cd ~/workspace/actions-runner-be/_work/DATN_BE/DATN_BE
+        docker stop dtex-be || true
+        docker rm dtex-be || true
         docker-compose up -d
         docker image prune -f
         

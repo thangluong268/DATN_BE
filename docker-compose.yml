@@ -1,11 +1,11 @@
 version: '3.7'
 services:
-  dtexbe:
+  dtex-be:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: dtexbe
-    image: dtexbe
+    container_name: dtex-be
+    image: dtex-be
     restart: always
     ports:
       - "5000:5000"
