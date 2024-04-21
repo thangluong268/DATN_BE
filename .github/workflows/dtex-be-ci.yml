@@ -32,7 +32,7 @@ jobs:
       PATH_TO_DOCKER_COMPOSE_FILE: ~/workspace/actions-runner-be/_work/DATN_BE/DATN_BE/
     steps:
     - run: |
-        cd $PATH_TO_DOCKER_COMPOSE_FILE
+        cd ~/workspace/actions-runner-be/_work/DATN_BE/DATN_BE
         docker stop $APP_NAME || true
         docker rm $APP_NAME || true
         docker image rm $APP_NAME || true
