@@ -31,8 +31,8 @@ jobs:
     - run: |
         cd ~/workspace/actions-runner-be/_work/DATN_BE/DATN_BE
         docker stop dtex-be || true
-        docker rm dtex-be || true
-        docker image rm dtex-be || true
+        docker rm dtex-be -f || true
+        docker image rm dtex-be -f || true
         docker-compose up -d
         docker image prune -f
         cd ~/workspace/actions-runner-be/_work/DATN_BE
