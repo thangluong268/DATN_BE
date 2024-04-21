@@ -34,10 +34,10 @@ jobs:
       REPO_NAME: DATN_BE
     steps:
     - run: |
-        cd $PATH_TO_DOCKER_COMPOSE_FILE
         docker stop $APP_NAME || true
         docker rm $APP_NAME || true
         docker image rm $APP_NAME || true
+        cd $PATH_TO_DOCKER_COMPOSE_FILE
         docker-compose up -d
         docker image prune -f
         cd $PATH_TO_REPO
