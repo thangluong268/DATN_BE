@@ -97,9 +97,16 @@ export class BillController {
 
   @Roles(ROLE_NAME.USER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
-  @Patch(':billId/cancel')
-  cancelBill(@Req() req, @Param('billId') billId: string) {
-    return this.billService.cancelBill(req.user._id.toString(), billId);
+  @Patch(':billId/user/cancel')
+  cancelBillByUser(@Req() req, @Param('billId') billId: string) {
+    return this.billService.cancelBillByUser(req.user._id.toString(), billId);
+  }
+
+  @Roles(ROLE_NAME.SELLER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Patch(':billId/seller/cancel')
+  cancelBillBySeller(@Req() req, @Param('billId') billId: string) {
+    return this.billService.cancelBillBySeller(req.user._id.toString(), billId);
   }
 
   @Roles(ROLE_NAME.SELLER)

@@ -1,8 +1,7 @@
 import { Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { BillService } from 'domains/bill/bill.service';
-import { ProductService } from 'domains/product/product.service';
-import { StoreService } from 'domains/store/store.service';
+import { Store } from 'domains/store/schema/store.schema';
 import { Model } from 'mongoose';
 import { BaseResponse } from 'shared/generics/base.response';
 import { Product } from '../product/schema/product.schema';
@@ -19,10 +18,9 @@ export class EvaluationService {
 
     @InjectModel(Product.name)
     private readonly productModel: Model<Product>,
-    @Inject(forwardRef(() => ProductService))
-    private readonly productService: ProductService,
 
-    private readonly storeService: StoreService,
+    @InjectModel(Store.name)
+    private readonly storeModel: Model<Store>,
 
     @Inject(forwardRef(() => BillService))
     private readonly billService: BillService,
@@ -35,9 +33,9 @@ export class EvaluationService {
 
   async expressedEmoji(userId: string, productId: string, name: string) {
     this.logger.log(`Expressed Emoji: ${userId} - ${productId} - ${name}`);
-    const product = await this.productService.findById(productId);
+    const product = await this.productModel.findById(productId).lean();
     if (!product) throw new NotFoundException('Không tìm thấy sản phẩm này!');
-    const store = await this.storeService.findById(product.storeId);
+    const store = await this.storeModel.findById(product.storeId).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     // const isEvaluation = await this.evaluationModel.findOne({
     //   productId,

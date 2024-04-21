@@ -1,8 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cron } from '@nestjs/schedule';
-import { BillSeller } from 'domains/bill/schema/bill-seller.schema';
-import { BillUser } from 'domains/bill/schema/bill-user.schema';
+import { Bill } from 'domains/bill/schema/bill.schema';
 import { Product } from 'domains/product/schema/product.schema';
 import { Promotion } from 'domains/promotion/schema/promotion.schema';
 import { Report } from 'domains/report/schema/report.schema';
@@ -19,11 +18,8 @@ export class CronjobsService {
     @InjectModel(Product.name)
     private readonly productModel: Model<Product>,
 
-    @InjectModel(BillUser.name)
-    private readonly billUserModel: Model<BillUser>,
-
-    @InjectModel(BillSeller.name)
-    private readonly billSellerModel: Model<BillSeller>,
+    @InjectModel(Bill.name)
+    private readonly billModel: Model<Bill>,
 
     @InjectModel(Promotion.name)
     private readonly promotionModel: Model<Promotion>,

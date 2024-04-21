@@ -10,9 +10,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { SALT_ROUNDS } from 'app.config';
 import * as bcrypt from 'bcrypt';
 import * as dayjs from 'dayjs';
-import { BillService } from 'domains/bill/bill.service';
-import { BillSeller } from 'domains/bill/schema/bill-seller.schema';
-import { BillUser } from 'domains/bill/schema/bill-user.schema';
+import { Bill } from 'domains/bill/schema/bill.schema';
 import { Store } from 'domains/store/schema/store.schema';
 import { Model } from 'mongoose';
 import { SOCIAL_APP } from 'shared/constants/user.constant';
@@ -48,12 +46,8 @@ export class UserService {
     @InjectModel(Store.name)
     private readonly storeModel: Model<Store>,
 
-    @InjectModel(BillUser.name)
-    private readonly billUserModel: Model<BillUser>,
-    private readonly billService: BillService,
-
-    @InjectModel(BillSeller.name)
-    private readonly billSellerModel: Model<BillSeller>,
+    @InjectModel(Bill.name)
+    private readonly billModel: Model<Bill>,
   ) {}
 
   async createUserSystem(body: AuthSignUpREQ) {
@@ -130,10 +124,10 @@ export class UserService {
     this.logger.log(`Get Detail: ${id}`);
     const user = await this.findById(id);
     if (!user) throw new NotFoundException('Không tìm thấy người dùng này!');
-    const billsOfUser = await this.billUserModel.find({ userId: id }).lean();
+    const billsOfUser = await this.billModel.find({ userId: id }).lean();
     const totalBills = billsOfUser.length;
-    const totalPricePaid = billsOfUser.reduce((total, bill) => total + bill.totalPayment, 0);
-    const totalReceived = billsOfUser.filter((bill) => bill.totalPayment === 0).length;
+    const totalPricePaid = billsOfUser.reduce((total, bill) => total + bill.totalPricePayment, 0);
+    const totalReceived = billsOfUser.filter((bill) => bill.totalPriceInit === 0).length;
     const data = { ...user, totalBills, totalPricePaid, totalReceived };
     return BaseResponse.withMessage(data, 'Lấy thông tin thành công!');
   }
@@ -151,7 +145,7 @@ export class UserService {
 
   async getUsersHaveMostBill(limit: number = 5) {
     this.logger.log(`Get Users Have Most Bill: ${limit}`);
-    const data = await this.billSellerModel.aggregate([
+    const data = await this.billModel.aggregate([
       { $match: { status: BILL_STATUS.DELIVERED } },
       { $group: { _id: '$userId', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
@@ -216,10 +210,10 @@ export class UserService {
       users.map(async (item) => {
         const user = await this.userModel.findById(item._id).lean();
         if (!user) return;
-        const billsOfUser = await this.billUserModel.find({ userId: user._id.toString() }).lean();
+        const billsOfUser = await this.billModel.find({ userId: user._id.toString() }).lean();
         const totalBills = billsOfUser.length;
-        const totalPricePaid = billsOfUser.reduce((total, bill) => total + bill.totalPayment, 0);
-        const totalReceived = billsOfUser.filter((bill) => bill.totalPayment === 0).length;
+        const totalPricePaid = billsOfUser.reduce((total, bill) => total + bill.totalPricePayment, 0);
+        const totalReceived = billsOfUser.filter((bill) => bill.totalPriceInit === 0).length;
         return { ...user, totalBills, totalPricePaid, totalReceived };
       }),
     );

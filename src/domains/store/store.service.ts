@@ -2,7 +2,7 @@ import { ConflictException, Inject, Injectable, Logger, NotFoundException, forwa
 import { InjectModel } from '@nestjs/mongoose';
 import * as dayjs from 'dayjs';
 import { BillService } from 'domains/bill/bill.service';
-import { BillSeller } from 'domains/bill/schema/bill-seller.schema';
+import { Bill } from 'domains/bill/schema/bill.schema';
 import { Feedback } from 'domains/feedback/schema/feedback.schema';
 import { Product } from 'domains/product/schema/product.schema';
 import { Model } from 'mongoose';
@@ -41,8 +41,8 @@ export class StoreService {
     @InjectModel(Feedback.name)
     private readonly feedbackModel: Model<Feedback>,
 
-    @InjectModel(BillSeller.name)
-    private readonly billSellerModel: Model<BillSeller>,
+    @InjectModel(Bill.name)
+    private readonly billModel: Model<Bill>,
     @Inject(forwardRef(() => BillService))
     private readonly billService: BillService,
   ) {}
@@ -128,7 +128,7 @@ export class StoreService {
     const averageStarOfStore = totalFeedback > 0 ? Number((totalAverageStar / totalFeedback).toFixed(2)) : 0;
     const totalFollow = await this.userModel.countDocuments({ followStores: storeId });
     const totalRevenue = await this.billService.calculateRevenueAllTimeByStoreId(storeId);
-    const totalDelivered = await this.billSellerModel.countDocuments({ storeId, status: BILL_STATUS.DELIVERED });
+    const totalDelivered = await this.billModel.countDocuments({ storeId, status: BILL_STATUS.DELIVERED });
     return BaseResponse.withMessage(
       { store, averageStar: averageStarOfStore, totalFeedback, totalFollow, totalRevenue, totalDelivered },
       'Lấy thông tin cửa hàng thành công!',
@@ -153,7 +153,7 @@ export class StoreService {
         const averageStarOfStore = totalFeedback > 0 ? Number((totalAverageStar / totalFeedback).toFixed(2)) : 0;
         const totalFollow = await this.userModel.countDocuments({ followStores: storeId });
         const totalRevenue = await this.billService.calculateRevenueAllTimeByStoreId(storeId);
-        const totalDelivered = await this.billSellerModel.countDocuments({ storeId, status: BILL_STATUS.DELIVERED });
+        const totalDelivered = await this.billModel.countDocuments({ storeId, status: BILL_STATUS.DELIVERED });
         return { store, averageStar: averageStarOfStore, totalFeedback, totalFollow, totalRevenue, totalDelivered };
       }),
     );
@@ -175,7 +175,7 @@ export class StoreService {
     const averageStarOfStore = totalFeedback > 0 ? Number((totalAverageStar / totalFeedback).toFixed(2)) : 0;
     const totalFollow = await this.userModel.countDocuments({ followStores: storeId });
     const totalRevenue = await this.billService.calculateRevenueAllTimeByStoreId(storeId);
-    const totalDelivered = await this.billSellerModel.countDocuments({ storeId, status: BILL_STATUS.DELIVERED });
+    const totalDelivered = await this.billModel.countDocuments({ storeId, status: BILL_STATUS.DELIVERED });
     return BaseResponse.withMessage(
       { store, averageStar: averageStarOfStore, totalFeedback, totalFollow, totalRevenue, totalDelivered },
       'Lấy thông tin cửa hàng thành công!',

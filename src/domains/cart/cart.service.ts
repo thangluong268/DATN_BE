@@ -5,7 +5,6 @@ import { ProductDTO } from 'domains/product/dto/product.dto';
 import { ProductService } from 'domains/product/product.service';
 import { Product } from 'domains/product/schema/product.schema';
 import { Store } from 'domains/store/schema/store.schema';
-import { StoreService } from 'domains/store/store.service';
 import { Model } from 'mongoose';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationResponse } from 'shared/generics/pagination.response';
@@ -23,7 +22,9 @@ export class CartService {
 
     @Inject(forwardRef(() => ProductService))
     private readonly productService: ProductService,
-    private readonly storeService: StoreService,
+
+    @InjectModel(Store.name)
+    private readonly storeModel: Model<Store>,
   ) {}
 
   async handleAddProductIntoCart(userId: string, productId: string) {
@@ -32,7 +33,7 @@ export class CartService {
     if (!product) {
       throw new NotFoundException('Không tìm thấy sản phẩm này!');
     }
-    const store = await this.storeService.findById(product.storeId);
+    const store = await this.storeModel.findById(product.storeId).lean();
     if (!store) {
       throw new NotFoundException('Không tìm thấy cửa hàng này!');
     }
@@ -132,7 +133,7 @@ export class CartService {
     this.logger.log(`Remove Product From Cart: ${userId} - ${productId}`);
     const product = await this.productService.findById(productId);
     if (!product) throw new NotFoundException('Không tìm thấy sản phẩm này!');
-    const store = await this.storeService.findById(product.storeId);
+    const store = await this.storeModel.findById(product.storeId).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const cart = await this.cartModel.findOne({ userId, storeId: store._id });
     if (cart.products.length === 1) {

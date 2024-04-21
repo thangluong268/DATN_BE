@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { BillService } from 'domains/bill/bill.service';
-import { BillUser } from 'domains/bill/schema/bill-user.schema';
+import { Bill } from 'domains/bill/schema/bill.schema';
 import { EvaluationService } from 'domains/evaluation/evaluation.service';
 import { Evaluation } from 'domains/evaluation/schema/evaluation.schema';
 import { Feedback } from 'domains/feedback/schema/feedback.schema';
@@ -25,7 +25,6 @@ import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import sortByConditions from 'shared/helpers/sort-by-condition.helper';
 import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 import { CategoryService } from '../category/category.service';
-import { StoreService } from '../store/store.service';
 import { ProductCreateREQ } from './request/product-create.request';
 import { ProductGetFilterREQ } from './request/product-get-filter.request';
 import { ProductGetInStoreREQ } from './request/product-get-in-store.request';
@@ -49,8 +48,8 @@ export class ProductService {
     @Inject(forwardRef(() => EvaluationService))
     private readonly evaluationService: EvaluationService,
 
-    @InjectModel(BillUser.name)
-    private readonly billUserModel: Model<BillUser>,
+    @InjectModel(Bill.name)
+    private readonly billModel: Model<Bill>,
     @Inject(forwardRef(() => BillService))
     private readonly billService: BillService,
 
@@ -59,14 +58,13 @@ export class ProductService {
 
     @InjectModel(Store.name)
     private readonly storeModel: Model<Store>,
-    private readonly storeService: StoreService,
 
     private readonly categoryService: CategoryService,
   ) {}
 
   async create(userId: string, body: ProductCreateREQ) {
     this.logger.log(`Create Product: ${userId}`);
-    const store = await this.storeService.findByUserId(userId);
+    const store = await this.storeModel.findOne({ userId: userId.toString }).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const category = await this.categoryService.findById(body.categoryId);
     if (!category) throw new NotFoundException('Không tìm thấy danh mục này!');
@@ -100,7 +98,7 @@ export class ProductService {
 
   async getProductsBySeller(userId: string, query: ProductsGetREQ) {
     this.logger.log(`Get Products By Seller: ${userId}`);
-    const store = await this.storeService.findByUserId(userId);
+    const store = await this.storeModel.findOne({ userId: userId.toString }).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const condition = ProductsGetREQ.toQueryCondition(store._id, query, {});
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
@@ -140,7 +138,7 @@ export class ProductService {
     const productsFullInfo = await Promise.all(
       products.map(async (product) => {
         const category = await this.categoryService.findOne(product.categoryId);
-        const store = await this.storeService.findById(product.storeId);
+        const store = await this.storeModel.findById(product.storeId).lean();
         const quantitySold = await this.billService.countProductDelivered(product._id, PRODUCT_TYPE.SELL, BILL_STATUS.DELIVERED);
         const quantityGive = await this.billService.countProductDelivered(product._id, PRODUCT_TYPE.GIVE, BILL_STATUS.DELIVERED);
         const revenue = quantitySold * product.newPrice;
@@ -159,7 +157,7 @@ export class ProductService {
 
   async getProductsInStore(query: ProductGetInStoreREQ) {
     this.logger.log(`Get Products In Store: ${JSON.stringify(query)}`);
-    const store = await this.storeService.findById(query.storeId);
+    const store = await this.storeModel.findById(query.storeId).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const condition = ProductsGetREQ.toQueryCondition(query.storeId, query, { status: true });
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
@@ -332,7 +330,7 @@ export class ProductService {
         const quantityGive = await this.billService.countProductDelivered(product._id, PRODUCT_TYPE.GIVE, BILL_STATUS.DELIVERED);
         const revenue = quantitySold * product.newPrice;
         const category = await this.categoryService.findOne(product.categoryId);
-        const store = await this.storeService.findById(product.storeId);
+        const store = await this.storeModel.findById(product.storeId).lean();
         return { ...product, categoryName: category.name, storeName: store.name, quantitySold, quantityGive, revenue };
       }),
     );
@@ -376,7 +374,7 @@ export class ProductService {
         }
         const totalStars = Object.keys(star).reduce((acc, key) => acc + star[key] * Number(key), 0);
         const averageStar = totalFeedback > 0 ? Number((totalStars / totalFeedback).toFixed(2)) : 0;
-        const store = await this.storeService.findById(item.storeId);
+        const store = await this.storeModel.findById(item.storeId).lean();
         const category = await this.categoryService.findOne(product.categoryId);
         const quantitySold = await this.billService.countProductDelivered(item._id, PRODUCT_TYPE.SELL, BILL_STATUS.DELIVERED);
         const quantityGive = await this.billService.countProductDelivered(item._id, PRODUCT_TYPE.GIVE, BILL_STATUS.DELIVERED);
@@ -404,7 +402,7 @@ export class ProductService {
     const type = product.newPrice === 0 ? PRODUCT_TYPE.GIVE : PRODUCT_TYPE.SELL;
     const quantityDelivered = await this.billService.countProductDelivered(id, type, BILL_STATUS.DELIVERED);
     const category = await this.categoryService.findOne(product.categoryId);
-    const store = await this.storeService.findById(product.storeId);
+    const store = await this.storeModel.findById(product.storeId).lean();
     const data = { ...product };
     return BaseResponse.withMessage(
       { data, quantityDelivered, categoryName: category.name, storeName: store.name },
@@ -485,10 +483,10 @@ export class ProductService {
     this.logger.log(`Delete Product: ${id}`);
     const product = await this.productModel.findOne({ _id: id, status: true }).lean();
     if (!product) throw new NotFoundException('Không tìm thấy sản phẩm này!');
-    const isPurchased = await this.billUserModel.findOne({ 'products.id': id }).lean();
+    const isPurchased = await this.billModel.findOne({ 'products.id': id }).lean();
     if (isPurchased) throw new BadRequestException('Sản phẩm này đã được mua, không thể xóa!');
     if (!(userRole.includes(ROLE_NAME.MANAGER) || userRole.includes(ROLE_NAME.ADMIN))) {
-      const store = await this.storeService.findByUserId(userId);
+      const store = await this.storeModel.findOne({ userId: userId.toString() }).lean();
       if (!store) throw new NotFoundException('Xóa sản phẩm thất bại!');
       if (product.storeId.toString() !== store._id.toString())
         throw new ForbiddenException('Bạn không có quyền xóa sản phẩm này!');
