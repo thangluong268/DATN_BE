@@ -1,9 +1,14 @@
-import { Promotion } from '../schema/promotion.schema';
-
-interface StorePromotionRESP {
+export interface StorePromotionRESP {
   id: string;
   name: string;
   avatar: string;
+}
+
+export interface UserPromotionRESP {
+  id: string;
+  fullName: string;
+  avatar: string;
+  numOfUsed: number;
 }
 
 export class PromotionGetDetailRESP {
@@ -18,7 +23,8 @@ export class PromotionGetDetailRESP {
   endTime: Date;
   isActive: boolean;
   stores: StorePromotionRESP[];
-  static of(promotion: any): PromotionGetDetailRESP {
+  users: UserPromotionRESP[];
+  static of(promotion: any, users: UserPromotionRESP[]): PromotionGetDetailRESP {
     return {
       id: promotion._id,
       avatar: promotion.avatar,
@@ -35,6 +41,7 @@ export class PromotionGetDetailRESP {
         name: store.name,
         avatar: store.avatar,
       })),
+      users,
     };
   }
 }

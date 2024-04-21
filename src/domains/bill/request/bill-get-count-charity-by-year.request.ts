@@ -18,9 +18,7 @@ export class BillGetCountCharityByYearREQ {
         $unwind: '$products',
       },
       {
-        $match: {
-          'products.type': `${PRODUCT_TYPE.GIVE.toUpperCase()}`,
-        },
+        $match: { 'products.type': `${PRODUCT_TYPE.GIVE}` },
       },
       {
         $group: {
@@ -43,9 +41,7 @@ export class BillGetCountCharityByYearREQ {
         $unwind: '$products',
       },
       {
-        $match: {
-          'products.type': `${PRODUCT_TYPE.GIVE.toUpperCase()}`,
-        },
+        $match: { 'products.type': `${PRODUCT_TYPE.GIVE}` },
       },
       {
         $group: {

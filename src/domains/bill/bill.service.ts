@@ -16,7 +16,7 @@ import { PaypalGateway, VNPayGateway } from 'payment/payment.gateway';
 import { PaymentService } from 'payment/payment.service';
 import { PaypalPaymentService } from 'payment/paypal/paypal.service';
 import { RedisService } from 'services/redis/redis.service';
-import { BILL_STATUS, PAYMENT_METHOD } from 'shared/enums/bill.enum';
+import { BILL_STATUS, PAYMENT_METHOD, PRODUCT_TYPE } from 'shared/enums/bill.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationResponse } from 'shared/generics/pagination.response';
 import { isBlank } from 'shared/validators/query.validator';
@@ -32,8 +32,6 @@ import { BillGetCountCharityByYearREQ } from './request/bill-get-count-charity-b
 import { BillGetRevenueStoreREQ } from './request/bill-get-revenue-store.request';
 import { BillGetTotalByStatusSellerREQ } from './request/bill-get-total-by-status-seller.request';
 import { CountTotalByStatusRESP } from './response/bill-count-total-by-status.response';
-import { BillSeller } from './schema/bill-seller.schema';
-import { BillUser } from './schema/bill-user.schema';
 import { Bill } from './schema/bill.schema';
 
 @Injectable()
@@ -42,11 +40,6 @@ export class BillService {
   constructor(
     @InjectModel(Bill.name)
     private readonly billModel: Model<Bill>,
-
-    @InjectModel(BillUser.name)
-    private readonly billUserModel: Model<BillUser>,
-    @InjectModel(BillSeller.name)
-    private readonly billSellerModel: Model<BillSeller>,
 
     @InjectConnection()
     private readonly connection: Connection,
@@ -136,7 +129,6 @@ export class BillService {
     const numOfStores = carts.length;
     let promotionValue = 0;
     if (promotionId) {
-      console.log(promotionId);
       const storeIds = carts.map((cart) => cart.storeId);
       const promotion = await this.promotionModel.findOne({
         _id: promotionId,
@@ -208,11 +200,11 @@ export class BillService {
       const { numOfCoins, promotionId } = JSON.parse(data);
       await this.userModel.findByIdAndUpdate(userId, { $inc: { wallet: -numOfCoins } });
       if (!promotionId) return;
-      await this.promotionModel.findByIdAndUpdate(promotionId, { $inc: { quantity: -1 }, $pull: { userSaves: userId } });
-      const isUserUsedPromotion = await this.promotionModel.findOne({ _id: promotionId, userUses: userId }).lean();
-      if (!isUserUsedPromotion) {
-        await this.promotionModel.findByIdAndUpdate(promotionId, { $push: { userUses: userId } });
-      }
+      await this.promotionModel.findByIdAndUpdate(promotionId, {
+        $inc: { quantity: -1 },
+        $pull: { userSaves: userId },
+        $push: { userUses: userId },
+      });
     }
   }
 
@@ -226,7 +218,7 @@ export class BillService {
     this.logger.log(`Count Total By Status Seller: ${userId}`);
     const store = await this.storeService.findByUserId(userId);
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
-    const data = await this.billSellerModel.aggregate(BillGetTotalByStatusSellerREQ.toQueryCondition(store._id, year));
+    const data = await this.billModel.aggregate(BillGetTotalByStatusSellerREQ.toQueryCondition(store._id, year));
     return BaseResponse.withMessage(
       Object.keys(BILL_STATUS).map((status) => CountTotalByStatusRESP.of(status, data)),
       'Lấy tổng số lượng các đơn theo trạng thái thành công!',
@@ -235,13 +227,14 @@ export class BillService {
 
   async countTotalByStatusUser(userId: string) {
     this.logger.log(`Count Total By Status User: ${userId}`);
-    const data = await this.billSellerModel.aggregate([
+    const data = await this.billModel.aggregate([
       { $match: { userId: userId.toString() } },
       { $group: { _id: '$status', count: { $sum: 1 } } },
       { $project: { _id: 0, status: '$_id', count: 1 } },
     ]);
+    const billStatus = Object.keys(BILL_STATUS).filter((status) => status !== BILL_STATUS.PROCESSING);
     return BaseResponse.withMessage(
-      Object.keys(BILL_STATUS).map((status) => CountTotalByStatusRESP.of(status, data)),
+      billStatus.map((status) => CountTotalByStatusRESP.of(status, data)),
       'Lấy tổng số lượng các đơn theo trạng thái thành công!',
     );
   }
@@ -250,7 +243,7 @@ export class BillService {
     this.logger.log(`Calculate Revenue By Year: ${userId}`);
     const store = await this.storeService.findByUserId(userId);
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
-    const data = await this.billSellerModel.aggregate(BillGetCalculateRevenueByYearREQ.toQueryCondition(year, store._id));
+    const data = await this.billModel.aggregate(BillGetCalculateRevenueByYearREQ.toQueryCondition(year, store._id));
     // Tạo mảng chứa 12 tháng với doanh thu mặc định là 0
     const monthlyRevenue = getMonthRevenue();
     let totalRevenue = 0;
@@ -268,7 +261,7 @@ export class BillService {
         maxRevenue = { month: `Tháng ${month}`, revenue };
       }
     });
-    const totalRevenueAllTime = await this.billSellerModel.aggregate(
+    const totalRevenueAllTime = await this.billModel.aggregate(
       BillGetCalculateRevenueByYearREQ.toQueryConditionForAllTime(store._id),
     );
     const res = {
@@ -283,11 +276,9 @@ export class BillService {
 
   async countCharityByYear(userId: string, year: number) {
     this.logger.log(`Count Charity By Year: ${userId}`);
-    const user = await this.userService.findById(userId);
-    if (!user) throw new NotFoundException('Không tìm thấy người dùng này!');
     const store = await this.storeService.findByUserId(userId);
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
-    const data = await this.billSellerModel.aggregate(BillGetCountCharityByYearREQ.toQueryCondition(store._id, year));
+    const data = await this.billModel.aggregate(BillGetCountCharityByYearREQ.toQueryCondition(store._id, year));
     const monthlyCharity = getMonthRevenue();
     let totalGive = 0;
     let minGive: { month: string; numOfGive: number } = { month: '', numOfGive: 0 };
@@ -304,7 +295,7 @@ export class BillService {
         maxGive = { month: `Tháng ${month}`, numOfGive };
       }
     });
-    const totalAllTime = await this.billSellerModel.aggregate(BillGetCountCharityByYearREQ.toQueryConditionForAllTime(store._id));
+    const totalAllTime = await this.billModel.aggregate(BillGetCountCharityByYearREQ.toQueryConditionForAllTime(store._id));
     const response = {
       data: monthlyCharity,
       charityTotalAllTime: totalAllTime[0]?.totalCharity || 0,
@@ -317,7 +308,7 @@ export class BillService {
 
   async calculateTotalRevenueByYear(year: number) {
     this.logger.log(`Calculate Total Revenue By Year: ${year}`);
-    const data = await this.billSellerModel.aggregate(BillGetCalculateTotalByYearREQ.toQueryCondition(year));
+    const data = await this.billModel.aggregate(BillGetCalculateTotalByYearREQ.toQueryCondition(year));
     const monthlyRevenue = getMonthRevenue();
     let totalRevenue = 0;
     let minRevenue: { month: string; revenue: number } = { month: '', revenue: 0 };
@@ -334,7 +325,7 @@ export class BillService {
         maxRevenue = { month: `Tháng ${month}`, revenue };
       }
     });
-    const revenueAllTime = await this.billSellerModel.aggregate(BillGetCalculateTotalByYearREQ.toQueryConditionForAllTime());
+    const revenueAllTime = await this.billModel.aggregate(BillGetCalculateTotalByYearREQ.toQueryConditionForAllTime());
     const response = {
       data: monthlyRevenue,
       revenueTotalAllTime: revenueAllTime[0]?.totalRevenue || 0,
@@ -358,8 +349,10 @@ export class BillService {
     this.logger.log(`Get All By Status Seller: ${userId}`);
     const store = await this.storeService.findByUserId(userId);
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
-    const total = await this.billSellerModel.countDocuments(BillGetAllByStatusSellerREQ.toCount(store._id.toString(), query));
-    const data = await this.billSellerModel.aggregate(BillGetAllByStatusSellerREQ.toFind(store._id.toString(), query) as any);
+    const [data, total] = await Promise.all([
+      this.billModel.aggregate(BillGetAllByStatusSellerREQ.toFind(store._id.toString(), query) as any),
+      this.billModel.countDocuments(BillGetAllByStatusSellerREQ.toCount(store._id.toString(), query)),
+    ]);
     return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách đơn hàng thành công!');
   }
 
@@ -368,7 +361,7 @@ export class BillService {
     const totalProduct = await this.productService.countTotal();
     const totalStore = await this.storeService.countTotal();
     const totalUser = await this.userService.countTotal();
-    const totalRevenueAllTime = await this.billSellerModel.aggregate(BillGetCalculateTotalByYearREQ.toQueryConditionForAllTime());
+    const totalRevenueAllTime = await this.billModel.aggregate(BillGetCalculateTotalByYearREQ.toQueryConditionForAllTime());
     const data = {
       totalProduct,
       totalStore,
@@ -380,48 +373,45 @@ export class BillService {
 
   async revenueStore(storeId: string) {
     this.logger.log(`Revenue Store: ${storeId}`);
-    const totalRevenueAllTime = await this.billSellerModel.aggregate(BillGetRevenueStoreREQ.toQueryRevenueAllTime(storeId));
-    const totalDelivered = await this.billSellerModel.countDocuments({ storeId, status: BILL_STATUS.DELIVERED });
+    const totalRevenueAllTime = await this.billModel.aggregate(BillGetRevenueStoreREQ.toQueryRevenueAllTime(storeId));
+    const totalDelivered = await this.billModel.countDocuments({ storeId, status: BILL_STATUS.DELIVERED });
     return BaseResponse.withMessage(
       { totalRevenue: totalRevenueAllTime[0]?.totalRevenue || 0, totalDelivered },
       'Lấy dữ liệu thành công!',
     );
   }
 
-  async updateStatusBillSeller(billId: string, status: string) {
-    this.logger.log(`Update Status Bill Seller: ${billId}`);
-    const bill = await this.billSellerModel.findById(billId, {}, { lean: true });
-    if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
-    const updatedBill = await this.billSellerModel.findByIdAndUpdate({ _id: billId }, { status }, { new: true });
-    if (updatedBill.paymentMethod === PAYMENT_METHOD.CASH && status === BILL_STATUS.DELIVERED) {
-      updatedBill.isPaid = true;
-      updatedBill.save();
-    }
-    if (status === 'CANCELLED') await this.userService.updateWallet(bill.userId, bill.totalPrice, 'sub');
-    return BaseResponse.withMessage({}, 'Cập nhật trạng thái đơn hàng thành công!');
-  }
+  // async updateStatusBillSeller(billId: string, status: BILL_STATUS) {
+  //   this.logger.log(`Update Status Bill Seller: ${billId}`);
+  //   const bill = await this.billSellerModel.findById(billId, {}, { lean: true });
+  //   if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
+  //   const updatedBill = await this.billSellerModel.findByIdAndUpdate({ _id: billId }, { status }, { new: true });
+  //   if (updatedBill.paymentMethod === PAYMENT_METHOD.CASH && status === BILL_STATUS.DELIVERED) {
+  //     updatedBill.isPaid = true;
+  //     updatedBill.save();
+  //   }
+  //   if (status === 'CANCELLED') await this.userService.updateWallet(bill.userId, bill.totalPrice, 'sub');
+  //   return BaseResponse.withMessage({}, 'Cập nhật trạng thái đơn hàng thành công!');
+  // }
 
-  async countProductDelivered(productId: string, type: string, status: BILL_STATUS) {
-    return await this.billSellerModel.countDocuments({
-      products: { $elemMatch: { id: productId.toString(), type: type.toUpperCase() } },
-      status,
-    });
+  async countProductDelivered(productId: string, type: PRODUCT_TYPE, status: BILL_STATUS) {
+    return await this.billModel.countDocuments({ products: { $elemMatch: { id: productId.toString(), type } }, status });
   }
 
   async checkProductPurchased(productId: string) {
-    const bill = await this.billUserModel.findOne({ products: { $elemMatch: { id: productId.toString() } } });
+    const bill = await this.billModel.findOne({ products: { $elemMatch: { id: productId.toString() } } });
     return bill ? true : false;
   }
 
   async checkProductPurchasedByUser(userId: string, productId: string) {
-    const bill = await this.billUserModel.findOne({ userId, products: { $elemMatch: { id: productId.toString() } } });
+    const bill = await this.billModel.findOne({ userId, products: { $elemMatch: { id: productId.toString() } } });
     return bill ? true : false;
   }
 
   async calculateRevenueAllTimeByStoreId(storeId: string) {
-    const result = await this.billSellerModel.aggregate([
+    const result = await this.billModel.aggregate([
       { $match: { status: BILL_STATUS.DELIVERED, storeId: storeId.toString() } },
-      { $group: { _id: null, totalRevenue: { $sum: '$totalPrice' } } },
+      { $group: { _id: null, totalRevenue: { $sum: '$totalPricePayment' } } },
     ]);
     return result[0]?.totalRevenue || 0;
   }
@@ -469,6 +459,26 @@ export class BillService {
       await session.commitTransaction();
       await redisClient.del(bill.paymentId);
       return BaseResponse.withMessage({}, 'Hủy đơn hàng thành công!');
+    } catch (err) {
+      await session.abortTransaction();
+      throw new BadRequestException(err.message);
+    } finally {
+      await session.endSession();
+    }
+  }
+
+  async refundBill(userId: string, billId: string) {
+    this.logger.log(`Refund Bill: ${billId}`);
+    const bill = await this.billModel.findOne({ _id: new ObjectId(billId), userId }).lean();
+    if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
+    if (bill.status !== BILL_STATUS.PROCESSING) throw new BadRequestException('Không thể hoàn trả đơn hàng này!');
+    const session = await this.connection.startSession();
+    session.startTransaction();
+    try {
+      // TO DO...
+
+      await session.commitTransaction();
+      return BaseResponse.withMessage({}, 'Hoàn tiền đơn hàng thành công!');
     } catch (err) {
       await session.abortTransaction();
       throw new BadRequestException(err.message);

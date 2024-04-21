@@ -51,7 +51,7 @@ export class Promotion extends Document {
   @Prop({ type: Date })
   endTime: Date;
 
-  @Prop({ type: Boolean, default: true })
+  @Prop({ type: Boolean, default: false })
   isActive: boolean;
 }
 

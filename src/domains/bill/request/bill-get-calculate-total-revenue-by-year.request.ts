@@ -16,13 +16,16 @@ export class BillGetCalculateTotalByYearREQ {
       {
         $group: {
           _id: { $month: '$createdAt' },
-          totalRevenue: { $sum: '$totalPrice' },
+          totalRevenue: { $sum: '$totalPricePayment' },
         },
       },
     ];
   }
 
   static toQueryConditionForAllTime() {
-    return [{ $match: { status: BILL_STATUS.DELIVERED } }, { $group: { _id: null, totalRevenue: { $sum: '$totalPrice' } } }];
+    return [
+      { $match: { status: BILL_STATUS.DELIVERED } },
+      { $group: { _id: null, totalRevenue: { $sum: '$totalPricePayment' } } },
+    ];
   }
 }
