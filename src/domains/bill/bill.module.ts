@@ -5,7 +5,7 @@ import { NotificationModule } from 'domains/notification/notification.module';
 import { ProductModule } from 'domains/product/product.module';
 import { Product, ProductSchema } from 'domains/product/schema/product.schema';
 import { Promotion, PromotionSchema } from 'domains/promotion/schema/promotion.schema';
-import { StoreModule } from 'domains/store/store.module';
+import { Store, StoreSchema } from 'domains/store/schema/store.schema';
 import { Tax, TaxSchema } from 'domains/tax/schema/tax.schema';
 import { User, UserSchema } from 'domains/user/schema/user.schema';
 import { UserModule } from 'domains/user/user.module';
@@ -14,7 +14,6 @@ import { RedisModule } from 'services/redis/redis.module';
 import { BillController } from './bill.controller';
 import { BillService } from './bill.service';
 import { Bill, BillSchema } from './schema/bill.schema';
-import { Store, StoreSchema } from 'domains/store/schema/store.schema';
 
 @Module({
   imports: [
@@ -35,6 +34,6 @@ import { Store, StoreSchema } from 'domains/store/schema/store.schema';
   ],
   controllers: [BillController],
   providers: [BillService],
-  exports: [BillService],
+  exports: [BillService, MongooseModule],
 })
 export class BillModule {}

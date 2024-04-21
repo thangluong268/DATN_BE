@@ -200,10 +200,6 @@ export class BillService {
         isPaid: bill.paymentMethod === PAYMENT_METHOD.CASH ? false : true,
       });
     });
-    // Sẽ được cập nhật khi status của bill -> DELIVERED (tức là đã qua 3 ngày kể từ lúc nhận hàng)
-    // -> làm trong cronjob
-    // await this.userService.updateWallet(userId, totalPrice, 'plus');
-    // await this.taxModel.updateMany({ paymentId }, { isSuccess: true });
     const redisClient = this.redisService.getClient();
     const data = await redisClient.get(paymentId);
     if (data) {
