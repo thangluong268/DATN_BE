@@ -27,15 +27,14 @@ jobs:
   deploy:
     runs-on: self-hosted
     needs: build
-    env:
-      APP_NAME: dtex-be
-      PATH_TO_DOCKER_COMPOSE_FILE: ~/workspace/actions-runner-be/_work/DATN_BE/DATN_BE/
     steps:
     - run: |
         cd ~/workspace/actions-runner-be/_work/DATN_BE/DATN_BE
-        docker stop $APP_NAME || true
-        docker rm $APP_NAME || true
-        docker image rm $APP_NAME || true
+        docker stop dtex-be || true
+        docker rm dtex-be || true
+        docker image rm dtex-be || true
         docker-compose up -d
         docker image prune -f
+        cd ~/workspace/actions-runner-be/_work/DATN_BE
+        rm -rf DATN_BE
         
