@@ -12,6 +12,7 @@ import { BillGetCalculateTotalByYearREQ } from './request/bill-get-calculate-tot
 import { BillGetCountCharityByYearREQ } from './request/bill-get-count-charity-by-year.request';
 import { BillGetRevenueStoreREQ } from './request/bill-get-revenue-store.request';
 import { BillGetTotalByStatusSellerREQ } from './request/bill-get-total-by-status-seller.request';
+import { BILL_STATUS } from 'shared/enums/bill.enum';
 
 @Controller('bill')
 export class BillController {
@@ -104,7 +105,7 @@ export class BillController {
   @Roles(ROLE_NAME.SELLER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Put('seller/:id')
-  updateStatusSeller(@Param('id') id: string, @Query('status') status: string) {
-    return this.billService.updateStatusBillSeller(id, status);
+  updateStatusSeller(@Param('id') id: string, @Query('status') status: BILL_STATUS) {
+    // return this.billService.updateStatusBillSeller(id, status);
   }
 }

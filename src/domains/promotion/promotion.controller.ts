@@ -1,9 +1,12 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import * as dayjs from 'dayjs';
 import { Roles } from 'domains/auth/decorators/auth-role.decorator';
 import { AuthJwtATGuard } from 'domains/auth/guards/auth-jwt-at.guard';
 import { AuthRoleGuard } from 'domains/auth/guards/auth-role.guard';
+import { Response } from 'express';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { PaginationREQ } from 'shared/generics/pagination.request';
+import { parseExcelResponse } from 'shared/helpers/excel.helper';
 import { PromotionService } from './promotion.service';
 import { PromotionCreateREQ } from './request/promotion-create.request';
 import { PromotionGetByManagerFilterREQ } from './request/promotion-get-by-manager-filter.request';
@@ -14,6 +17,13 @@ import { PromotionUpdateREQ } from './request/promotion-update.request';
 @Controller('promotions')
 export class PromotionController {
   constructor(private readonly promotionService: PromotionService) {}
+
+  @Roles(ROLE_NAME.MANAGER)
+  @Get('excel')
+  async downloadExcelPromotions(@Query('storeId') storeId: string, @Res() response: Response) {
+    const book = await this.promotionService.downloadExcelPromotion(storeId);
+    await parseExcelResponse(response, book, `DTEX_Promotions_${dayjs().format('YYYY-MM-DD_HH:mm:ss')}`);
+  }
 
   @Roles(ROLE_NAME.SELLER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)

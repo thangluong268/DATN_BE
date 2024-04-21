@@ -17,7 +17,7 @@ export class BillGetRevenueStoreREQ {
       {
         $group: {
           _id: null,
-          totalRevenue: { $sum: '$totalPrice' },
+          totalRevenue: { $sum: '$totalPricePayment' },
         },
       },
     ];

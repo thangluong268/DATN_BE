@@ -17,7 +17,7 @@ export class BillGetCalculateRevenueByYearREQ {
       {
         $group: {
           _id: { $month: '$createdAt' },
-          totalRevenue: { $sum: '$totalPrice' },
+          totalRevenue: { $sum: '$totalPricePayment' },
         },
       },
     ];
@@ -34,7 +34,7 @@ export class BillGetCalculateRevenueByYearREQ {
       {
         $group: {
           _id: null,
-          totalRevenue: { $sum: '$totalPrice' },
+          totalRevenue: { $sum: '$totalPricePayment' },
         },
       },
     ];

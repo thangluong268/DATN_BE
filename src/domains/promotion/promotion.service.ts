@@ -16,9 +16,13 @@ import { PromotionGetByStore } from './request/promotion-get-by-store.request';
 import { PromotionGetUserUsesREQ } from './request/promotion-get-user-use.request';
 import { PromotionUpdateREQ } from './request/promotion-update.request';
 import { PromotionGetByStoreIdRESP } from './response/promotion-get-by-store-id.response';
-import { PromotionGetDetailRESP } from './response/promotion-get-detail.response';
+import { PromotionGetDetailRESP, UserPromotionRESP } from './response/promotion-get-detail.response';
 import { PromotionGetMyRESP } from './response/promotion-get-my.response';
 import { Promotion } from './schema/promotion.schema';
+import { PromotionDownloadExcelDTO } from './dto/promotion-download-excel.dto';
+import * as dayjs from 'dayjs';
+import { createExcelFile } from 'shared/helpers/excel.helper';
+import * as _ from 'lodash';
 
 @Injectable()
 export class PromotionService {
@@ -77,6 +81,8 @@ export class PromotionService {
 
   async getPromotion(promotionId: string) {
     this.logger.log(`get detail promotionId: ${promotionId}`);
+    const isExistPromotion = await this.promotionModel.findById(promotionId).lean();
+    if (!isExistPromotion) throw new NotFoundException('Không tìm thấy khuyến mãi!');
     const promotion = await this.promotionModel.aggregate([
       { $match: { _id: new ObjectId(promotionId) } },
       {
@@ -86,12 +92,7 @@ export class PromotionService {
           pipeline: [
             {
               $match: {
-                $expr: {
-                  $in: [
-                    { $toObjectId: '$_id' },
-                    { $map: { input: '$$storeIds', as: 'storeId', in: { $toObjectId: '$$storeId' } } },
-                  ],
-                },
+                $expr: { $in: ['$_id', { $map: { input: '$$storeIds', as: 'storeId', in: { $toObjectId: '$$storeId' } } }] },
               },
             },
             { $project: { _id: 1, name: 1, avatar: 1 } },
@@ -100,8 +101,30 @@ export class PromotionService {
         },
       },
     ]);
+    const countNumOfUsedByUserId = promotion[0].userUses.reduce((map, currentValue) => {
+      map[currentValue] = (map[currentValue] || 0) + 1;
+      return map;
+    }, {});
+    const userIdsWithNumOfUsed = Object.keys(countNumOfUsedByUserId).map((key) => ({
+      id: key,
+      count: countNumOfUsedByUserId[key],
+    }));
+    const usersWithNumOfUsed = await Promise.all(
+      userIdsWithNumOfUsed.map(async (item) => {
+        const user = await this.userModel.findById(item.id).lean();
+        return {
+          id: user._id,
+          fullName: user.fullName,
+          avatar: user.avatar,
+          numOfUsed: item.count,
+        } as UserPromotionRESP;
+      }),
+    );
     if (isBlank(promotion)) throw new NotFoundException('Không tìm thấy khuyến mãi!');
-    return BaseResponse.withMessage(PromotionGetDetailRESP.of(promotion[0]), 'Lấy thông tin chi tiết khuyến mãi thành công!');
+    return BaseResponse.withMessage(
+      PromotionGetDetailRESP.of(promotion[0], usersWithNumOfUsed),
+      'Lấy thông tin chi tiết khuyến mãi thành công!',
+    );
   }
 
   async getUserUsesPromotion(userId: string, userRole: string[], promotionId: string, query: PromotionGetUserUsesREQ) {
@@ -119,7 +142,7 @@ export class PromotionService {
     const total = await this.promotionModel.aggregate(conditionToTal);
     const data = await this.promotionModel.aggregate(conditionFind);
     return PaginationResponse.ofWithTotalAndMessage(
-      data,
+      _.uniqWith(data, _.isEqual),
       total[0]?.total || 0,
       'Lấy danh sách người dùng sử dụng khuyến mãi thành công!',
     );
@@ -170,5 +193,34 @@ export class PromotionService {
     const isExist = await this.promotionModel.findOne({ voucherCode });
     if (isExist) return this.generateVoucherCode();
     return voucherCode;
+  }
+
+  /**
+   * Excel Download
+   */
+
+  async downloadExcelPromotion(storeId: string) {
+    this.logger.log('download excel promotion');
+    const promotions = await this.promotionModel.aggregate([
+      { $match: storeId ? { storeIds: storeId } : {} },
+      {
+        $lookup: {
+          from: 'stores',
+          let: { storeIds: '$storeIds' },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $in: ['$_id', { $map: { input: '$$storeIds', as: 'storeId', in: { $toObjectId: '$$storeId' } } }] },
+              },
+            },
+            { $project: { _id: 1, name: 1, avatar: 1 } },
+          ],
+          as: 'stores',
+        },
+      },
+    ]);
+    const headers = PromotionDownloadExcelDTO.getSheetValue();
+    const dataRows = promotions.map(PromotionDownloadExcelDTO.fromEntity);
+    return createExcelFile<PromotionDownloadExcelDTO>(`Promotions - ${dayjs().format('YYYY-MM-DD')}`, headers, dataRows);
   }
 }

@@ -11,11 +11,11 @@ export class PromotionGetUserUsesREQ extends PaginationREQ {
     return [
       { $match: { _id: promotionId } },
       { $unwind: '$userUses' },
-      { $addFields: { userIdString: { $toObjectId: '$userUses' } } },
+      { $addFields: { userObjId: { $toObjectId: '$userUses' } } },
       {
         $lookup: {
           from: 'users',
-          localField: 'userIdString',
+          localField: 'userObjId',
           foreignField: '_id',
           as: 'userInfos',
         },
@@ -30,11 +30,11 @@ export class PromotionGetUserUsesREQ extends PaginationREQ {
     const pipeline = [
       { $match: { _id: promotionId } },
       { $unwind: '$userUses' },
-      { $addFields: { userIdString: { $toObjectId: '$userUses' } } },
+      { $addFields: { userObjId: { $toObjectId: '$userUses' } } },
       {
         $lookup: {
           from: 'users',
-          localField: 'userIdString',
+          localField: 'userObjId',
           foreignField: '_id',
           as: 'userInfos',
         },
