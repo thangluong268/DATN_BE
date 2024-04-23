@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import * as dayjs from 'dayjs';
 import { Roles } from 'domains/auth/decorators/auth-role.decorator';
 import { AuthJwtATGuard } from 'domains/auth/guards/auth-jwt-at.guard';
@@ -17,6 +17,12 @@ import { PromotionUpdateREQ } from './request/promotion-update.request';
 @Controller('promotions')
 export class PromotionController {
   constructor(private readonly promotionService: PromotionService) {}
+
+  @Roles(ROLE_NAME.MANAGER)
+  @Get('not-used')
+  getPromotionsNotUsed(@Query() query: PaginationREQ) {
+    return this.promotionService.getPromotionsNotUsed(query);
+  }
 
   @Roles(ROLE_NAME.MANAGER)
   @Get('excel')
@@ -84,5 +90,12 @@ export class PromotionController {
   @Patch(':promotionId/voucher')
   handleSaveVoucher(@Req() req, @Param('promotionId') promotionId: string) {
     return this.promotionService.handleSaveVoucher(req.user._id, promotionId);
+  }
+
+  @Roles(ROLE_NAME.MANAGER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Delete(':promotionId')
+  delete(@Param('promotionId') promotionId: string) {
+    return this.promotionService.delete(promotionId);
   }
 }

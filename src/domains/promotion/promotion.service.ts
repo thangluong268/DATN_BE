@@ -1,15 +1,19 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import * as dayjs from 'dayjs';
 import { Store } from 'domains/store/schema/store.schema';
 import { User } from 'domains/user/schema/user.schema';
+import * as _ from 'lodash';
 import { ObjectId } from 'mongodb';
 import { Model } from 'mongoose';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationREQ } from 'shared/generics/pagination.request';
 import { PaginationResponse } from 'shared/generics/pagination.response';
+import { createExcelFile } from 'shared/helpers/excel.helper';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { isBlank } from 'shared/validators/query.validator';
+import { PromotionDownloadExcelDTO } from './dto/promotion-download-excel.dto';
 import { PromotionCreateREQ } from './request/promotion-create.request';
 import { PromotionGetByManagerFilterREQ } from './request/promotion-get-by-manager-filter.request';
 import { PromotionGetByStore } from './request/promotion-get-by-store.request';
@@ -19,10 +23,6 @@ import { PromotionGetByStoreIdRESP } from './response/promotion-get-by-store-id.
 import { PromotionGetDetailRESP, UserPromotionRESP } from './response/promotion-get-detail.response';
 import { PromotionGetMyRESP } from './response/promotion-get-my.response';
 import { Promotion } from './schema/promotion.schema';
-import { PromotionDownloadExcelDTO } from './dto/promotion-download-excel.dto';
-import * as dayjs from 'dayjs';
-import { createExcelFile } from 'shared/helpers/excel.helper';
-import * as _ from 'lodash';
 
 @Injectable()
 export class PromotionService {
@@ -57,6 +57,10 @@ export class PromotionService {
 
   async getPromotionsByManager(query: PaginationREQ, filter: PromotionGetByManagerFilterREQ) {
     this.logger.log(`get promotions by manager`);
+    if (filter.storeId) {
+      const store = await this.storeModel.findById(filter.storeId).lean();
+      if (!store) throw new NotFoundException('Không tìm thấy cửa hàng!');
+    }
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const condition = PromotionGetByManagerFilterREQ.toFilter(filter);
     const total = await this.promotionModel.countDocuments(condition);
@@ -159,12 +163,34 @@ export class PromotionService {
     return BaseResponse.withMessage(data, 'Lấy danh sách khuyến mãi thành công!');
   }
 
+  async getPromotionsNotUsed(query: PaginationREQ) {
+    this.logger.log(`get promotions not used`);
+    const { skip, limit } = QueryPagingHelper.queryPaging(query);
+    const total = await this.promotionModel.countDocuments({ isActive: true, userUses: { $size: 0 } });
+    const data = await this.promotionModel
+      .find({ isActive: true, userUses: { $size: 0 } }, { createdAt: 0, updatedAt: 0 })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+    return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách khuyến mãi chưa sử dụng thành công!');
+  }
+
   async update(promotionId: string, body: PromotionUpdateREQ) {
     this.logger.log(`update promotionId: ${promotionId}, body: ${JSON.stringify(body)}`);
     const promotion = await this.promotionModel.findById(promotionId).lean();
     if (!promotion) throw new NotFoundException('Không tìm thấy khuyến mãi!');
     await this.promotionModel.findByIdAndUpdate(promotionId, { ...body });
     return BaseResponse.withMessage({}, 'Cập nhật khuyến mãi thành công!');
+  }
+
+  async delete(promotionId: string) {
+    this.logger.log(`Delete promotionId: ${promotionId}`);
+    const promotion = await this.promotionModel.findById(promotionId).lean();
+    if (!promotion) throw new NotFoundException('Không tìm thấy khuyến mãi!');
+    if (promotion.userUses.length > 0) throw new BadRequestException('Khuyến mãi đã được sử dụng, không thể xóa!');
+    await this.promotionModel.findByIdAndDelete(promotionId);
+    return BaseResponse.withMessage({}, 'Xóa khuyến mãi thành công!');
   }
 
   async handleSaveVoucher(userId: string, promotionId: string) {
