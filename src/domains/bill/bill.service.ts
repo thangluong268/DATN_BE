@@ -484,6 +484,7 @@ export class BillService {
           await redisClient.del(bill.paymentId);
         }
       }
+      await this.taxModel.findOneAndDelete({ storeId: bill.storeId, paymentId: bill.paymentId });
       await this.billModel.findByIdAndUpdate(bill._id, { status: BILL_STATUS.CANCELLED }, { session });
       await session.commitTransaction();
     } catch (err) {

@@ -60,6 +60,7 @@ export class PromotionGetByManagerFilterREQ {
   isActive: boolean;
 
   static toFilter(filter: PromotionGetByManagerFilterREQ) {
+    console.log(filter.isActive === true);
     const condition = {
       storeIds: filter.storeId ? filter.storeId : undefined,
       minSpend: filter.min_minSpend && filter.max_minSpend ? { $gte: filter.min_minSpend, $lte: filter.max_minSpend } : undefined,
@@ -73,6 +74,7 @@ export class PromotionGetByManagerFilterREQ {
         filter.min_startTime && filter.max_startTime ? { $gte: filter.min_startTime, $lte: filter.max_startTime } : undefined,
       endTime: filter.min_endTime && filter.max_endTime ? { $gte: filter.min_endTime, $lte: filter.max_endTime } : undefined,
       isActive: filter.isActive !== undefined ? filter.isActive : undefined,
+      $or: filter.isActive === true ? [{ userSaves: { $not: { $size: 0 } } }, { userUses: { $not: { $size: 0 } } }] : undefined,
     };
     return leanObject(condition);
   }
