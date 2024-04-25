@@ -25,7 +25,6 @@ FROM node:lts-bookworm-slim
 
 # Set the working directory in the container
 WORKDIR /app
-RUN apt-get update
 
 # Copy the production dependencies from the build stage
 COPY --from=build /app/.env.prod ./

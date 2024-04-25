@@ -61,15 +61,9 @@ export class PromotionService {
       const store = await this.storeModel.findById(filter.storeId).lean();
       if (!store) throw new NotFoundException('Không tìm thấy cửa hàng!');
     }
-    const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const condition = PromotionGetByManagerFilterREQ.toFilter(filter);
     const total = await this.promotionModel.countDocuments(condition);
-    const data = await this.promotionModel
-      .find(condition, { createdAt: 0, updatedAt: 0 })
-      .sort({ isActive: -1, createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    const data = await this.promotionModel.aggregate(PromotionGetByManagerFilterREQ.toFind(query, condition) as any);
     return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách khuyến mãi thành công!');
   }
 
