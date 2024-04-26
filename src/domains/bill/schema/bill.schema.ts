@@ -51,6 +51,15 @@ export class Bill extends Document {
 
   @Prop({ type: String, required: true })
   paymentId: string;
+
+  @Prop({ type: Date })
+  deliveredDate: Date;
+
+  @Prop({ type: Boolean, default: false })
+  isSuccess: boolean;
+
+  @Prop({ type: String })
+  reasonRefund: string;
 }
 
 export const BillSchema = SchemaFactory.createForClass(Bill);

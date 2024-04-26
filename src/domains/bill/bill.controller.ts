@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { Roles } from 'domains/auth/decorators/auth-role.decorator';
 import { AuthJwtATGuard } from 'domains/auth/guards/auth-jwt-at.guard';
 import { AuthRoleGuard } from 'domains/auth/guards/auth-role.guard';
+import { BILL_STATUS } from 'shared/enums/bill.enum';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BillService } from './bill.service';
 import { BillCreateREQ } from './request/bill-create.request';
@@ -12,7 +13,7 @@ import { BillGetCalculateTotalByYearREQ } from './request/bill-get-calculate-tot
 import { BillGetCountCharityByYearREQ } from './request/bill-get-count-charity-by-year.request';
 import { BillGetRevenueStoreREQ } from './request/bill-get-revenue-store.request';
 import { BillGetTotalByStatusSellerREQ } from './request/bill-get-total-by-status-seller.request';
-import { BILL_STATUS } from 'shared/enums/bill.enum';
+import { BillRefundREQ } from './request/bill-refund.request';
 
 @Controller('bill')
 export class BillController {
@@ -83,16 +84,16 @@ export class BillController {
 
   @Roles(ROLE_NAME.USER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
-  @Get('user/:id')
-  getMyBill(@Req() req, @Param('id') id: string) {
-    // return this.billService.getMyBill(req.user._id, id);
+  @Post('user')
+  create(@Req() req, @Body() body: BillCreateREQ) {
+    return this.billService.create(req.user._id, body);
   }
 
   @Roles(ROLE_NAME.USER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
-  @Post('user')
-  create(@Req() req, @Body() body: BillCreateREQ) {
-    return this.billService.create(req.user._id, body);
+  @Patch('refund')
+  refundBill(@Req() req, @Body() body: BillRefundREQ) {
+    return this.billService.refundBill(req.user._id.toString(), body);
   }
 
   @Roles(ROLE_NAME.USER)
@@ -113,6 +114,6 @@ export class BillController {
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Put('seller/:id')
   updateStatusSeller(@Param('id') id: string, @Query('status') status: BILL_STATUS) {
-    // return this.billService.updateStatusBillSeller(id, status);
+    return this.billService.updateStatusBillSeller(id, status);
   }
 }

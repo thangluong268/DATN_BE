@@ -11,6 +11,7 @@ export class BillGetCalculateRevenueByYearREQ {
         $match: {
           storeId: storeId.toString(),
           status: BILL_STATUS.DELIVERED,
+          isSuccess: true,
           createdAt: { $gte: new Date(year, 0, 1), $lt: new Date(year + 1, 0, 1) },
         },
       },
@@ -28,6 +29,7 @@ export class BillGetCalculateRevenueByYearREQ {
       {
         $match: {
           status: BILL_STATUS.DELIVERED,
+          isSuccess: true,
           storeId: storeId.toString(),
         },
       },

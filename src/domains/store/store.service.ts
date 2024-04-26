@@ -128,7 +128,7 @@ export class StoreService {
     const averageStarOfStore = totalFeedback > 0 ? Number((totalAverageStar / totalFeedback).toFixed(2)) : 0;
     const totalFollow = await this.userModel.countDocuments({ followStores: storeId });
     const totalRevenue = await this.billService.calculateRevenueAllTimeByStoreId(storeId);
-    const totalDelivered = await this.billModel.countDocuments({ storeId, status: BILL_STATUS.DELIVERED });
+    const totalDelivered = await this.billModel.countDocuments({ storeId, status: BILL_STATUS.DELIVERED, isSuccess: true });
     return BaseResponse.withMessage(
       { store, averageStar: averageStarOfStore, totalFeedback, totalFollow, totalRevenue, totalDelivered },
       'Lấy thông tin cửa hàng thành công!',
@@ -153,7 +153,7 @@ export class StoreService {
         const averageStarOfStore = totalFeedback > 0 ? Number((totalAverageStar / totalFeedback).toFixed(2)) : 0;
         const totalFollow = await this.userModel.countDocuments({ followStores: storeId });
         const totalRevenue = await this.billService.calculateRevenueAllTimeByStoreId(storeId);
-        const totalDelivered = await this.billModel.countDocuments({ storeId, status: BILL_STATUS.DELIVERED });
+        const totalDelivered = await this.billModel.countDocuments({ storeId, status: BILL_STATUS.DELIVERED, isSuccess: true });
         return { store, averageStar: averageStarOfStore, totalFeedback, totalFollow, totalRevenue, totalDelivered };
       }),
     );
@@ -175,7 +175,7 @@ export class StoreService {
     const averageStarOfStore = totalFeedback > 0 ? Number((totalAverageStar / totalFeedback).toFixed(2)) : 0;
     const totalFollow = await this.userModel.countDocuments({ followStores: storeId });
     const totalRevenue = await this.billService.calculateRevenueAllTimeByStoreId(storeId);
-    const totalDelivered = await this.billModel.countDocuments({ storeId, status: BILL_STATUS.DELIVERED });
+    const totalDelivered = await this.billModel.countDocuments({ storeId, status: BILL_STATUS.DELIVERED, isSuccess: true });
     return BaseResponse.withMessage(
       { store, averageStar: averageStarOfStore, totalFeedback, totalFollow, totalRevenue, totalDelivered },
       'Lấy thông tin cửa hàng thành công!',

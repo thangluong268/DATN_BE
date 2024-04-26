@@ -10,6 +10,7 @@ export class BillGetCalculateTotalByYearREQ {
       {
         $match: {
           status: BILL_STATUS.DELIVERED,
+          isSuccess: true,
           createdAt: { $gte: new Date(year, 0, 1), $lt: new Date(year + 1, 0, 1) },
         },
       },
@@ -24,7 +25,7 @@ export class BillGetCalculateTotalByYearREQ {
 
   static toQueryConditionForAllTime() {
     return [
-      { $match: { status: BILL_STATUS.DELIVERED } },
+      { $match: { status: BILL_STATUS.DELIVERED, isSuccess: true } },
       { $group: { _id: null, totalRevenue: { $sum: '$totalPricePayment' } } },
     ];
   }
