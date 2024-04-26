@@ -1,10 +1,9 @@
 version: '3.7'
 services:
   dtex-be:
-    image: dtex-be:latest
     build: .
     container_name: dtex-be
-    image: dtex-be
+    image: dtex-be:latest
     restart: always
     ports:
       - "5000:5000"
