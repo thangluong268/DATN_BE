@@ -11,6 +11,7 @@ export class BillGetRevenueStoreREQ {
       {
         $match: {
           status: BILL_STATUS.DELIVERED,
+          isSuccess: true,
           storeId: storeId.toString(),
         },
       },

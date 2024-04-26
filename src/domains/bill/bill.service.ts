@@ -39,6 +39,7 @@ import { BillGetCalculateTotalByYearREQ } from './request/bill-get-calculate-tot
 import { BillGetCountCharityByYearREQ } from './request/bill-get-count-charity-by-year.request';
 import { BillGetRevenueStoreREQ } from './request/bill-get-revenue-store.request';
 import { BillGetTotalByStatusSellerREQ } from './request/bill-get-total-by-status-seller.request';
+import { BillRefundREQ } from './request/bill-refund.request';
 import { CountTotalByStatusRESP } from './response/bill-count-total-by-status.response';
 import { Bill } from './schema/bill.schema';
 
@@ -238,9 +239,8 @@ export class BillService {
       { $group: { _id: '$status', count: { $sum: 1 } } },
       { $project: { _id: 0, status: '$_id', count: 1 } },
     ]);
-    const billStatus = Object.keys(BILL_STATUS).filter((status) => status !== BILL_STATUS.PROCESSING);
     return BaseResponse.withMessage(
-      billStatus.map((status) => CountTotalByStatusRESP.of(status, data)),
+      Object.keys(BILL_STATUS).map((status) => CountTotalByStatusRESP.of(status, data)),
       'Lấy tổng số lượng các đơn theo trạng thái thành công!',
     );
   }
@@ -380,7 +380,7 @@ export class BillService {
   async revenueStore(storeId: string) {
     this.logger.log(`Revenue Store: ${storeId}`);
     const totalRevenueAllTime = await this.billModel.aggregate(BillGetRevenueStoreREQ.toQueryRevenueAllTime(storeId));
-    const totalDelivered = await this.billModel.countDocuments({ storeId, status: BILL_STATUS.DELIVERED });
+    const totalDelivered = await this.billModel.countDocuments({ storeId, status: BILL_STATUS.DELIVERED, isSuccess: true });
     return BaseResponse.withMessage(
       { totalRevenue: totalRevenueAllTime[0]?.totalRevenue || 0, totalDelivered },
       'Lấy dữ liệu thành công!',
@@ -391,30 +391,37 @@ export class BillService {
     this.logger.log(`Update Status Bill Seller: ${billId}`);
     const bill = await this.billModel.findById(billId).lean();
     if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
-    if (![BILL_STATUS.CONFIRMED, BILL_STATUS.DELIVERING, BILL_STATUS.PROCESSING].includes(status))
+    if (![BILL_STATUS.CONFIRMED, BILL_STATUS.DELIVERING, BILL_STATUS.DELIVERED].includes(status))
       throw new BadRequestException('Trạng thái không hợp lệ!');
     const updatedBill = await this.billModel.findByIdAndUpdate({ _id: billId }, { status }, { new: true });
     switch (status) {
       case BILL_STATUS.CONFIRMED:
         // TO DO...
+        // Notification to User
         break;
       case BILL_STATUS.DELIVERING:
         // TO DO...
+        // Notification to Shipper
         break;
-      case BILL_STATUS.PROCESSING:
+      case BILL_STATUS.DELIVERED:
         if (bill.paymentMethod === PAYMENT_METHOD.CASH) {
           updatedBill.isPaid = true;
-          updatedBill.save();
         }
+        updatedBill.deliveredDate = new Date();
         break;
       default:
         break;
     }
+    updatedBill.save();
     return BaseResponse.withMessage({}, 'Cập nhật trạng thái đơn hàng thành công!');
   }
 
   async countProductDelivered(productId: string, type: PRODUCT_TYPE, status: BILL_STATUS) {
-    return await this.billModel.countDocuments({ products: { $elemMatch: { id: productId.toString(), type } }, status });
+    return await this.billModel.countDocuments({
+      products: { $elemMatch: { id: productId.toString(), type } },
+      status,
+      isSuccess: true,
+    });
   }
 
   async checkProductPurchased(productId: string) {
@@ -429,7 +436,7 @@ export class BillService {
 
   async calculateRevenueAllTimeByStoreId(storeId: string) {
     const result = await this.billModel.aggregate([
-      { $match: { status: BILL_STATUS.DELIVERED, storeId: storeId.toString() } },
+      { $match: { status: BILL_STATUS.DELIVERED, isSuccess: true, storeId: storeId.toString() } },
       { $group: { _id: null, totalRevenue: { $sum: '$totalPricePayment' } } },
     ]);
     return result[0]?.totalRevenue || 0;
@@ -495,18 +502,31 @@ export class BillService {
     }
   }
 
-  async refundBill(userId: string, billId: string) {
+  async refundBill(userId: string, body: BillRefundREQ) {
+    const { billId, reasonRefund } = body;
     this.logger.log(`Refund Bill: ${billId}`);
-    const bill = await this.billModel.findOne({ _id: new ObjectId(billId), userId }).lean();
+    const bill = await this.billModel.findOne({ _id: new ObjectId(billId), userId });
     if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
-    if (bill.status !== BILL_STATUS.PROCESSING) throw new BadRequestException('Không thể hoàn trả đơn hàng này!');
+    if (bill.status === BILL_STATUS.DELIVERED && bill.isSuccess)
+      throw new BadRequestException('Không thể hoàn trả đơn hàng này!');
     const session = await this.connection.startSession();
     session.startTransaction();
     try {
       // TO DO...
-
+      /**
+       * 1. Thêm 1 field isRefundSuccess vào bill để check xem đã hoàn trả thành công hay chưa
+       * 2. Có thêm chức năng cho seller để xác nhận đơn hàng đã được hoàn trả thành công
+       * 3. Seller có thể xác nhận hoàn trả thành công sau khi nhận được hàng -> isRefundSuccess = true
+       */
+      for (const product of bill.products) {
+        await this.productModel.findByIdAndUpdate(product.id, { $inc: { quantity: product.quantity } }, { session });
+      }
+      bill.status = BILL_STATUS.REFUND;
+      bill.isSuccess = false;
+      bill.reasonRefund = reasonRefund;
+      await bill.save({ session });
       await session.commitTransaction();
-      return BaseResponse.withMessage({}, 'Hoàn tiền đơn hàng thành công!');
+      return BaseResponse.withMessage({}, 'Hoàn đơn hàng thành công!');
     } catch (err) {
       await session.abortTransaction();
       throw new BadRequestException(err.message);

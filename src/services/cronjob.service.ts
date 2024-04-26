@@ -106,12 +106,15 @@ export class CronjobsService {
   @Cron('*/1 * * * * *')
   async processBill() {
     const now = dayjs();
-    const threeDaysAgo = now.subtract(3, 'day').toDate();
-    const bills = await this.billModel.find({ status: BILL_STATUS.PROCESSING, updatedAt: { $lte: threeDaysAgo } }).lean();
+    // const threeDaysAgo = now.subtract(3, 'day').toDate();
+    const threeDaysAgo = now.subtract(1, 'day').toDate();
+    const bills = await this.billModel
+      .find({ status: BILL_STATUS.DELIVERED, isSuccess: false, deliveredDate: { $lte: threeDaysAgo } })
+      .lean();
     if (bills.length === 0) return;
     await Promise.all(
       bills.map(async (bill) => {
-        await this.billModel.findByIdAndUpdate(bill._id, { status: BILL_STATUS.DELIVERED });
+        await this.billModel.findByIdAndUpdate(bill._id, { isSuccess: true });
         await this.taxModel.findOneAndUpdate({ storeId: bill.storeId, paymentId: bill.paymentId }, { isSuccess: true });
         const bonusCoins = Math.floor((bill.totalPricePayment * 0.2) / 1000);
         await this.userModel.findByIdAndUpdate(bill.userId, { $inc: { wallet: bonusCoins } });
