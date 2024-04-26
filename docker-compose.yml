@@ -1,9 +1,7 @@
 version: '3.7'
 services:
   dtex-be:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: dtex-be:latest
     container_name: dtex-be
     image: dtex-be
     restart: always
