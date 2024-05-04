@@ -1,5 +1,6 @@
-import { Transform, Type } from 'class-transformer';
-import { IsArray, IsDate, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsNotEmpty, IsNumber, IsString, Max, Min } from 'class-validator';
+import { DateValidator } from 'shared/validators/date.validator';
 
 export class PromotionCreateREQ {
   @IsNotEmpty()
@@ -8,18 +9,23 @@ export class PromotionCreateREQ {
 
   @IsNumber()
   @IsNotEmpty()
+  @Min(0)
   minSpend: number;
 
   @IsNumber()
   @IsNotEmpty()
+  @Min(0)
   quantity: number;
 
   @IsNumber()
   @IsNotEmpty()
+  @Min(0)
+  @Max(100)
   value: number;
 
   @IsNumber()
   @IsNotEmpty()
+  @Min(0)
   maxDiscountValue: number;
 
   @IsNotEmpty()
@@ -27,11 +33,9 @@ export class PromotionCreateREQ {
   @Type(() => String)
   storeIds: string[];
 
-  @IsDate()
-  @Transform(({ value }) => new Date(value))
+  @DateValidator()
   startTime: Date;
 
-  @IsDate()
-  @Transform(({ value }) => new Date(value))
+  @DateValidator()
   endTime: Date;
 }

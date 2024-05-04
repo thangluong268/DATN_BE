@@ -65,8 +65,11 @@ export class CronjobsService {
   }
 
   @Cron('*/1 * * * * *')
-  async deleteIfPassEndTimeAndUnUsedPromotion() {
-    await this.promotionModel.deleteMany({ endTime: { $lt: new Date() }, isActive: false, userUses: { $size: 0 } });
+  async resetStartTimePromotion() {
+    await this.promotionModel.updateMany(
+      { startTime: { $lt: new Date() }, isActive: false, userUses: { $size: 0 } },
+      { $set: { startTime: dayjs(new Date()).add(1, 'day'), endTime: dayjs(new Date()).add(7, 'day') } },
+    );
   }
 
   /**

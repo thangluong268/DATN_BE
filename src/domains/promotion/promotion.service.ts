@@ -23,6 +23,7 @@ import { PromotionGetByStoreIdRESP } from './response/promotion-get-by-store-id.
 import { PromotionGetDetailRESP, UserPromotionRESP } from './response/promotion-get-detail.response';
 import { PromotionGetMyRESP } from './response/promotion-get-my.response';
 import { Promotion } from './schema/promotion.schema';
+import { promotionCreateValidate } from './validates/promotion-create.validate';
 
 @Injectable()
 export class PromotionService {
@@ -40,6 +41,7 @@ export class PromotionService {
 
   async create(userId: string, body: PromotionCreateREQ) {
     this.logger.log(`Create promotion by userId: ${userId}, body: ${JSON.stringify(body)}`);
+    promotionCreateValidate(body);
     const voucherCode = await this.generateVoucherCode();
     return await this.promotionModel.create({ ...body, voucherCode });
   }
@@ -149,7 +151,7 @@ export class PromotionService {
   async getPromotionsByUser(userId: string, storeIds: string[]) {
     this.logger.log(`get promotion by user in: ${storeIds}`);
     const promotions = await this.promotionModel.aggregate([
-      { $match: { isActive: true, storeIds: { $in: storeIds } } },
+      { $match: { startTime: { $lte: new Date() }, isActive: true, storeIds: { $in: storeIds } } },
       { $addFields: { isSaved: { $in: [userId.toString(), '$userSaves'] } } },
       { $project: { createdAt: 0, updatedAt: 0, userSaves: 0, storeIds: 0 } },
     ]);
