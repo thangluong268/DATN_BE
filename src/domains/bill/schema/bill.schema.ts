@@ -60,6 +60,9 @@ export class Bill extends Document {
 
   @Prop({ type: String })
   reasonRefund: string;
+
+  @Prop({ type: Boolean, default: false })
+  isRefundSuccess: boolean;
 }
 
 export const BillSchema = SchemaFactory.createForClass(Bill);

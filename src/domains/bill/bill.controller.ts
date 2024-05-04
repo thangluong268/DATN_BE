@@ -112,6 +112,13 @@ export class BillController {
 
   @Roles(ROLE_NAME.SELLER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Patch(':billId/confirm-refund')
+  confirmRefundBill(@Req() req, @Param('billId') billId: string) {
+    return this.billService.confirmRefundBill(req.user._id.toString(), billId);
+  }
+
+  @Roles(ROLE_NAME.SELLER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Put('seller/:id')
   updateStatusSeller(@Param('id') id: string, @Query('status') status: BILL_STATUS) {
     return this.billService.updateStatusBillSeller(id, status);

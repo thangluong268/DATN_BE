@@ -509,29 +509,27 @@ export class BillService {
     if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
     if (bill.status === BILL_STATUS.DELIVERED && bill.isSuccess)
       throw new BadRequestException('Không thể hoàn trả đơn hàng này!');
-    const session = await this.connection.startSession();
-    session.startTransaction();
-    try {
-      // TO DO...
-      /**
-       * 1. Thêm 1 field isRefundSuccess vào bill để check xem đã hoàn trả thành công hay chưa
-       * 2. Có thêm chức năng cho seller để xác nhận đơn hàng đã được hoàn trả thành công
-       * 3. Seller có thể xác nhận hoàn trả thành công sau khi nhận được hàng -> isRefundSuccess = true
-       */
-      for (const product of bill.products) {
-        await this.productModel.findByIdAndUpdate(product.id, { $inc: { quantity: product.quantity } }, { session });
-      }
-      bill.status = BILL_STATUS.REFUND;
-      bill.isSuccess = false;
-      bill.reasonRefund = reasonRefund;
-      await bill.save({ session });
-      await session.commitTransaction();
-      return BaseResponse.withMessage({}, 'Hoàn đơn hàng thành công!');
-    } catch (err) {
-      await session.abortTransaction();
-      throw new BadRequestException(err.message);
-    } finally {
-      await session.endSession();
-    }
+    bill.status = BILL_STATUS.REFUND;
+    bill.isSuccess = false;
+    bill.reasonRefund = reasonRefund;
+    await bill.save();
+    return BaseResponse.withMessage({}, 'Hoàn đơn hàng thành công!');
+  }
+
+  async confirmRefundBill(userId: string, billId: string) {
+    this.logger.log(`Confirm Refund Bill: ${billId}`);
+    const store = await this.storeModel.findOne({ userId }).lean();
+    if (!store) throw new ForbiddenException('Bạn không có quyền xác nhận hoàn trả đơn hàng này!');
+    const bill = await this.billModel.findOne({ _id: new ObjectId(billId), storeId: store._id.toString() });
+    if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
+    if (bill.status !== BILL_STATUS.REFUND) throw new BadRequestException('Không thể xác nhận hoàn trả đơn hàng này!');
+    await Promise.all(
+      bill.products.map(async (product) => {
+        await this.productModel.findByIdAndUpdate(product.id, { $inc: { quantity: product.quantity } });
+      }),
+    );
+    bill.isRefundSuccess = true;
+    await bill.save();
+    return BaseResponse.withMessage({}, 'Xác nhận hoàn trả đơn hàng thành công!');
   }
 }
