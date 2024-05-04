@@ -14,6 +14,7 @@ import { RedisModule } from 'services/redis/redis.module';
 import { BillController } from './bill.controller';
 import { BillService } from './bill.service';
 import { Bill, BillSchema } from './schema/bill.schema';
+import { UserRefundTracking, UserRefundTrackingSchema } from 'domains/user-refund-tracking/schema/user-otp.schema';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { Bill, BillSchema } from './schema/bill.schema';
       { name: Product.name, schema: ProductSchema },
       { name: Tax.name, schema: TaxSchema },
       { name: Store.name, schema: StoreSchema },
+      { name: UserRefundTracking.name, schema: UserRefundTrackingSchema },
     ]),
     CartModule,
     ProductModule,

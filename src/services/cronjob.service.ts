@@ -8,6 +8,7 @@ import { Promotion } from 'domains/promotion/schema/promotion.schema';
 import { Report } from 'domains/report/schema/report.schema';
 import { Store } from 'domains/store/schema/store.schema';
 import { Tax } from 'domains/tax/schema/tax.schema';
+import { UserRefundTracking } from 'domains/user-refund-tracking/schema/user-otp.schema';
 import { User } from 'domains/user/schema/user.schema';
 import { ObjectId } from 'mongodb';
 import { Model } from 'mongoose';
@@ -38,6 +39,9 @@ export class CronjobsService {
 
     @InjectModel(Tax.name)
     private readonly taxModel: Model<Tax>,
+
+    @InjectModel(UserRefundTracking.name)
+    private readonly userRefundTrackingModel: Model<UserRefundTracking>,
   ) {}
 
   @Cron('0 * * * * *')
@@ -58,6 +62,11 @@ export class CronjobsService {
   @Cron('*/1 * * * * *')
   async usedUpPromotion() {
     await this.promotionModel.updateMany({ quantity: { $lte: 0 }, isActive: true }, { $set: { isActive: false } });
+  }
+
+  @Cron('*/1 * * * * *')
+  async deleteIfPassEndTimeAndUnUsedPromotion() {
+    await this.promotionModel.deleteMany({ endTime: { $lt: new Date() }, isActive: false, userUses: { $size: 0 } });
   }
 
   /**
@@ -106,8 +115,7 @@ export class CronjobsService {
   @Cron('*/1 * * * * *')
   async processBill() {
     const now = dayjs();
-    // const threeDaysAgo = now.subtract(3, 'day').toDate();
-    const threeDaysAgo = now.subtract(1, 'day').toDate();
+    const threeDaysAgo = now.subtract(3, 'day').toDate();
     const bills = await this.billModel
       .find({ status: BILL_STATUS.DELIVERED, isSuccess: false, deliveredDate: { $lte: threeDaysAgo } })
       .lean();
@@ -118,6 +126,27 @@ export class CronjobsService {
         await this.taxModel.findOneAndUpdate({ storeId: bill.storeId, paymentId: bill.paymentId }, { isSuccess: true });
         const bonusCoins = Math.floor((bill.totalPricePayment * 0.2) / 1000);
         await this.userModel.findByIdAndUpdate(bill.userId, { $inc: { wallet: bonusCoins } });
+        await this.userRefundTrackingModel.updateOne(
+          { userId: bill.userId },
+          { $set: { numOfRefund: 0, bannedDate: null } },
+          { upsert: true },
+        );
+      }),
+    );
+  }
+
+  @Cron('*/1 * * * * *')
+  async handleUserRefundTracking() {
+    const now = dayjs();
+    const thirtyDaysAgo = now.subtract(30, 'day').toDate();
+    const userRefundTrackings = await this.userRefundTrackingModel.find({ bannedDate: { $lte: thirtyDaysAgo } }).lean();
+    if (userRefundTrackings.length === 0) return;
+    await Promise.all(
+      userRefundTrackings.map(async (userRefundTracking) => {
+        await this.userRefundTrackingModel.updateOne(
+          { userId: userRefundTracking.userId },
+          { $set: { numOfRefund: 0, bannedDate: null } },
+        );
       }),
     );
   }

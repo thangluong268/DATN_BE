@@ -9,12 +9,14 @@ import {
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { TAX_RATE } from 'app.config';
+import * as dayjs from 'dayjs';
 import { CartService } from 'domains/cart/cart.service';
 import { ProductService } from 'domains/product/product.service';
 import { Product } from 'domains/product/schema/product.schema';
 import { Promotion } from 'domains/promotion/schema/promotion.schema';
 import { Store } from 'domains/store/schema/store.schema';
 import { Tax } from 'domains/tax/schema/tax.schema';
+import { UserRefundTracking } from 'domains/user-refund-tracking/schema/user-otp.schema';
 import { User } from 'domains/user/schema/user.schema';
 import { UserService } from 'domains/user/user.service';
 import { ObjectId } from 'mongodb';
@@ -24,6 +26,7 @@ import { PaypalGateway, VNPayGateway } from 'payment/payment.gateway';
 import { PaymentService } from 'payment/payment.service';
 import { PaypalPaymentService } from 'payment/paypal/paypal.service';
 import { RedisService } from 'services/redis/redis.service';
+import { NUM_OF_DAY_USER_NOT_ALLOW_USE_VOUCHER, NUM_OF_REFUND_TO_BAN } from 'shared/constants/common.constant';
 import { BILL_STATUS, PAYMENT_METHOD, PRODUCT_TYPE } from 'shared/enums/bill.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationResponse } from 'shared/generics/pagination.response';
@@ -74,6 +77,9 @@ export class BillService {
     @InjectModel(Store.name)
     private readonly storeModel: Model<Store>,
 
+    @InjectModel(UserRefundTracking.name)
+    private readonly userRefundTrackingModel: Model<UserRefundTracking>,
+
     private readonly paymentService: PaymentService,
     private readonly paypalPaymentService: PaypalPaymentService,
     private readonly redisService: RedisService,
@@ -96,12 +102,10 @@ export class BillService {
         if (user.wallet < body.coins) throw new BadRequestException('Số dư xu không đủ!');
         numOfCoins = body.coins;
       }
-      await this.calculateDiscount(numOfCoins, body.promotionId, body.data);
+      await this.calculateDiscount(userId, numOfCoins, body.promotionId, body.data);
       await this.calculateTax(body.data, paymentId, session);
-
       const redisClient = this.redisService.getClient();
       await redisClient.set(paymentId, JSON.stringify({ numOfCoins, promotionId: body.promotionId }));
-
       for (const cart of body.data) {
         totalPrice += cart['totalPricePayment'];
         await this.billModel.create([BillCreateREQ.toCreateBill(cart, userId, body, paymentId)], { session });
@@ -134,7 +138,7 @@ export class BillService {
     }
   }
 
-  async calculateDiscount(numOfCoins: number, promotionId: string, carts: CartInfoDTO[]) {
+  async calculateDiscount(userId: string, numOfCoins: number, promotionId: string, carts: CartInfoDTO[]) {
     const coinsValue = numOfCoins * 100; // 1 xu = 100đ
     const totalPrice = carts.reduce((acc, cart) => acc + (cart.totalPrice + cart.deliveryFee), 0);
     const numOfStores = carts.length;
@@ -148,6 +152,11 @@ export class BillService {
       });
       if (!promotion) throw new BadRequestException('Khuyến mãi không hợp lệ!');
       if (promotion.quantity === 0) throw new BadRequestException('Khuyến mãi đã hết!');
+      const userRefundTracking = await this.userRefundTrackingModel.findOne({ userId }).lean();
+      if (userRefundTracking && userRefundTracking.bannedDate)
+        throw new BadRequestException(
+          `Bạn đã bị vô hiệu hóa sử dụng voucher trong vòng ${NUM_OF_DAY_USER_NOT_ALLOW_USE_VOUCHER - dayjs(new Date()).diff(userRefundTracking.bannedDate, 'day')} ngày !`,
+        );
       promotionValue = Math.floor((totalPrice * promotion.value) / 100);
       if (promotionValue > promotion.maxDiscountValue) promotionValue = promotion.maxDiscountValue;
     }
@@ -408,6 +417,8 @@ export class BillService {
           updatedBill.isPaid = true;
         }
         updatedBill.deliveredDate = new Date();
+        const redisClient = this.redisService.getClient();
+        await redisClient.del(bill.paymentId);
         break;
       default:
         break;
@@ -513,7 +524,21 @@ export class BillService {
     bill.isSuccess = false;
     bill.reasonRefund = reasonRefund;
     await bill.save();
+    await this.handleUserRefundTracking(userId);
     return BaseResponse.withMessage({}, 'Hoàn đơn hàng thành công!');
+  }
+
+  async handleUserRefundTracking(userId: string) {
+    const userRefundTracking = await this.userRefundTrackingModel.findOneAndUpdate(
+      { userId },
+      { $inc: { numOfRefund: 1 } },
+      { upsert: true, new: true },
+    );
+    if (userRefundTracking.bannedDate) return;
+    if (userRefundTracking.numOfRefund >= NUM_OF_REFUND_TO_BAN) {
+      userRefundTracking.bannedDate = new Date();
+    }
+    await userRefundTracking.save();
   }
 
   async confirmRefundBill(userId: string, billId: string) {
@@ -522,7 +547,8 @@ export class BillService {
     if (!store) throw new ForbiddenException('Bạn không có quyền xác nhận hoàn trả đơn hàng này!');
     const bill = await this.billModel.findOne({ _id: new ObjectId(billId), storeId: store._id.toString() });
     if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
-    if (bill.status !== BILL_STATUS.REFUND) throw new BadRequestException('Không thể xác nhận hoàn trả đơn hàng này!');
+    if (!(bill.status === BILL_STATUS.REFUND && !bill.isRefundSuccess))
+      throw new BadRequestException('Không thể xác nhận hoàn trả đơn hàng này!');
     await Promise.all(
       bill.products.map(async (product) => {
         await this.productModel.findByIdAndUpdate(product.id, { $inc: { quantity: product.quantity } });

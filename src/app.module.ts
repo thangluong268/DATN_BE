@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BillModule } from 'domains/bill/bill.module';
 import { CartModule } from 'domains/cart/cart.module';
@@ -9,6 +10,7 @@ import { PolicyModule } from 'domains/policy/policy.module';
 import { PromotionModule } from 'domains/promotion/promotion.module';
 import { ReportModule } from 'domains/report/report.module';
 import { TaxModule } from 'domains/tax/tax.module';
+import { UserRefundTrackingModule } from 'domains/user-refund-tracking/user-refund-tracking.module';
 import { PaymentModule } from 'payment/paymen.module';
 import { CloudinaryModule } from 'services/cloudinary/cloudinary.module';
 import { CronjobsService } from 'services/cronjob.service';
@@ -24,7 +26,6 @@ import { UserOTPModule } from './domains/user-otp/user-otp.module';
 import { UserTokenModule } from './domains/user-token/user-token.module';
 import { UserModule } from './domains/user/user.module';
 import { SeederService } from './services/seeder.service';
-import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { ConfigModule } from '@nestjs/config';
     PromotionModule,
     CloudinaryModule,
     TaxModule,
+    UserRefundTrackingModule,
   ],
   providers: [SeederService, CronjobsService],
 })

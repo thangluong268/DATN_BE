@@ -162,7 +162,7 @@ export class PromotionService {
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.promotionModel.countDocuments({ isActive: true, userUses: { $size: 0 } });
     const data = await this.promotionModel
-      .find({ isActive: true, userUses: { $size: 0 } }, { createdAt: 0, updatedAt: 0 })
+      .find({ endTime: { $gte: new Date() }, isActive: true, userUses: { $size: 0 } }, { createdAt: 0, updatedAt: 0 })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)

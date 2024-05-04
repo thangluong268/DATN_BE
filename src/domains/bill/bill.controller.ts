@@ -86,7 +86,7 @@ export class BillController {
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Post('user')
   create(@Req() req, @Body() body: BillCreateREQ) {
-    return this.billService.create(req.user._id, body);
+    return this.billService.create(req.user._id.toString(), body);
   }
 
   @Roles(ROLE_NAME.USER)

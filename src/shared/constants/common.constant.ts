@@ -1,0 +1,2 @@
+export const NUM_OF_REFUND_TO_BAN = 3;
+export const NUM_OF_DAY_USER_NOT_ALLOW_USE_VOUCHER = 30;

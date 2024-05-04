@@ -42,7 +42,7 @@ export class PromotionController {
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Post('user')
   getPromotionsByUser(@Req() req, @Body() body: string[]) {
-    return this.promotionService.getPromotionsByUser(req.user._id, body);
+    return this.promotionService.getPromotionsByUser(req.user._id.toString(), body);
   }
 
   @Roles(ROLE_NAME.MANAGER)
