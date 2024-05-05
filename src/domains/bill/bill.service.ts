@@ -106,7 +106,7 @@ export class BillService {
       const redisClient = this.redisService.getClient();
       await redisClient.set(paymentId, JSON.stringify({ numOfCoins, promotionId: body.promotionId, expense }));
       for (const cart of body.data) {
-        totalPrice += cart['totalPricePayment'];
+        totalPrice += cart['totalPricePayment'] + cart.deliveryFee;
         await this.billModel.create([BillCreateREQ.toCreateBill(cart, userId, body, paymentId)], { session });
       }
       console.log(totalPrice);

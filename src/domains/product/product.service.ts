@@ -10,6 +10,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { BillService } from 'domains/bill/bill.service';
 import { Bill } from 'domains/bill/schema/bill.schema';
+import { ESService } from 'domains/elastic-search/elastic-search.service';
 import { EvaluationService } from 'domains/evaluation/evaluation.service';
 import { Evaluation } from 'domains/evaluation/schema/evaluation.schema';
 import { Feedback } from 'domains/feedback/schema/feedback.schema';
@@ -60,6 +61,8 @@ export class ProductService {
     private readonly storeModel: Model<Store>,
 
     private readonly categoryService: CategoryService,
+
+    private readonly esService: ESService,
   ) {}
 
   async create(userId: string, body: ProductCreateREQ) {
@@ -70,6 +73,7 @@ export class ProductService {
     if (!category) throw new NotFoundException('Không tìm thấy danh mục này!');
     const newProduct = await this.productModel.create({ ...body, storeId: store._id });
     await this.evaluationService.create(newProduct._id);
+    await this.esService.indexProduct(toDocModel(newProduct));
     return BaseResponse.withMessage<Product>(toDocModel(newProduct), 'Tạo sản phẩm thành công!');
   }
 

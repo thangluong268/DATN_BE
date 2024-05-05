@@ -50,4 +50,6 @@ export const {
   REDIS_PASSWORD,
   URL_FE,
   HOST,
+  ELASTICSEARCH_NODE,
+  ELASTICSEARCH_PRODUCTS_INDEX,
 } = process.env;
