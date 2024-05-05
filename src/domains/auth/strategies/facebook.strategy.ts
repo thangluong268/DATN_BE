@@ -18,7 +18,8 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
 
   async validate(accessToken: string, refreshToken: string, profile: any, done: any): Promise<any> {
     if (!profile || !accessToken) {
-      return done('No user from facebook', null);
+      const errorMessage = new Error('No user from facebook');
+      return done(errorMessage, null);
     }
     const { id, displayName, gender, _json, emails } = profile;
     const user = {
