@@ -3,8 +3,10 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BillModule } from 'domains/bill/bill.module';
 import { CartModule } from 'domains/cart/cart.module';
+import { ElasticSearchModule } from 'domains/elastic-search/elastic-search.module';
 import { EvaluationModule } from 'domains/evaluation/evaluation.module';
 import { FeedbackModule } from 'domains/feedback/feedback.module';
+import { FinanceModule } from 'domains/finance/finance.module';
 import { NotificationModule } from 'domains/notification/notification.module';
 import { PolicyModule } from 'domains/policy/policy.module';
 import { PromotionModule } from 'domains/promotion/promotion.module';
@@ -26,7 +28,6 @@ import { UserOTPModule } from './domains/user-otp/user-otp.module';
 import { UserTokenModule } from './domains/user-token/user-token.module';
 import { UserModule } from './domains/user/user.module';
 import { SeederService } from './services/seeder.service';
-import { FinanceModule } from 'domains/finance/finance.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { FinanceModule } from 'domains/finance/finance.module';
     TaxModule,
     UserRefundTrackingModule,
     FinanceModule,
+    ElasticSearchModule,
   ],
   providers: [SeederService, CronjobsService],
 })

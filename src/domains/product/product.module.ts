@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { BillModule } from 'domains/bill/bill.module';
 import { Bill, BillSchema } from 'domains/bill/schema/bill.schema';
 import { CategoryModule } from 'domains/category/category.module';
+import { ElasticSearchModule } from 'domains/elastic-search/elastic-search.module';
 import { EvaluationModule } from 'domains/evaluation/evaluation.module';
 import { Evaluation, EvaluationSchema } from 'domains/evaluation/schema/evaluation.schema';
 import { FeedbackModule } from 'domains/feedback/feedback.module';
@@ -30,6 +31,7 @@ import { ProductScraping } from './scraping/product.scraping';
     forwardRef(() => UserModule),
     forwardRef(() => EvaluationModule),
     FeedbackModule,
+    ElasticSearchModule,
   ],
   controllers: [ProductController],
   providers: [ProductService, ProductScraping],
