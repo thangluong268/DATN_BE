@@ -1,19 +1,23 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { BILL_STATUS } from 'shared/enums/bill.enum';
 
 @Schema({
   versionKey: false,
   timestamps: true,
 })
-export class UserRefundTracking extends Document {
+export class UserBillTracking extends Document {
   @Prop({ type: String, required: true })
   userId: string;
 
   @Prop({ type: Number, default: 1 })
-  numOfRefund: number;
+  numOfBehavior: number;
 
   @Prop({ type: Date, default: null })
   bannedDate: Date;
+
+  @Prop({ enum: BILL_STATUS, required: true })
+  status: BILL_STATUS;
 }
 
-export const UserRefundTrackingSchema = SchemaFactory.createForClass(UserRefundTracking);
+export const UserBillTrackingSchema = SchemaFactory.createForClass(UserBillTracking);

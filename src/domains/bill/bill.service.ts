@@ -8,14 +8,13 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import * as dayjs from 'dayjs';
 import { CartService } from 'domains/cart/cart.service';
 import { ProductService } from 'domains/product/product.service';
 import { Product } from 'domains/product/schema/product.schema';
 import { Promotion } from 'domains/promotion/schema/promotion.schema';
 import { Store } from 'domains/store/schema/store.schema';
 import { Tax } from 'domains/tax/schema/tax.schema';
-import { UserRefundTracking } from 'domains/user-refund-tracking/schema/user-otp.schema';
+import { UserBillTrackingService } from 'domains/user-bill-tracking/user-bill-tracking.service';
 import { User } from 'domains/user/schema/user.schema';
 import { UserService } from 'domains/user/user.service';
 import { ObjectId } from 'mongodb';
@@ -25,7 +24,6 @@ import { PaypalGateway, VNPayGateway } from 'payment/payment.gateway';
 import { PaymentService } from 'payment/payment.service';
 import { PaypalPaymentService } from 'payment/paypal/paypal.service';
 import { RedisService } from 'services/redis/redis.service';
-import { NUM_OF_DAY_USER_NOT_ALLOW_USE_VOUCHER, NUM_OF_REFUND_TO_BAN } from 'shared/constants/common.constant';
 import { BILL_STATUS, PAYMENT_METHOD, PRODUCT_TYPE } from 'shared/enums/bill.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationResponse } from 'shared/generics/pagination.response';
@@ -76,8 +74,7 @@ export class BillService {
     @InjectModel(Store.name)
     private readonly storeModel: Model<Store>,
 
-    @InjectModel(UserRefundTracking.name)
-    private readonly userRefundTrackingModel: Model<UserRefundTracking>,
+    private readonly userBillTrackingService: UserBillTrackingService,
 
     private readonly paymentService: PaymentService,
     private readonly paypalPaymentService: PaypalPaymentService,
@@ -151,11 +148,7 @@ export class BillService {
       });
       if (!promotion) throw new BadRequestException('Khuyến mãi không hợp lệ!');
       if (promotion.quantity === 0) throw new BadRequestException('Khuyến mãi đã hết!');
-      const userRefundTracking = await this.userRefundTrackingModel.findOne({ userId }).lean();
-      if (userRefundTracking && userRefundTracking.bannedDate)
-        throw new BadRequestException(
-          `Bạn đã bị vô hiệu hóa sử dụng voucher trong vòng ${NUM_OF_DAY_USER_NOT_ALLOW_USE_VOUCHER - dayjs(new Date()).diff(userRefundTracking.bannedDate, 'day')} ngày !`,
-        );
+      await this.userBillTrackingService.checkUserNotAllowUseVoucher(userId);
       promotionValue = Math.floor((totalPrice * promotion.value) / 100);
       if (promotionValue > promotion.maxDiscountValue) promotionValue = promotion.maxDiscountValue;
     }
@@ -456,7 +449,9 @@ export class BillService {
     const bill = await this.billModel.findOne({ _id: new ObjectId(billId), userId }).lean();
     if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
     if (bill.status !== BILL_STATUS.NEW) throw new BadRequestException('Không thể hủy đơn hàng này!');
+    await this.userBillTrackingService.checkUserNotAllowDoBehavior(userId, BILL_STATUS.CANCELLED);
     await this.handleCancelBill(bill);
+    await this.userBillTrackingService.handleUserBillTracking(userId, BILL_STATUS.CANCELLED);
     return BaseResponse.withMessage({}, 'Hủy đơn hàng thành công!');
   }
 
@@ -518,25 +513,13 @@ export class BillService {
     if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
     if (bill.status === BILL_STATUS.DELIVERED && bill.isSuccess)
       throw new BadRequestException('Không thể hoàn trả đơn hàng này!');
+    await this.userBillTrackingService.checkUserNotAllowDoBehavior(userId, BILL_STATUS.REFUND);
     bill.status = BILL_STATUS.REFUND;
     bill.isSuccess = false;
     bill.reasonRefund = reasonRefund;
     await bill.save();
-    await this.handleUserRefundTracking(userId);
+    await this.userBillTrackingService.handleUserBillTracking(userId, BILL_STATUS.REFUND);
     return BaseResponse.withMessage({}, 'Hoàn đơn hàng thành công!');
-  }
-
-  async handleUserRefundTracking(userId: string) {
-    const userRefundTracking = await this.userRefundTrackingModel.findOneAndUpdate(
-      { userId },
-      { $inc: { numOfRefund: 1 } },
-      { upsert: true, new: true },
-    );
-    if (userRefundTracking.bannedDate) return;
-    if (userRefundTracking.numOfRefund >= NUM_OF_REFUND_TO_BAN) {
-      userRefundTracking.bannedDate = new Date();
-    }
-    await userRefundTracking.save();
   }
 
   async confirmRefundBill(userId: string, billId: string) {

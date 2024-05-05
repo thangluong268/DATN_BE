@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BillModule } from 'domains/bill/bill.module';
 import { CartModule } from 'domains/cart/cart.module';
-import { ElasticSearchModule } from 'domains/elastic-search/elastic-search.module';
 import { EvaluationModule } from 'domains/evaluation/evaluation.module';
 import { FeedbackModule } from 'domains/feedback/feedback.module';
 import { FinanceModule } from 'domains/finance/finance.module';
@@ -12,7 +11,7 @@ import { PolicyModule } from 'domains/policy/policy.module';
 import { PromotionModule } from 'domains/promotion/promotion.module';
 import { ReportModule } from 'domains/report/report.module';
 import { TaxModule } from 'domains/tax/tax.module';
-import { UserRefundTrackingModule } from 'domains/user-refund-tracking/user-refund-tracking.module';
+import { UserBillTrackingModule } from 'domains/user-bill-tracking/user-bill-tracking.module';
 import { PaymentModule } from 'payment/paymen.module';
 import { CloudinaryModule } from 'services/cloudinary/cloudinary.module';
 import { CronjobsService } from 'services/cronjob.service';
@@ -57,7 +56,7 @@ import { SeederService } from './services/seeder.service';
     PromotionModule,
     CloudinaryModule,
     TaxModule,
-    UserRefundTrackingModule,
+    UserBillTrackingModule,
     FinanceModule,
     // ElasticSearchModule,
   ],

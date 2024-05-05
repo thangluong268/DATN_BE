@@ -10,7 +10,7 @@ import { Promotion } from 'domains/promotion/schema/promotion.schema';
 import { Report } from 'domains/report/schema/report.schema';
 import { Store } from 'domains/store/schema/store.schema';
 import { Tax } from 'domains/tax/schema/tax.schema';
-import { UserRefundTracking } from 'domains/user-refund-tracking/schema/user-otp.schema';
+import { UserBillTracking } from 'domains/user-bill-tracking/schema/user-bill-tracking.schema';
 import { User } from 'domains/user/schema/user.schema';
 import { ObjectId } from 'mongodb';
 import { Model } from 'mongoose';
@@ -43,8 +43,8 @@ export class CronjobsService {
     @InjectModel(Tax.name)
     private readonly taxModel: Model<Tax>,
 
-    @InjectModel(UserRefundTracking.name)
-    private readonly userRefundTrackingModel: Model<UserRefundTracking>,
+    @InjectModel(UserBillTracking.name)
+    private readonly userBillTrackingModel: Model<UserBillTracking>,
 
     @InjectModel(Finance.name)
     private readonly financeModel: Model<Finance>,
@@ -157,28 +157,25 @@ export class CronjobsService {
         }
         const bonusCoins = Math.floor((bill.totalPricePayment * 0.2) / 1000);
         await this.userModel.findByIdAndUpdate(bill.userId, { $inc: { wallet: bonusCoins } });
-        await this.userRefundTrackingModel.updateOne(
-          { userId: bill.userId },
-          { $set: { numOfRefund: 0, bannedDate: null } },
-          { upsert: true },
-        );
+        await this.userBillTrackingModel.deleteMany({ userId: bill.userId });
       }),
     );
   }
 
   @Cron('*/1 * * * * *')
-  async handleUserRefundTracking() {
+  async handlePassBannedDayUserBillTracking() {
     const now = dayjs();
     const thirtyDaysAgo = now.subtract(30, 'day').toDate();
-    const userRefundTrackings = await this.userRefundTrackingModel.find({ bannedDate: { $lte: thirtyDaysAgo } }).lean();
-    if (userRefundTrackings.length === 0) return;
-    await Promise.all(
-      userRefundTrackings.map(async (userRefundTracking) => {
-        await this.userRefundTrackingModel.updateOne(
-          { userId: userRefundTracking.userId },
-          { $set: { numOfRefund: 0, bannedDate: null } },
-        );
-      }),
-    );
+    const userBillTrackings = await this.userBillTrackingModel
+      .find({
+        bannedDate: { $lte: thirtyDaysAgo },
+        status: { $in: [BILL_STATUS.REFUND, BILL_STATUS.BACK, BILL_STATUS.CANCELLED] },
+      })
+      .select('userId')
+      .lean();
+    if (userBillTrackings.length === 0) return;
+    await this.userBillTrackingModel.deleteMany({
+      userId: { $in: userBillTrackings.map((userBillTracking) => userBillTracking.userId) },
+    });
   }
 }
