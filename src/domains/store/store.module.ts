@@ -6,6 +6,7 @@ import { FeedbackModule } from 'domains/feedback/feedback.module';
 import { Feedback, FeedbackSchema } from 'domains/feedback/schema/feedback.schema';
 import { ProductModule } from 'domains/product/product.module';
 import { Product, ProductSchema } from 'domains/product/schema/product.schema';
+import { Report, ReportSchema } from 'domains/report/schema/report.schema';
 import { User, UserSchema } from 'domains/user/schema/user.schema';
 import { UserModule } from 'domains/user/user.module';
 import { Store, StoreSchema } from './schema/store.schema';
@@ -20,6 +21,7 @@ import { StoreService } from './store.service';
       { name: Product.name, schema: ProductSchema },
       { name: Feedback.name, schema: FeedbackSchema },
       { name: Bill.name, schema: BillSchema },
+      { name: Report.name, schema: ReportSchema },
     ]),
     forwardRef(() => ProductModule),
     forwardRef(() => FeedbackModule),

@@ -5,8 +5,10 @@ import { BillService } from 'domains/bill/bill.service';
 import { Bill } from 'domains/bill/schema/bill.schema';
 import { Feedback } from 'domains/feedback/schema/feedback.schema';
 import { Product } from 'domains/product/schema/product.schema';
+import { Report } from 'domains/report/schema/report.schema';
 import { Model } from 'mongoose';
 import { BILL_STATUS } from 'shared/enums/bill.enum';
+import { PolicyType } from 'shared/enums/policy.enum';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationREQ } from 'shared/generics/pagination.request';
@@ -16,6 +18,7 @@ import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { User } from '../user/schema/user.schema';
 import { UserService } from '../user/user.service';
 import { STORE_DATA } from './data/sample.data';
+import { StoreBeingReportedDownloadExcelDTO } from './dto/store-being-reported-download-excel.dto';
 import { StoreDownloadExcelDTO } from './dto/store-download-excel.dto';
 import { StoreCreateREQ } from './request/store-create.request';
 import { GetStoresByAdminREQ } from './request/store-get-all-admin.request';
@@ -40,6 +43,9 @@ export class StoreService {
 
     @InjectModel(Feedback.name)
     private readonly feedbackModel: Model<Feedback>,
+
+    @InjectModel(Report.name)
+    private readonly reportModel: Model<Report>,
 
     @InjectModel(Bill.name)
     private readonly billModel: Model<Bill>,
@@ -242,19 +248,29 @@ export class StoreService {
     return createExcelFile<StoreDownloadExcelDTO>(`Stores - ${dayjs().format('YYYY-MM-DD')}`, headers, dataRows);
   }
 
-  async downloadExcelStoresBeingWarned() {
-    this.logger.log(`Download Excel Stores Being Warned`);
-    const stores = await this.storeModel.aggregate([
-      { $match: { warningCount: { $gt: 0, $lt: 3 } } },
-      { $addFields: { userObjId: { $toObjectId: '$userId' } } },
+  async downloadExcelStoresBeingReported() {
+    this.logger.log(`Download Excel Stores Being Reported`);
+    const stores = await this.reportModel.aggregate([
+      { $match: { type: PolicyType.STORE, status: false } },
+      { $addFields: { userReportObjId: { $toObjectId: '$userId' } } },
+      { $lookup: { from: 'users', localField: 'userReportObjId', foreignField: '_id', as: 'userReport' } },
+      { $addFields: { userReportName: { $first: '$userReport.fullName' } } },
+      { $addFields: { storeObjId: { $toObjectId: '$subjectId' } } },
+      { $lookup: { from: 'stores', localField: 'storeObjId', foreignField: '_id', as: 'store' } },
+      { $addFields: { store: { $first: '$store' } } },
+      { $addFields: { userObjId: { $toObjectId: '$store.userId' } } },
       { $lookup: { from: 'users', localField: 'userObjId', foreignField: '_id', as: 'user' } },
       { $addFields: { userName: { $first: '$user.fullName' } } },
       { $sort: { createdAt: -1 } },
-      { $project: { userObjId: 0, user: 0 } },
+      { $project: { userReportName: 1, content: 1, store: 1, userName: 1 } },
     ]);
-    const headers = StoreDownloadExcelDTO.getSheetValue();
-    const dataRows = stores.map(StoreDownloadExcelDTO.fromEntity);
-    return createExcelFile<StoreDownloadExcelDTO>(`Stores Being Warned - ${dayjs().format('YYYY-MM-DD')}`, headers, dataRows);
+    const headers = StoreBeingReportedDownloadExcelDTO.getSheetValue();
+    const dataRows = stores.map(StoreBeingReportedDownloadExcelDTO.fromEntity);
+    return createExcelFile<StoreBeingReportedDownloadExcelDTO>(
+      `Stores Being Warned - ${dayjs().format('YYYY-MM-DD')}`,
+      headers,
+      dataRows,
+    );
   }
 
   async downloadExcelStoresBanned() {

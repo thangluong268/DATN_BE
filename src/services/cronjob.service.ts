@@ -124,6 +124,16 @@ export class CronjobsService {
   }
 
   @Cron('*/1 * * * * *')
+  async handleBanStore() {
+    await this.storeModel.updateMany({ warningCount: { $gte: 3 } }, { $set: { status: false } });
+  }
+
+  @Cron('*/1 * * * * *')
+  async handleUnBanStore() {
+    await this.storeModel.updateMany({ warningCount: { $lt: 3 } }, { $set: { status: true } });
+  }
+
+  @Cron('*/1 * * * * *')
   async processBill() {
     const now = dayjs();
     // const threeDaysAgo = now.subtract(3, 'day').toDate();

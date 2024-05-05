@@ -208,6 +208,9 @@ export class ReportService {
     if (report.type === PolicyType.USER) {
       await this.userModel.findByIdAndUpdate(report.subjectId, { $inc: { warningCount: -1 } });
     }
+    if (report.type === PolicyType.STORE) {
+      await this.storeModel.findByIdAndUpdate(report.subjectId, { $inc: { warningCount: -1 } });
+    }
     await this.reportModel.findByIdAndDelete(id);
     return BaseResponse.withMessage({}, 'Xóa báo cáo thành công!');
   }

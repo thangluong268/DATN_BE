@@ -25,9 +25,9 @@ export class StoreController {
   }
 
   @Roles(ROLE_NAME.MANAGER)
-  @Get('stores/excel/being-warned')
-  async downloadExcelStoresBeingWarned(@Res() response: Response) {
-    const book = await this.storeService.downloadExcelStoresBeingWarned();
+  @Get('stores/excel/being-reported')
+  async downloadExcelStoresBeingReported(@Res() response: Response) {
+    const book = await this.storeService.downloadExcelStoresBeingReported();
     await parseExcelResponse(response, book, `DTEX_Stores_Being_Warned_${dayjs().format('YYYY-MM-DD_HH:mm:ss')}`);
   }
 
