@@ -62,7 +62,7 @@ export class ProductService {
 
     private readonly categoryService: CategoryService,
 
-    private readonly esService: ESService,
+    // private readonly esService: ESService,
   ) {}
 
   async create(userId: string, body: ProductCreateREQ) {
@@ -73,7 +73,7 @@ export class ProductService {
     if (!category) throw new NotFoundException('Không tìm thấy danh mục này!');
     const newProduct = await this.productModel.create({ ...body, storeId: store._id });
     await this.evaluationService.create(newProduct._id);
-    await this.esService.indexProduct(toDocModel(newProduct));
+    // await this.esService.indexProduct(toDocModel(newProduct));
     return BaseResponse.withMessage<Product>(toDocModel(newProduct), 'Tạo sản phẩm thành công!');
   }
 

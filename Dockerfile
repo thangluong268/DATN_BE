@@ -18,7 +18,7 @@ COPY tsconfig*.json ./
 
 
 # Build your NestJS application
-RUN npm run build
+RUN yarn build
 
 # Stage 2: Create a production-ready image
 FROM node:lts-bookworm-slim
@@ -36,4 +36,4 @@ COPY --from=build /app/dist ./dist
 EXPOSE 5000
 
 # Start your NestJS application in production mode
-CMD ["npm", "run", "start:prod"]
+CMD ["yarn", "start:prod"]

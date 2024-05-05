@@ -31,7 +31,7 @@ import { ProductScraping } from './scraping/product.scraping';
     forwardRef(() => UserModule),
     forwardRef(() => EvaluationModule),
     FeedbackModule,
-    ElasticSearchModule,
+    // ElasticSearchModule,
   ],
   controllers: [ProductController],
   providers: [ProductService, ProductScraping],
