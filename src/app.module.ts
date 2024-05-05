@@ -59,7 +59,7 @@ import { SeederService } from './services/seeder.service';
     TaxModule,
     UserRefundTrackingModule,
     FinanceModule,
-    // ElasticSearchModule,
+    ElasticSearchModule,
   ],
   providers: [SeederService, CronjobsService],
 })
