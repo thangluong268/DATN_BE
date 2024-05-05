@@ -17,6 +17,7 @@ export const parseXLSX = async (file) => {
 
 export async function parseExcelResponse(response: Response, book: Workbook, name?: string) {
   response.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  response.setHeader('Access-Control-Expose-Headers', `Content-Disposition`);
   response.setHeader('Content-Disposition', 'attachment; filename=' + `${name}.xlsx`);
   await book.xlsx.write(response);
   response.end();

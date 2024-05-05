@@ -26,6 +26,7 @@ import { UserOTPModule } from './domains/user-otp/user-otp.module';
 import { UserTokenModule } from './domains/user-token/user-token.module';
 import { UserModule } from './domains/user/user.module';
 import { SeederService } from './services/seeder.service';
+import { FinanceModule } from 'domains/finance/finance.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { SeederService } from './services/seeder.service';
     CloudinaryModule,
     TaxModule,
     UserRefundTrackingModule,
+    FinanceModule,
   ],
   providers: [SeederService, CronjobsService],
 })

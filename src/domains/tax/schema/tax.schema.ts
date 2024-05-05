@@ -17,9 +17,6 @@ export class Tax extends Document {
 
   @Prop({ type: String })
   paymentId: string;
-
-  @Prop({ type: Boolean, default: false })
-  isSuccess: boolean;
 }
 
 export const TaxSchema = SchemaFactory.createForClass(Tax);

@@ -8,7 +8,6 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { TAX_RATE } from 'app.config';
 import * as dayjs from 'dayjs';
 import { CartService } from 'domains/cart/cart.service';
 import { ProductService } from 'domains/product/product.service';
@@ -20,7 +19,7 @@ import { UserRefundTracking } from 'domains/user-refund-tracking/schema/user-otp
 import { User } from 'domains/user/schema/user.schema';
 import { UserService } from 'domains/user/user.service';
 import { ObjectId } from 'mongodb';
-import { ClientSession, Connection, Model } from 'mongoose';
+import { Connection, Model } from 'mongoose';
 import { PaymentDTO } from 'payment/dto/payment.dto';
 import { PaypalGateway, VNPayGateway } from 'payment/payment.gateway';
 import { PaymentService } from 'payment/payment.service';
@@ -102,10 +101,10 @@ export class BillService {
         if (user.wallet < body.coins) throw new BadRequestException('Số dư xu không đủ!');
         numOfCoins = body.coins;
       }
-      await this.calculateDiscount(userId, numOfCoins, body.promotionId, body.data);
-      await this.calculateTax(body.data, paymentId, session);
+      const expense = await this.calculateDiscount(userId, numOfCoins, body.promotionId, body.data);
+      // await this.calculateTax(body.data, paymentId, session);
       const redisClient = this.redisService.getClient();
-      await redisClient.set(paymentId, JSON.stringify({ numOfCoins, promotionId: body.promotionId }));
+      await redisClient.set(paymentId, JSON.stringify({ numOfCoins, promotionId: body.promotionId, expense }));
       for (const cart of body.data) {
         totalPrice += cart['totalPricePayment'];
         await this.billModel.create([BillCreateREQ.toCreateBill(cart, userId, body, paymentId)], { session });
@@ -129,17 +128,17 @@ export class BillService {
     }
   }
 
-  async calculateTax(carts: CartInfoDTO[], paymentId: string, session: ClientSession) {
-    for (const [index, cart] of carts.entries()) {
-      const taxFee = Math.ceil(carts[index]['totalPricePayment'] * TAX_RATE);
-      const totalPrice = carts[index]['totalPricePayment'];
-      carts[index]['totalPricePayment'] -= taxFee;
-      await this.taxModel.create([{ storeId: cart.storeId, totalPrice, taxFee, paymentId }], { session });
-    }
-  }
+  // async calculateTax(carts: CartInfoDTO[], paymentId: string, session: ClientSession) {
+  //   for (const [index, cart] of carts.entries()) {
+  //     const taxFee = Math.ceil(carts[index]['totalPricePayment'] * TAX_RATE);
+  //     const totalPrice = carts[index]['totalPricePayment'];
+  //     carts[index]['totalPricePayment'] -= taxFee;
+  //     await this.taxModel.create([{ storeId: cart.storeId, totalPrice, taxFee, paymentId }], { session });
+  //   }
+  // }
 
   async calculateDiscount(userId: string, numOfCoins: number, promotionId: string, carts: CartInfoDTO[]) {
-    const coinsValue = numOfCoins * 100; // 1 xu = 100đ
+    const coinsValue = numOfCoins; // 1 xu = 1đ
     const totalPrice = carts.reduce((acc, cart) => acc + (cart.totalPrice + cart.deliveryFee), 0);
     const numOfStores = carts.length;
     let promotionValue = 0;
@@ -175,6 +174,7 @@ export class BillService {
       const discountValuePerStore = Math.floor(discountRemain / numOfStore);
       this.calculatorDiscountRemain(carts, discountValuePerStore);
     }
+    return coinsValue + promotionValue;
   }
 
   private calculatorDiscountRemain(carts: CartInfoDTO[], discountValuePerStore: number) {
@@ -417,8 +417,6 @@ export class BillService {
           updatedBill.isPaid = true;
         }
         updatedBill.deliveredDate = new Date();
-        const redisClient = this.redisService.getClient();
-        await redisClient.del(bill.paymentId);
         break;
       default:
         break;

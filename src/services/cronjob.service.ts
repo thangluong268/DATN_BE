@@ -1,8 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cron } from '@nestjs/schedule';
+import { TAX_RATE } from 'app.config';
 import * as dayjs from 'dayjs';
 import { Bill } from 'domains/bill/schema/bill.schema';
+import { Finance } from 'domains/finance/schema/finance.schema';
 import { Product } from 'domains/product/schema/product.schema';
 import { Promotion } from 'domains/promotion/schema/promotion.schema';
 import { Report } from 'domains/report/schema/report.schema';
@@ -14,6 +16,7 @@ import { ObjectId } from 'mongodb';
 import { Model } from 'mongoose';
 import { BILL_STATUS } from 'shared/enums/bill.enum';
 import { PolicyType } from 'shared/enums/policy.enum';
+import { RedisService } from './redis/redis.service';
 
 @Injectable()
 export class CronjobsService {
@@ -42,6 +45,11 @@ export class CronjobsService {
 
     @InjectModel(UserRefundTracking.name)
     private readonly userRefundTrackingModel: Model<UserRefundTracking>,
+
+    @InjectModel(Finance.name)
+    private readonly financeModel: Model<Finance>,
+
+    private readonly redisService: RedisService,
   ) {}
 
   @Cron('0 * * * * *')
@@ -118,7 +126,8 @@ export class CronjobsService {
   @Cron('*/1 * * * * *')
   async processBill() {
     const now = dayjs();
-    const threeDaysAgo = now.subtract(3, 'day').toDate();
+    // const threeDaysAgo = now.subtract(3, 'day').toDate();
+    const threeDaysAgo = now.subtract(1, 'minute').toDate();
     const bills = await this.billModel
       .find({ status: BILL_STATUS.DELIVERED, isSuccess: false, deliveredDate: { $lte: threeDaysAgo } })
       .lean();
@@ -126,7 +135,16 @@ export class CronjobsService {
     await Promise.all(
       bills.map(async (bill) => {
         await this.billModel.findByIdAndUpdate(bill._id, { isSuccess: true });
-        await this.taxModel.findOneAndUpdate({ storeId: bill.storeId, paymentId: bill.paymentId }, { isSuccess: true });
+        const totalPrice = bill.totalPriceInit;
+        const taxFee = Math.ceil(totalPrice * TAX_RATE);
+        await this.taxModel.create({ storeId: bill.storeId, totalPrice, taxFee, paymentId: bill.paymentId });
+        const redisClient = this.redisService.getClient();
+        const data = await redisClient.get(bill.paymentId);
+        if (data) {
+          const { expense } = JSON.parse(data);
+          await this.financeModel.create({ expense, revenue: taxFee });
+          await redisClient.del(bill.paymentId);
+        }
         const bonusCoins = Math.floor((bill.totalPricePayment * 0.2) / 1000);
         await this.userModel.findByIdAndUpdate(bill.userId, { $inc: { wallet: bonusCoins } });
         await this.userRefundTrackingModel.updateOne(
