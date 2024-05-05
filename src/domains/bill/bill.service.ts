@@ -139,7 +139,7 @@ export class BillService {
 
   async calculateDiscount(userId: string, numOfCoins: number, promotionId: string, carts: CartInfoDTO[]) {
     const coinsValue = numOfCoins; // 1 xu = 1đ
-    const totalPrice = carts.reduce((acc, cart) => acc + (cart.totalPrice + cart.deliveryFee), 0);
+    const totalPrice = carts.reduce((acc, cart) => acc + cart.totalPrice, 0);
     const numOfStores = carts.length;
     let promotionValue = 0;
     if (promotionId) {
@@ -162,12 +162,12 @@ export class BillService {
     const discountValuePerStore = Math.floor((coinsValue + promotionValue) / numOfStores);
     let discountRemain = 0;
     for (const [index, cart] of carts.entries()) {
-      if (discountValuePerStore > cart.totalPrice + cart.deliveryFee) {
-        discountRemain += discountValuePerStore - (cart.totalPrice + cart.deliveryFee);
+      if (discountValuePerStore > cart.totalPrice) {
+        discountRemain += discountValuePerStore - cart.totalPrice;
         carts[index]['totalPricePayment'] = 0;
         continue;
       }
-      carts[index]['totalPricePayment'] = cart.totalPrice + cart.deliveryFee - discountValuePerStore;
+      carts[index]['totalPricePayment'] = cart.totalPrice - discountValuePerStore;
     }
     if (discountRemain > 0) {
       const numOfStore = carts.filter((cart) => cart['totalPricePayment'] > 0).length;

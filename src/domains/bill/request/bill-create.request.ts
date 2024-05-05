@@ -44,7 +44,7 @@ export class BillCreateREQ {
       products: cart.products,
       notes: cart.notes,
       deliveryFee: cart.deliveryFee,
-      totalPriceInit: cart.totalPrice + cart.deliveryFee,
+      totalPriceInit: cart.totalPrice,
       totalPricePayment: cart['totalPricePayment'],
       deliveryMethod: body.deliveryMethod,
       paymentMethod: body.paymentMethod,
