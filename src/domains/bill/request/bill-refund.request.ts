@@ -1,9 +1,6 @@
 import { IsString } from 'class-validator';
 
-export class BillRefundREQ {
+export class BillReasonREQ {
   @IsString()
-  billId: string;
-
-  @IsString()
-  reasonRefund: string;
+  reason: string;
 }

@@ -59,7 +59,7 @@ export class Bill extends Document {
   isSuccess: boolean;
 
   @Prop({ type: String })
-  reasonRefund: string;
+  reason: string;
 
   @Prop({ type: Boolean, default: false })
   isRefundSuccess: boolean;

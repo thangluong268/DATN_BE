@@ -13,7 +13,7 @@ import { BillGetCalculateTotalByYearREQ } from './request/bill-get-calculate-tot
 import { BillGetCountCharityByYearREQ } from './request/bill-get-count-charity-by-year.request';
 import { BillGetRevenueStoreREQ } from './request/bill-get-revenue-store.request';
 import { BillGetTotalByStatusSellerREQ } from './request/bill-get-total-by-status-seller.request';
-import { BillRefundREQ } from './request/bill-refund.request';
+import { BillReasonREQ } from './request/bill-refund.request';
 
 @Controller('bill')
 export class BillController {
@@ -91,23 +91,23 @@ export class BillController {
 
   @Roles(ROLE_NAME.USER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
-  @Patch('refund')
-  refundBill(@Req() req, @Body() body: BillRefundREQ) {
-    return this.billService.refundBill(req.user._id.toString(), body);
+  @Patch(':billId/refund')
+  refundBill(@Req() req, @Param('billId') billId: string, @Body() body: BillReasonREQ) {
+    return this.billService.refundBill(req.user._id.toString(), billId, body);
   }
 
   @Roles(ROLE_NAME.USER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Patch(':billId/user/cancel')
-  cancelBillByUser(@Req() req, @Param('billId') billId: string) {
-    return this.billService.cancelBillByUser(req.user._id.toString(), billId);
+  cancelBillByUser(@Req() req, @Param('billId') billId: string, @Body() body: BillReasonREQ) {
+    return this.billService.cancelBillByUser(req.user._id.toString(), billId, body);
   }
 
   @Roles(ROLE_NAME.SELLER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Patch(':billId/seller/cancel')
-  cancelBillBySeller(@Req() req, @Param('billId') billId: string) {
-    return this.billService.cancelBillBySeller(req.user._id.toString(), billId);
+  cancelBillBySeller(@Req() req, @Param('billId') billId: string, @Body() body: BillReasonREQ) {
+    return this.billService.cancelBillBySeller(req.user._id.toString(), billId, body);
   }
 
   @Roles(ROLE_NAME.SELLER)

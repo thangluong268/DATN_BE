@@ -39,7 +39,7 @@ import { BillGetCalculateTotalByYearREQ } from './request/bill-get-calculate-tot
 import { BillGetCountCharityByYearREQ } from './request/bill-get-count-charity-by-year.request';
 import { BillGetRevenueStoreREQ } from './request/bill-get-revenue-store.request';
 import { BillGetTotalByStatusSellerREQ } from './request/bill-get-total-by-status-seller.request';
-import { BillRefundREQ } from './request/bill-refund.request';
+import { BillReasonREQ } from './request/bill-refund.request';
 import { CountTotalByStatusRESP } from './response/bill-count-total-by-status.response';
 import { Bill } from './schema/bill.schema';
 
@@ -444,29 +444,29 @@ export class BillService {
     return result[0]?.totalRevenue || 0;
   }
 
-  async cancelBillByUser(userId: string, billId: string) {
+  async cancelBillByUser(userId: string, billId: string, body: BillReasonREQ) {
     this.logger.log(`Cancel Bill: ${billId} By User: ${userId}`);
     const bill = await this.billModel.findOne({ _id: new ObjectId(billId), userId }).lean();
     if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
     if (bill.status !== BILL_STATUS.NEW) throw new BadRequestException('Không thể hủy đơn hàng này!');
     await this.userBillTrackingService.checkUserNotAllowDoBehavior(userId, BILL_STATUS.CANCELLED);
-    await this.handleCancelBill(bill);
+    await this.handleCancelBill(bill, body.reason);
     await this.userBillTrackingService.handleUserBillTracking(userId, BILL_STATUS.CANCELLED);
     return BaseResponse.withMessage({}, 'Hủy đơn hàng thành công!');
   }
 
-  async cancelBillBySeller(userId: string, billId: string) {
+  async cancelBillBySeller(userId: string, billId: string, body: BillReasonREQ) {
     this.logger.log(`Cancel Bill: ${billId} By Seller: ${userId}`);
     const store = await this.storeModel.findOne({ userId: userId.toString() }).lean();
     if (!store) throw new ForbiddenException('Bạn không có quyền hủy đơn hàng này!');
     const bill = await this.billModel.findOne({ _id: new ObjectId(billId), storeId: store._id.toString() }).lean();
     if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
     if (bill.status !== BILL_STATUS.NEW) throw new BadRequestException('Không thể hủy đơn hàng này!');
-    await this.handleCancelBill(bill);
+    await this.handleCancelBill(bill, body.reason);
     return BaseResponse.withMessage({}, 'Hủy đơn hàng thành công!');
   }
 
-  private async handleCancelBill(bill: Bill) {
+  private async handleCancelBill(bill: Bill, reason: string) {
     const redisClient = this.redisService.getClient();
     const session = await this.connection.startSession();
     session.startTransaction();
@@ -495,8 +495,7 @@ export class BillService {
           await redisClient.del(bill.paymentId);
         }
       }
-      await this.taxModel.findOneAndDelete({ storeId: bill.storeId, paymentId: bill.paymentId });
-      await this.billModel.findByIdAndUpdate(bill._id, { status: BILL_STATUS.CANCELLED }, { session });
+      await this.billModel.findByIdAndUpdate(bill._id, { status: BILL_STATUS.CANCELLED, reason }, { session });
       await session.commitTransaction();
     } catch (err) {
       await session.abortTransaction();
@@ -506,8 +505,7 @@ export class BillService {
     }
   }
 
-  async refundBill(userId: string, body: BillRefundREQ) {
-    const { billId, reasonRefund } = body;
+  async refundBill(userId: string, billId: string, body: BillReasonREQ) {
     this.logger.log(`Refund Bill: ${billId}`);
     const bill = await this.billModel.findOne({ _id: new ObjectId(billId), userId });
     if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
@@ -516,7 +514,7 @@ export class BillService {
     await this.userBillTrackingService.checkUserNotAllowDoBehavior(userId, BILL_STATUS.REFUND);
     bill.status = BILL_STATUS.REFUND;
     bill.isSuccess = false;
-    bill.reasonRefund = reasonRefund;
+    bill.reason = body.reason;
     await bill.save();
     await this.userBillTrackingService.handleUserBillTracking(userId, BILL_STATUS.REFUND);
     return BaseResponse.withMessage({}, 'Hoàn đơn hàng thành công!');
