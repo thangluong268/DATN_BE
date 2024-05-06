@@ -1,12 +1,13 @@
 import { BILL_STATUS } from 'shared/enums/bill.enum';
 
 export const BILL_STATUS_TRANSITION = {
-  NEW: 'Đơn mới',
-  CONFIRMED: 'Đang chuẩn bị',
-  DELIVERING: 'Đang giao',
-  DELIVERED: 'Đã giao',
-  CANCELLED: 'Đã hủy',
-  RETURNED: 'Đã hoàn',
+  [BILL_STATUS.NEW]: 'Đơn mới',
+  [BILL_STATUS.CONFIRMED]: 'Đang chuẩn bị',
+  [BILL_STATUS.DELIVERING]: 'Đang giao',
+  [BILL_STATUS.DELIVERED]: 'Đã giao',
+  [BILL_STATUS.CANCELLED]: 'Đã hủy',
+  [BILL_STATUS.REFUND]: 'Đã hoàn',
+  [BILL_STATUS.BACK]: 'Đã trả',
 };
 
 export const BILL_STATUS_TRANSLATE_VALUE = {
