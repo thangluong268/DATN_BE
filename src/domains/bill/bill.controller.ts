@@ -13,7 +13,7 @@ import { BillGetCalculateTotalByYearREQ } from './request/bill-get-calculate-tot
 import { BillGetCountCharityByYearREQ } from './request/bill-get-count-charity-by-year.request';
 import { BillGetRevenueStoreREQ } from './request/bill-get-revenue-store.request';
 import { BillGetTotalByStatusSellerREQ } from './request/bill-get-total-by-status-seller.request';
-import { BillReasonREQ } from './request/bill-refund.request';
+import { BillReasonREQ } from './request/bill-reason.request';
 
 @Controller('bill')
 export class BillController {
@@ -115,6 +115,13 @@ export class BillController {
   @Patch(':billId/confirm-refund')
   confirmRefundBill(@Req() req, @Param('billId') billId: string) {
     return this.billService.confirmRefundBill(req.user._id.toString(), billId);
+  }
+
+  @Roles(ROLE_NAME.SHIPPER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Patch(':billId/back')
+  backBill(@Req() req, @Param('billId') billId: string) {
+    return this.billService.backBill(req.user._id.toString(), billId);
   }
 
   @Roles(ROLE_NAME.SELLER)

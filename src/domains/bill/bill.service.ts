@@ -39,7 +39,7 @@ import { BillGetCalculateTotalByYearREQ } from './request/bill-get-calculate-tot
 import { BillGetCountCharityByYearREQ } from './request/bill-get-count-charity-by-year.request';
 import { BillGetRevenueStoreREQ } from './request/bill-get-revenue-store.request';
 import { BillGetTotalByStatusSellerREQ } from './request/bill-get-total-by-status-seller.request';
-import { BillReasonREQ } from './request/bill-refund.request';
+import { BillReasonREQ } from './request/bill-reason.request';
 import { CountTotalByStatusRESP } from './response/bill-count-total-by-status.response';
 import { Bill } from './schema/bill.schema';
 
@@ -536,5 +536,12 @@ export class BillService {
     bill.isRefundSuccess = true;
     await bill.save();
     return BaseResponse.withMessage({}, 'Xác nhận hoàn trả đơn hàng thành công!');
+  }
+
+  async backBill(userId: string, billId: string) {
+    this.logger.log(`Back Bill: ${billId}`);
+    /**
+     * TO DO...
+     */
   }
 }
