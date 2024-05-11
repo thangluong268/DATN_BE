@@ -12,9 +12,14 @@ import * as bcrypt from 'bcrypt';
 import * as dayjs from 'dayjs';
 import { Bill } from 'domains/bill/schema/bill.schema';
 import { Store } from 'domains/store/schema/store.schema';
+import { NotificationSubjectInfoDTO } from 'gateways/notifications/dto/notification-subject-info.dto';
+import { NotificationGateway } from 'gateways/notifications/notification.gateway';
+import { NotificationService } from 'gateways/notifications/notification.service';
+import { NotificationUpdateREQ } from 'gateways/notifications/request/notification-update.request';
 import { Model } from 'mongoose';
 import { SOCIAL_APP } from 'shared/constants/user.constant';
 import { BILL_STATUS } from 'shared/enums/bill.enum';
+import { NotificationType } from 'shared/enums/notification.enum';
 import { PolicyType } from 'shared/enums/policy.enum';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BaseResponse } from 'shared/generics/base.response';
@@ -48,6 +53,9 @@ export class UserService {
 
     @InjectModel(Bill.name)
     private readonly billModel: Model<Bill>,
+
+    private readonly notificationService: NotificationService,
+    private readonly notificationGateway: NotificationGateway,
   ) {}
 
   async createUserSystem(body: AuthSignUpREQ) {
@@ -117,6 +125,14 @@ export class UserService {
       throw new ForbiddenException('Bạn không có quyền cập nhật thông tin người dùng khác!');
     }
     const updatedUser = await this.userModel.findByIdAndUpdate(id, { ...body }, { lean: true, new: true });
+
+    // Send notification
+    const subjectInfo = NotificationSubjectInfoDTO.ofUser(updatedUser);
+    const receiverId = updatedUser._id.toString();
+    const redirectId = updatedUser._id.toString();
+    const notification = await this.notificationService.create(receiverId, subjectInfo, NotificationType.UPDATE_INFO, redirectId);
+    this.notificationGateway.sendNotification(receiverId, notification);
+
     return BaseResponse.withMessage<User>(User.toDocModel(updatedUser), 'Cập nhật thông tin thành công!');
   }
 
@@ -246,19 +262,67 @@ export class UserService {
     const index = user.followStores.findIndex((id) => id.toString() === storeId.toString());
     index == -1 ? user.followStores.push(storeId) : user.followStores.splice(index, 1);
     await this.userModel.findByIdAndUpdate(userId, { followStores: user.followStores });
+
+    // Send notification
+    const subjectInfo = NotificationSubjectInfoDTO.ofStore(store);
+    const receiverId = store.userId;
+    const redirectId = userId;
+    const notification = await this.notificationService.create(receiverId, subjectInfo, NotificationType.FOLLOW, redirectId);
+    this.notificationGateway.sendNotification(receiverId, notification);
+
     return BaseResponse.withMessage({}, index == -1 ? 'Follow cửa hàng thành công!' : 'Hủy follow cửa hàng thành công!');
   }
 
-  async addFriend(userIdSend: string, userIdReceive: string) {
-    this.logger.log(`Add Friend: ${userIdSend} - ${userIdReceive}`);
-    const userReceive = await this.findById(userIdReceive);
-    if (!userReceive) throw new NotFoundException('Không tìm thấy người dùng này!');
-    if (userIdReceive === userIdSend) throw new BadRequestException('Bạn không thể kết bạn với chính mình!');
-    const userSend = await this.findById(userIdSend);
-    const index = userSend.friends.findIndex((id) => id.toString() === userIdReceive.toString());
-    index == -1 ? userSend.friends.push(userIdReceive) : userSend.friends.splice(index, 1);
-    await this.userModel.findByIdAndUpdate(userIdSend, { friends: userSend.friends });
-    return BaseResponse.withMessage({}, index == -1 ? 'Kết bạn thành công!' : 'Hủy kết bạn thành công!');
+  async acceptOrUnFriend(receiverId: string, senderId: string) {
+    this.logger.log(`Accept Or UnFriend`);
+    if (receiverId === senderId) throw new BadRequestException('Bạn không thể kết bạn với chính mình!');
+    const receiver = await this.findById(receiverId);
+    const sender = await this.findById(senderId);
+    const index = receiver.friends.findIndex((id) => id.toString() === sender.toString());
+    index === -1 ? receiver.friends.push(senderId) : receiver.friends.splice(index, 1);
+    await this.userModel.findByIdAndUpdate(receiverId, { friends: receiver.friends });
+
+    if (index === 1) return BaseResponse.withMessage({}, 'Hủy kết bạn thành công!');
+
+    // Receiver side
+    const notificationReceiver = await this.notificationService.getOne(receiverId, senderId, NotificationType.SENT_ADD_FRIEND);
+    const body = {
+      notificationId: notificationReceiver._id,
+      content: this.notificationService.getContent(NotificationType.ACCEPTED_ADD_FRIEND_OF_RECEIVER),
+      type: NotificationType.ACCEPTED_ADD_FRIEND_OF_RECEIVER,
+    } as NotificationUpdateREQ;
+    const updatedNotification = await this.notificationService.update(body);
+    this.notificationGateway.sendNotification(receiverId, updatedNotification);
+
+    // Sender side
+    const subjectInfo = NotificationSubjectInfoDTO.ofUser(receiver);
+    const redirectId = receiverId;
+    const newNotificationSender = await this.notificationService.create(
+      senderId, // receiverId
+      subjectInfo,
+      NotificationType.ACCEPTED_ADD_FRIEND_OF_SENDER,
+      redirectId,
+    );
+    this.notificationGateway.sendNotification(senderId, newNotificationSender);
+
+    return BaseResponse.withMessage({}, 'Kết bạn thành công!');
+  }
+
+  async rejectAddFriend(receiverId: string, senderId: string) {
+    this.logger.log(`Reject Add Friend`);
+    if (receiverId === senderId) throw new BadRequestException('Không thể thực hiện!');
+
+    // Receiver side
+    const notificationReceiver = await this.notificationService.getOne(receiverId, senderId, NotificationType.SENT_ADD_FRIEND);
+    const body = {
+      notificationId: notificationReceiver._id,
+      content: this.notificationService.getContent(NotificationType.REJECT_ADD_FRIEND),
+      type: NotificationType.REJECT_ADD_FRIEND,
+    } as NotificationUpdateREQ;
+    const updatedNotification = await this.notificationService.update(body);
+    this.notificationGateway.sendNotification(receiverId, updatedNotification);
+
+    return BaseResponse.withMessage({}, 'Từ chối lời mời kết bạn thành công!');
   }
 
   async getUsersHasStore(query: UsersHaveStoreREQ) {

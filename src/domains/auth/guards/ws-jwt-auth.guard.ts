@@ -1,8 +1,10 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { InjectModel } from '@nestjs/mongoose';
+import { User } from 'domains/user/schema/user.schema';
+import { Model } from 'mongoose';
 import { Socket } from 'socket.io';
 import { JWT_ACCESS_TOKEN_SECRET } from '../../../app.config';
-import { UserService } from '../../../domains/user/user.service';
 import { JwtPayload } from '../strategies/auth-jwt-at.strategy';
 
 export interface AuthSocket extends Socket {
@@ -13,7 +15,9 @@ export interface AuthSocket extends Socket {
 export class WsGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly userService: UserService,
+
+    @InjectModel(User.name)
+    private readonly userModel: Model<User>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean | any> {
@@ -31,7 +35,7 @@ export class WsGuard implements CanActivate {
       secret: JWT_ACCESS_TOKEN_SECRET,
     })) as JwtPayload;
 
-    const user = await this.userService.findById(jwtPayLoad.userId);
+    const user = await this.userModel.findById(jwtPayLoad.userId).lean();
     if (!user) {
       return false;
     }

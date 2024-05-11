@@ -14,12 +14,48 @@ jobs:
       matrix:
         node-version: [18.x]
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code from repo to ubuntu
+      uses: actions/checkout@v3
+
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
+
+    - name: Login Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+    
+    - name: Setup Docker Buildx
+      uses: docker/setup-buildx-action@v1
+      id: buildx
+    
+    - name: Cache Docker Image Layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+    
+    - name: Build and Push Docker Image
+        uses: docker/build-push-action@v2
+        id: docker_build
+        with:
+          context: ./
+          file: ./Dockerfile
+          builder: ${{ steps.buildx.outputs.name }}
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/dtex-be:latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+
+    - name: Verify
+        run: echo ${{ steps.docker_build.outputs.digest }}
+      
     - run: |
          touch .env.prod
          echo "${{ secrets.ENV_FILE_PROD }}" > .env.prod
@@ -30,9 +66,8 @@ jobs:
     steps:
     - run: |
         cd ~/workspace/actions-runner-be/_work/DATN_BE/DATN_BE
-        docker stop dtex-be || true
-        docker rm dtex-be -f || true
-        docker-compose build
+        docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/dtex-be:latest
+        docker-compose down
         docker-compose up -d
-        docker image prune -f
+        docker system prune -fa
         

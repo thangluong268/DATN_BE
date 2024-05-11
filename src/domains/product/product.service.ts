@@ -1,17 +1,13 @@
 import {
   BadRequestException,
   ForbiddenException,
-  Inject,
   Injectable,
   Logger,
-  NotFoundException,
-  forwardRef,
+  NotFoundException
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { BillService } from 'domains/bill/bill.service';
 import { Bill } from 'domains/bill/schema/bill.schema';
-import { ESService } from 'domains/elastic-search/elastic-search.service';
-import { EvaluationService } from 'domains/evaluation/evaluation.service';
 import { Evaluation } from 'domains/evaluation/schema/evaluation.schema';
 import { Feedback } from 'domains/feedback/schema/feedback.schema';
 import { Store } from 'domains/store/schema/store.schema';
@@ -46,12 +42,9 @@ export class ProductService {
 
     @InjectModel(Evaluation.name)
     private readonly evaluationModel: Model<Evaluation>,
-    @Inject(forwardRef(() => EvaluationService))
-    private readonly evaluationService: EvaluationService,
 
     @InjectModel(Bill.name)
     private readonly billModel: Model<Bill>,
-    @Inject(forwardRef(() => BillService))
     private readonly billService: BillService,
 
     @InjectModel(Feedback.name)
@@ -67,12 +60,12 @@ export class ProductService {
 
   async create(userId: string, body: ProductCreateREQ) {
     this.logger.log(`Create Product: ${userId}`);
-    const store = await this.storeModel.findOne({ userId: userId.toString }).lean();
+    const store = await this.storeModel.findOne({ userId: userId.toString() }).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const category = await this.categoryService.findById(body.categoryId);
     if (!category) throw new NotFoundException('Không tìm thấy danh mục này!');
     const newProduct = await this.productModel.create({ ...body, storeId: store._id });
-    await this.evaluationService.create(newProduct._id);
+    await this.evaluationModel.create({ productId: newProduct._id.toString() });
     // await this.esService.indexProduct(toDocModel(newProduct));
     return BaseResponse.withMessage<Product>(toDocModel(newProduct), 'Tạo sản phẩm thành công!');
   }
@@ -102,7 +95,7 @@ export class ProductService {
 
   async getProductsBySeller(userId: string, query: ProductsGetREQ) {
     this.logger.log(`Get Products By Seller: ${userId}`);
-    const store = await this.storeModel.findOne({ userId: userId.toString }).lean();
+    const store = await this.storeModel.findOne({ userId: userId.toString() }).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const condition = ProductsGetREQ.toQueryCondition(store._id, query, {});
     const { skip, limit } = QueryPagingHelper.queryPaging(query);

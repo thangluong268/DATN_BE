@@ -10,21 +10,21 @@ import {
   WebSocketServer,
   WsResponse,
 } from '@nestjs/websockets';
+
 import { AuthSocket, WsGuard } from 'domains/auth/guards/ws-jwt-auth.guard';
-import { ConversationService } from 'domains/conversations/conversation.service';
-import { ConversationGetREQ } from 'domains/conversations/request/conversation-get.request';
-import { ConversationJoinRoomREQ } from 'domains/conversations/request/conversation-join-room.request';
-import { ConversationLeaveRoomREQ } from 'domains/conversations/request/conversation-leave-room.request';
 import { MessageService } from 'domains/message/message.service';
 import { MessageCreateREQ } from 'domains/message/request/message-create.request';
 import { MessageDeleteREQ } from 'domains/message/request/message-delete.request';
 import { MessageIsTypingREQ } from 'domains/message/request/message-is-typing.request';
 import { UserService } from 'domains/user/user.service';
-
 import { AllExceptionsSocketFilter } from 'filter/ws-exception.filter';
 import { WS_EVENT } from 'shared/constants/ws-event.constant';
 import { PaginationREQ } from 'shared/generics/pagination.request';
 import { Namespace, Socket } from 'socket.io';
+import { ConversationService } from './conversation.service';
+import { ConversationGetREQ } from './request/conversation-get.request';
+import { ConversationJoinRoomREQ } from './request/conversation-join-room.request';
+import { ConversationLeaveRoomREQ } from './request/conversation-leave-room.request';
 
 @WebSocketGateway({
   namespace: 'conversation',

@@ -1,4 +1,4 @@
-import { ConflictException, Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as dayjs from 'dayjs';
 import { BillService } from 'domains/bill/bill.service';
@@ -16,7 +16,6 @@ import { PaginationResponse } from 'shared/generics/pagination.response';
 import { createExcelFile } from 'shared/helpers/excel.helper';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { User } from '../user/schema/user.schema';
-import { UserService } from '../user/user.service';
 import { STORE_DATA } from './data/sample.data';
 import { StoreBeingReportedDownloadExcelDTO } from './dto/store-being-reported-download-excel.dto';
 import { StoreDownloadExcelDTO } from './dto/store-download-excel.dto';
@@ -35,8 +34,6 @@ export class StoreService {
 
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
-    @Inject(forwardRef(() => UserService))
-    private readonly userService: UserService,
 
     @InjectModel(Product.name)
     private readonly productModel: Model<Product>,
@@ -49,13 +46,12 @@ export class StoreService {
 
     @InjectModel(Bill.name)
     private readonly billModel: Model<Bill>,
-    @Inject(forwardRef(() => BillService))
     private readonly billService: BillService,
   ) {}
 
   async create(userId: string, body: StoreCreateREQ) {
     this.logger.log(`Create Store: ${userId}`);
-    const user = await this.userService.findById(userId);
+    const user = await this.userModel.findById(userId).lean();
     if (!user) throw new NotFoundException('Không tìm thấy người dùng này!');
     const store = await this.storeModel.findOne({ userId }, {}, { lean: true });
     if (store) throw new ConflictException('Người dùng đã có cửa hàng!');
@@ -97,7 +93,7 @@ export class StoreService {
     const totalFollow = await this.userModel.countDocuments({ followStores: storeId });
     let isFollow = false;
     if (userReq) {
-      const user = await this.userService.findById(userReq.userId);
+      const user = await this.userModel.findById(userReq.userId).lean();
       isFollow = user.followStores.includes(storeId);
     }
     return BaseResponse.withMessage(

@@ -1,22 +1,13 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Inject,
-  Injectable,
-  Logger,
-  NotFoundException,
-  forwardRef,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { CartService } from 'domains/cart/cart.service';
-import { ProductService } from 'domains/product/product.service';
 import { Product } from 'domains/product/schema/product.schema';
 import { Promotion } from 'domains/promotion/schema/promotion.schema';
 import { Store } from 'domains/store/schema/store.schema';
 import { Tax } from 'domains/tax/schema/tax.schema';
 import { UserBillTrackingService } from 'domains/user-bill-tracking/user-bill-tracking.service';
 import { User } from 'domains/user/schema/user.schema';
-import { UserService } from 'domains/user/user.service';
+import { NotificationService } from 'gateways/notifications/notification.service';
 import { ObjectId } from 'mongodb';
 import { Connection, Model } from 'mongoose';
 import { PaymentDTO } from 'payment/dto/payment.dto';
@@ -55,13 +46,9 @@ export class BillService {
 
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
-    @Inject(forwardRef(() => UserService))
-    private readonly userService: UserService,
 
     @InjectModel(Product.name)
     private readonly productModel: Model<Product>,
-    @Inject(forwardRef(() => ProductService))
-    private readonly productService: ProductService,
 
     private readonly cartService: CartService,
 
@@ -75,6 +62,7 @@ export class BillService {
     private readonly storeModel: Model<Store>,
 
     private readonly userBillTrackingService: UserBillTrackingService,
+    private readonly notificationService: NotificationService,
 
     private readonly paymentService: PaymentService,
     private readonly paypalPaymentService: PaypalPaymentService,
@@ -94,7 +82,7 @@ export class BillService {
     try {
       // Coins
       if (!isBlank(body.coins)) {
-        const user = await this.userService.findById(userId);
+        const user = await this.userModel.findById(userId).lean();
         if (user.wallet < body.coins) throw new BadRequestException('Số dư xu không đủ!');
         numOfCoins = body.coins;
       }
@@ -197,7 +185,7 @@ export class BillService {
       userId = bill.userId;
       await this.cartService.removeMultiProductInCart(bill.userId, bill.storeId, bill.products);
       bill.products.forEach(async (product) => {
-        await this.productService.decreaseQuantity(product.id, product.quantity);
+        await this.productModel.findByIdAndUpdate(product.id, { $inc: { quantity: -product.quantity } });
       });
       await this.billModel.findByIdAndUpdate(bill._id, {
         isPaid: bill.paymentMethod === PAYMENT_METHOD.CASH ? false : true,
@@ -366,9 +354,9 @@ export class BillService {
 
   async countTotalData() {
     this.logger.log(`Count Total Data`);
-    const totalProduct = await this.productService.countTotal();
+    const totalProduct = await this.productModel.countDocuments();
     const totalStore = await this.storeModel.countDocuments();
-    const totalUser = await this.userService.countTotal();
+    const totalUser = await this.userModel.countDocuments();
     const totalRevenueAllTime = await this.billModel.aggregate(BillGetCalculateTotalByYearREQ.toQueryConditionForAllTime());
     const data = {
       totalProduct,
@@ -428,11 +416,6 @@ export class BillService {
 
   async checkProductPurchased(productId: string) {
     const bill = await this.billModel.findOne({ products: { $elemMatch: { id: productId.toString() } } });
-    return bill ? true : false;
-  }
-
-  async checkProductPurchasedByUser(userId: string, productId: string) {
-    const bill = await this.billModel.findOne({ userId, products: { $elemMatch: { id: productId.toString() } } });
     return bill ? true : false;
   }
 

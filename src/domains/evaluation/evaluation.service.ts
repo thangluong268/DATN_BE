@@ -1,7 +1,8 @@
-import { Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { BillService } from 'domains/bill/bill.service';
+import { Bill } from 'domains/bill/schema/bill.schema';
 import { Store } from 'domains/store/schema/store.schema';
+import { NotificationService } from 'gateways/notifications/notification.service';
 import { Model } from 'mongoose';
 import { BaseResponse } from 'shared/generics/base.response';
 import { Product } from '../product/schema/product.schema';
@@ -22,8 +23,10 @@ export class EvaluationService {
     @InjectModel(Store.name)
     private readonly storeModel: Model<Store>,
 
-    @Inject(forwardRef(() => BillService))
-    private readonly billService: BillService,
+    @InjectModel(Bill.name)
+    private readonly billModel: Model<Bill>,
+
+    private readonly notificationService: NotificationService,
   ) {}
 
   async create(productId: string) {
@@ -86,7 +89,8 @@ export class EvaluationService {
     if (user) {
       const evaluationOfUser = evaluation.emojis.find((emoji) => emoji.userId.toString() === user.userId);
       evaluationOfUser ? (isReaction = true) : (isReaction = false);
-      isPurchased = await this.billService.checkProductPurchasedByUser(user.userId, productId);
+      const bill = await this.billModel.findOne({ userId: user.userId, products: { $elemMatch: { id: productId.toString() } } });
+      isPurchased = bill ? true : false;
     }
     return BaseResponse.withMessage(
       EvaluationGetByUserRESP.of(total, emoji, isReaction, isPurchased),

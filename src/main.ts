@@ -5,11 +5,11 @@ import * as chalk from 'chalk';
 import * as compression from 'compression';
 import * as cookieParser from 'cookie-parser';
 import { cleanEnv, port, str } from 'envalid';
+import { SocketIoAdapter } from 'gateways/socket-io.adapter';
 import helmet from 'helmet';
 import { LoggingInterceptor } from 'interceptors/logging.interceptor';
 import { APP_SECRET, CREDENTIALS, HOST, NODE_ENV, ORIGIN, PORT } from './app.config';
 import { AppModule } from './app.module';
-import { SocketIoAdapter } from './domains/conversations/conversation.adapter';
 import { HttpExceptionMiddleware } from './middlewares/http-exception.middlewave';
 import { ValidationCustomPipe } from './pipes/validation-custom.pipe';
 
