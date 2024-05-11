@@ -444,7 +444,8 @@ export class BillService {
     if (!store) throw new ForbiddenException('Bạn không có quyền hủy đơn hàng này!');
     const bill = await this.billModel.findOne({ _id: new ObjectId(billId), storeId: store._id.toString() }).lean();
     if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
-    if (bill.status !== BILL_STATUS.NEW) throw new BadRequestException('Không thể hủy đơn hàng này!');
+    if (bill.status !== BILL_STATUS.NEW && bill.status !== BILL_STATUS.CONFIRMED)
+      throw new BadRequestException('Không thể hủy đơn hàng này!');
     await this.handleCancelBill(bill, body.reason);
     return BaseResponse.withMessage({}, 'Hủy đơn hàng thành công!');
   }
