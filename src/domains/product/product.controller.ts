@@ -126,7 +126,7 @@ export class ProductController {
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Delete('product/:id')
   delete(@Req() req, @Param('id') id: string) {
-    return this.productService.delete(req.user._id, req.user.role, id);
+    return this.productService.delete(req.user._id.toString(), req.user.role, id);
   }
 
   /**

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { Roles } from 'domains/auth/decorators/auth-role.decorator';
 import { AuthJwtATGuard } from 'domains/auth/guards/auth-jwt-at.guard';
 import { AuthRoleGuard } from 'domains/auth/guards/auth-role.guard';
@@ -129,5 +129,12 @@ export class BillController {
   @Patch('seller/:id')
   updateStatusSeller(@Param('id') id: string, @Query('status') status: BILL_STATUS) {
     return this.billService.updateStatusBillSeller(id, status);
+  }
+
+  @Roles(ROLE_NAME.USER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Patch(':billId/user/confirm-delivered')
+  confirmDeliveredBillByUser(@Req() req, @Param('billId') billId: string) {
+    return this.billService.confirmDeliveredBillByUser(req.user._id.toString(), billId);
   }
 }

@@ -55,14 +55,26 @@ export class Bill extends Document {
   @Prop({ type: Date })
   deliveredDate: Date;
 
-  @Prop({ type: Boolean, default: false })
-  isSuccess: boolean;
-
   @Prop({ type: String })
   reason: string;
 
+  @Prop({ type: [String], default: [] })
+  shipperIds: string[];
+
+  @Prop({ type: Boolean, default: false })
+  isSuccess: boolean;
+
   @Prop({ type: Boolean, default: false })
   isRefundSuccess: boolean;
+
+  @Prop({ type: Boolean, default: false })
+  isFindShipper: boolean;
+
+  @Prop({ type: Boolean, default: false })
+  isShipperConfirmed: boolean;
+
+  @Prop({ type: Boolean, default: false })
+  isUserConfirmed: boolean;
 }
 
 export const BillSchema = SchemaFactory.createForClass(Bill);
