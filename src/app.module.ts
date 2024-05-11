@@ -9,6 +9,7 @@ import { FinanceModule } from 'domains/finance/finance.module';
 import { PolicyModule } from 'domains/policy/policy.module';
 import { PromotionModule } from 'domains/promotion/promotion.module';
 import { ReportModule } from 'domains/report/report.module';
+import { ShipperModule } from 'domains/shipper/shipper.module';
 import { TaxModule } from 'domains/tax/tax.module';
 import { UserBillTrackingModule } from 'domains/user-bill-tracking/user-bill-tracking.module';
 import { ConversationModule } from 'gateways/conversations/conversation.module';
@@ -58,6 +59,7 @@ import { SeederService } from './services/seeder.service';
     FinanceModule,
     ConversationModule,
     NotificationModule,
+    ShipperModule,
     // ElasticSearchModule,
   ],
   providers: [SeederService, CronjobsService],
