@@ -35,10 +35,10 @@ jobs:
         echo "${{ secrets.ENV_FILE_PROD }}" > .env.prod
     
     - name: Build Docker
-      run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/dtex-be .
+      run: docker build -t "${{ secrets.DOCKER_HUB_USERNAME }}"/dtex-be .
   
     - name: Push Docker
-      run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/dtex-be:latest
+      run: docker push "${{ secrets.DOCKER_HUB_USERNAME }}"/dtex-be:latest
 
   deploy:
     runs-on: self-hosted
@@ -48,7 +48,7 @@ jobs:
       run: cd ~/workspace/actions-runner-be/_work/DATN_BE/DATN_BE
 
     - name: Pull Docker
-      run: docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/dtex-be:latest
+      run: docker pull "${{ secrets.DOCKER_HUB_USERNAME }}"/dtex-be:latest
 
     - name: Down and Up Docker
       run: |
