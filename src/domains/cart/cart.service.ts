@@ -1,8 +1,7 @@
-import { Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ProductInfoDTO } from 'domains/bill/dto/product-info.dto';
 import { ProductDTO } from 'domains/product/dto/product.dto';
-import { ProductService } from 'domains/product/product.service';
 import { Product } from 'domains/product/schema/product.schema';
 import { Store } from 'domains/store/schema/store.schema';
 import { Model } from 'mongoose';
@@ -20,8 +19,8 @@ export class CartService {
     @InjectModel(Cart.name)
     private readonly cartModel: Model<Cart>,
 
-    @Inject(forwardRef(() => ProductService))
-    private readonly productService: ProductService,
+    @InjectModel(Product.name)
+    private readonly productModel: Model<Product>,
 
     @InjectModel(Store.name)
     private readonly storeModel: Model<Store>,
@@ -29,7 +28,7 @@ export class CartService {
 
   async handleAddProductIntoCart(userId: string, productId: string) {
     this.logger.log(`Handle Add Product Into Cart: ${userId} - ${productId}`);
-    const product = await this.productService.findById(productId);
+    const product = await this.productModel.findById(productId).lean();
     if (!product) {
       throw new NotFoundException('Không tìm thấy sản phẩm này!');
     }
@@ -97,7 +96,10 @@ export class CartService {
     const product = cart.products.find((product) => product.id.toString() === productId.toString());
     product.quantity += 1;
     product.quantityInStock = quantityInStock;
-    await this.productService.checkExceedQuantityInStock(product.id, product.quantity);
+    const productToCheck = await this.productModel.findById(product.id).lean();
+    if (product.quantity > productToCheck.quantity) {
+      throw new BadRequestException(`Số lượng sản phẩm trong kho không đủ! Còn lại: ${productToCheck.quantity}`);
+    }
     cart.totalPrice = this.getTotalPrice(cart.products);
     return await this.cartModel.findByIdAndUpdate(cart._id, cart, { lean: true, new: true });
   }
@@ -131,7 +133,7 @@ export class CartService {
 
   async removeProductFromCart(userId: string, productId: string) {
     this.logger.log(`Remove Product From Cart: ${userId} - ${productId}`);
-    const product = await this.productService.findById(productId);
+    const product = await this.productModel.findById(productId).lean();
     if (!product) throw new NotFoundException('Không tìm thấy sản phẩm này!');
     const store = await this.storeModel.findById(product.storeId).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');

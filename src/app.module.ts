@@ -6,12 +6,13 @@ import { CartModule } from 'domains/cart/cart.module';
 import { EvaluationModule } from 'domains/evaluation/evaluation.module';
 import { FeedbackModule } from 'domains/feedback/feedback.module';
 import { FinanceModule } from 'domains/finance/finance.module';
-import { NotificationModule } from 'domains/notification/notification.module';
 import { PolicyModule } from 'domains/policy/policy.module';
 import { PromotionModule } from 'domains/promotion/promotion.module';
 import { ReportModule } from 'domains/report/report.module';
 import { TaxModule } from 'domains/tax/tax.module';
 import { UserBillTrackingModule } from 'domains/user-bill-tracking/user-bill-tracking.module';
+import { ConversationModule } from 'gateways/conversations/conversation.module';
+import { NotificationModule } from 'gateways/notifications/notification.module';
 import { PaymentModule } from 'payment/paymen.module';
 import { CloudinaryModule } from 'services/cloudinary/cloudinary.module';
 import { CronjobsService } from 'services/cronjob.service';
@@ -19,7 +20,6 @@ import { RedisModule } from 'services/redis/redis.module';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './domains/auth/auth.module';
 import { CategoryModule } from './domains/category/category.module';
-import { ConversationModule } from './domains/conversations/conversation.module';
 import { MessageModule } from './domains/message/message.module';
 import { ProductModule } from './domains/product/product.module';
 import { StoreModule } from './domains/store/store.module';
@@ -43,13 +43,11 @@ import { SeederService } from './services/seeder.service';
     StoreModule,
     ProductModule,
     CategoryModule,
-    ConversationModule,
     MessageModule,
     PolicyModule,
     PaymentModule,
     CartModule,
     BillModule,
-    NotificationModule,
     EvaluationModule,
     FeedbackModule,
     ReportModule,
@@ -58,6 +56,8 @@ import { SeederService } from './services/seeder.service';
     TaxModule,
     UserBillTrackingModule,
     FinanceModule,
+    ConversationModule,
+    NotificationModule,
     // ElasticSearchModule,
   ],
   providers: [SeederService, CronjobsService],

@@ -110,18 +110,25 @@ export class UserController {
     return this.userService.createUserWithoutRole(body);
   }
 
-  @Roles(ROLE_NAME.USER, ROLE_NAME.MANAGER)
+  @Roles(ROLE_NAME.USER)
   @Put('user-follow-store')
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   followStore(@Req() req, @Query('storeId') storeId: string) {
     return this.userService.followStore(req.user._id, storeId);
   }
 
-  @Roles(ROLE_NAME.USER, ROLE_NAME.MANAGER)
-  @Put('user-add-friend')
+  @Roles(ROLE_NAME.USER)
+  @Patch('accept-or-unfriend')
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
-  addFriend(@Req() req, @Query('userIdReceive') userIdReceive: string) {
-    return this.userService.addFriend(req.user._id, userIdReceive);
+  acceptOrUnFriend(@Req() req, @Query('senderId') senderId: string) {
+    return this.userService.acceptOrUnFriend(req.user._id.toString(), senderId);
+  }
+
+  @Roles(ROLE_NAME.USER)
+  @Patch('reject-add-friend')
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  rejectAddFriend(@Req() req, @Query('senderId') senderId: string) {
+    return this.userService.rejectAddFriend(req.user._id.toString(), senderId);
   }
 
   @Roles(ROLE_NAME.USER, ROLE_NAME.MANAGER)

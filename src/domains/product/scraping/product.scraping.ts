@@ -1,7 +1,7 @@
-import { Inject, Injectable, forwardRef } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import axios, { AxiosHeaders } from 'axios';
-import { EvaluationService } from 'domains/evaluation/evaluation.service';
+import { Evaluation } from 'domains/evaluation/schema/evaluation.schema';
 import { Store } from 'domains/store/schema/store.schema';
 import { Model } from 'mongoose';
 import { Product } from '../schema/product.schema';
@@ -15,8 +15,8 @@ export class ProductScraping {
     @InjectModel(Product.name)
     private readonly productModel: Model<Product>,
 
-    @Inject(forwardRef(() => EvaluationService))
-    private readonly evaluationService: EvaluationService,
+    @InjectModel(Evaluation.name)
+    private readonly evaluationModel: Model<Evaluation>,
   ) {}
 
   // Đồ gia dụng, nội thất, cây cảnh
@@ -49,7 +49,7 @@ export class ProductScraping {
         keywords: ['do gia dung', 'noi that', 'cay canh', 'cay kieng', 'cay phong thuy', 'cay trong nha', 'cay trong van phong'],
         storeId: storeIds[index % 10],
       });
-      await this.evaluationService.create(newProduct._id);
+      await this.evaluationModel.create({ productId: newProduct._id.toString() });
     }
   }
 
@@ -83,7 +83,7 @@ export class ProductScraping {
           categoryId,
           storeId: storeIds[index % 10],
         });
-        await this.evaluationService.create(newProduct._id);
+        await this.evaluationModel.create({ productId: newProduct._id.toString() });
       }
     }
   }
@@ -118,7 +118,7 @@ export class ProductScraping {
         keywords: ['me va be', 'do choi', 'tre em'],
         storeId: storeIds[index % 10],
       });
-      await this.evaluationService.create(newProduct._id);
+      await this.evaluationModel.create({ productId: newProduct._id.toString() });
     }
   }
 
@@ -152,7 +152,7 @@ export class ProductScraping {
         keywords: ['xe', 'xe may', 'o to', 'xe dap', 'xe dap dien', 'xe may dien', 'xe cu', 'xe moi'],
         storeId: storeIds[index % 10],
       });
-      await this.evaluationService.create(newProduct._id);
+      await this.evaluationModel.create({ productId: newProduct._id.toString() });
     }
   }
 
@@ -186,7 +186,7 @@ export class ProductScraping {
         keywords: ['dien lanh', 'tu lanh', 'may lanh', 'dieu hoa', 'quat', 'quat dieu hoa', 'quat may lanh'],
         storeId: storeIds[index % 10],
       });
-      await this.evaluationService.create(newProduct._id);
+      await this.evaluationModel.create({ productId: newProduct._id.toString() });
     }
   }
 
@@ -220,7 +220,7 @@ export class ProductScraping {
         keywords: ['giai tri', 'the thao', 'so thich'],
         storeId: storeIds[index % 10],
       });
-      await this.evaluationService.create(newProduct._id);
+      await this.evaluationModel.create({ productId: newProduct._id.toString() });
     }
   }
 
@@ -254,7 +254,7 @@ export class ProductScraping {
         keywords: ['thu cung', 'cho', 'meo'],
         storeId: storeIds[index % 10],
       });
-      await this.evaluationService.create(newProduct._id);
+      await this.evaluationModel.create({ productId: newProduct._id.toString() });
     }
   }
 
@@ -287,7 +287,7 @@ export class ProductScraping {
         keywords: ['cho tang', 'tang', 'mien phi'],
         storeId: storeIds[index % 10],
       });
-      await this.evaluationService.create(newProduct._id);
+      await this.evaluationModel.create({ productId: newProduct._id.toString() });
     }
   }
 
@@ -321,7 +321,7 @@ export class ProductScraping {
         keywords: ['thoi trang', 'do dung ca nhan', 'quan ao', 'giay dep', 'tui xach', 'phu kien'],
         storeId: storeIds[index % 10],
       });
-      await this.evaluationService.create(newProduct._id);
+      await this.evaluationModel.create({ productId: newProduct._id.toString() });
     }
   }
 
@@ -355,7 +355,7 @@ export class ProductScraping {
         keywords: ['do dung van phong', 'may tinh', 'may in', 'may fax', 'may photocopy', 'may chieu', 'may quet', 'may scan'],
         storeId: storeIds[index % 10],
       });
-      await this.evaluationService.create(newProduct._id);
+      await this.evaluationModel.create({ productId: newProduct._id.toString() });
     }
   }
 }
