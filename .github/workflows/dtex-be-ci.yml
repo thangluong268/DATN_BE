@@ -41,6 +41,11 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-buildx-
     
+    - name: Set up env file
+      run: |
+        touch .env.prod
+        echo "${{ secrets.ENV_FILE_PROD }}" > .env.prod
+    
     - name: Build and Push Docker Image
       uses: docker/build-push-action@v2
       id: docker_build
@@ -55,10 +60,6 @@ jobs:
 
     - name: Verify
       run: echo ${{ steps.docker_build.outputs.digest }}
-      
-    - run: |
-         touch .env.prod
-         echo "${{ secrets.ENV_FILE_PROD }}" > .env.prod
 
   deploy:
     runs-on: self-hosted
