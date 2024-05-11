@@ -474,7 +474,7 @@ export class BillService {
               { session },
             );
           }
-          await this.userModel.findByIdAndUpdate(bill.userId, { $inc: { wallet: numOfCoins } }, { session });
+          await this.userModel.findByIdAndUpdate(bill.userId, { $inc: { wallet: numOfCoins } });
           await redisClient.del(bill.paymentId);
         }
       }
