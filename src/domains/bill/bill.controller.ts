@@ -126,7 +126,7 @@ export class BillController {
 
   @Roles(ROLE_NAME.SELLER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
-  @Put('seller/:id')
+  @Patch('seller/:id')
   updateStatusSeller(@Param('id') id: string, @Query('status') status: BILL_STATUS) {
     return this.billService.updateStatusBillSeller(id, status);
   }

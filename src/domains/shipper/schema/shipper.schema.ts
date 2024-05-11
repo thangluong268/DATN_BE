@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { GenderType } from 'shared/enums/common.enum';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
 
 @Schema({
   versionKey: false,
@@ -33,6 +34,9 @@ export class Shipper extends Document {
 
   @Prop({ type: String })
   password: string;
+
+  @Prop({ type: String, default: ROLE_NAME.SHIPPER })
+  role: ROLE_NAME;
 }
 
 export const ShipperSchema = SchemaFactory.createForClass(Shipper);
