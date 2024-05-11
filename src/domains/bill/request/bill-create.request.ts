@@ -1,3 +1,4 @@
+import { TAX_RATE } from 'app.config';
 import { Type } from 'class-transformer';
 import { IsArray, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { PAYMENT_METHOD } from 'shared/enums/bill.enum';
@@ -44,8 +45,8 @@ export class BillCreateREQ {
       products: cart.products,
       notes: cart.notes,
       deliveryFee: cart.deliveryFee,
-      totalPriceInit: cart.totalPrice,
-      totalPricePayment: cart['totalPricePayment'] + cart.deliveryFee,
+      totalPriceInit: cart.totalPrice - Math.ceil(cart.totalPrice * TAX_RATE),
+      totalPricePayment: cart['totalPricePayment'],
       deliveryMethod: body.deliveryMethod,
       paymentMethod: body.paymentMethod,
       receiverInfo: body.receiverInfo,

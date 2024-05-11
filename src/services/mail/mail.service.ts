@@ -37,4 +37,16 @@ export class MailService {
       },
     });
   }
+
+  async sendActiveShipper(receiverEmail: string, email: string, password: string) {
+    await this.mailerService.sendMail({
+      to: receiverEmail,
+      subject: 'WELCOME TO DTEX',
+      template: 'active-shipper.hbs',
+      context: {
+        email,
+        password,
+      },
+    });
+  }
 }
