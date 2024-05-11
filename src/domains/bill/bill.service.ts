@@ -381,17 +381,12 @@ export class BillService {
     this.logger.log(`Update Status Bill Seller: ${billId}`);
     const bill = await this.billModel.findById(billId).lean();
     if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng này!');
-    if (![BILL_STATUS.CONFIRMED, BILL_STATUS.DELIVERING, BILL_STATUS.DELIVERED].includes(status))
-      throw new BadRequestException('Trạng thái không hợp lệ!');
+    if (![BILL_STATUS.CONFIRMED].includes(status)) throw new BadRequestException('Trạng thái không hợp lệ!');
     const updatedBill = await this.billModel.findByIdAndUpdate({ _id: billId }, { status }, { new: true });
     switch (status) {
       case BILL_STATUS.CONFIRMED:
         // TO DO...
         // Notification to User
-        break;
-      case BILL_STATUS.DELIVERING:
-        // TO DO...
-        // Notification to Shipper
         break;
       case BILL_STATUS.DELIVERED:
         if (bill.paymentMethod === PAYMENT_METHOD.CASH) {
@@ -520,6 +515,26 @@ export class BillService {
     bill.isRefundSuccess = true;
     await bill.save();
     return BaseResponse.withMessage({}, 'Xác nhận hoàn trả đơn hàng thành công!');
+  }
+
+  async confirmDeliveredBillByUser(userId: string, billId: string) {
+    this.logger.log(`Confirm delivered bill by user`);
+    const bill = await this.billModel
+      .findOne({
+        _id: new ObjectId(billId),
+        status: BILL_STATUS.DELIVERING,
+        userId,
+        isShipperConfirmed: true,
+        isUserConfirmed: false,
+      })
+      .lean();
+    if (!bill) throw new NotFoundException('Đơn hàng không hợp lệ!');
+    await this.billModel.findByIdAndUpdate(billId, {
+      status: BILL_STATUS.DELIVERED,
+      isUserConfirmed: true,
+      deliveredDate: new Date(),
+    });
+    return BaseResponse.withMessage({}, 'Xác nhận giao hàng thành công!');
   }
 
   async backBill(userId: string, billId: string) {

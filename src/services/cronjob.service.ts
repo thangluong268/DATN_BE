@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Cron } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { TAX_RATE } from 'app.config';
 import * as dayjs from 'dayjs';
 import { Bill } from 'domains/bill/schema/bill.schema';
@@ -181,5 +181,50 @@ export class CronjobsService {
     await this.userBillTrackingModel.deleteMany({
       userId: { $in: userBillTrackings.map((userBillTracking) => userBillTracking.userId) },
     });
+  }
+
+  /**
+   *
+   * 1. Shipper has already confirmed delivery
+   * 2. If user not confirm delivery after 1 days, system will auto confirm delivery
+   */
+  @Cron(CronExpression.EVERY_MINUTE)
+  async confirmedBill() {
+    const now = dayjs();
+    const oneDayAgo = now.subtract(1, 'day').toDate();
+    const bills = await this.billModel
+      .find({
+        updatedAt: { $lt: oneDayAgo },
+        status: BILL_STATUS.DELIVERING,
+        isShipperConfirmed: true,
+        isUserConfirmed: false,
+      })
+      .lean();
+    if (bills.length === 0) return;
+    const billIds = bills.map((bill) => bill._id);
+    await this.billModel.updateMany(
+      { _id: { $in: billIds } },
+      {
+        status: BILL_STATUS.DELIVERED,
+        isUserConfirmed: true,
+        deliveredDate: new Date(),
+      },
+    );
+  }
+
+  /**
+   *
+   * 1. If shipper not confirm to active the account after 7 days, system will auto delete the account
+   */
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async deleteShipperAccount() {
+    const now = dayjs();
+    const sevenDayAgo = now.subtract(7, 'day').toDate();
+    const shippers = await this.userModel
+      .find({ createdAt: { $lt: sevenDayAgo }, role: ROLE_NAME.SHIPPER, status: false })
+      .lean();
+    if (shippers.length === 0) return;
+    const shipperIds = shippers.map((shipper) => shipper._id);
+    await this.userModel.deleteMany({ _id: { $in: shipperIds } });
   }
 }

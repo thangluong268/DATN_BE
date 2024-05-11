@@ -1,10 +1,4 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  Logger,
-  NotFoundException
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { BillService } from 'domains/bill/bill.service';
 import { Bill } from 'domains/bill/schema/bill.schema';
@@ -478,17 +472,17 @@ export class ProductService {
 
   async delete(userId: string, userRole: string[], id: string) {
     this.logger.log(`Delete Product: ${id}`);
-    const product = await this.productModel.findOne({ _id: id, status: true }).lean();
+    const product = await this.productModel.findOne({ _id: new ObjectId(id), status: true }).lean();
     if (!product) throw new NotFoundException('Không tìm thấy sản phẩm này!');
     const isPurchased = await this.billModel.findOne({ 'products.id': id }).lean();
     if (isPurchased) throw new BadRequestException('Sản phẩm này đã được mua, không thể xóa!');
     if (!(userRole.includes(ROLE_NAME.MANAGER) || userRole.includes(ROLE_NAME.ADMIN))) {
-      const store = await this.storeModel.findOne({ userId: userId.toString() }).lean();
+      const store = await this.storeModel.findOne({ userId }).lean();
       if (!store) throw new NotFoundException('Xóa sản phẩm thất bại!');
       if (product.storeId.toString() !== store._id.toString())
         throw new ForbiddenException('Bạn không có quyền xóa sản phẩm này!');
     }
-    await this.productModel.findByIdAndUpdate(id, { status: false });
+    await this.productModel.findByIdAndDelete(id);
     return BaseResponse.withMessage({}, 'Xóa sản phẩm thành công!');
   }
 

@@ -1,19 +1,22 @@
-import { IsNotEmpty } from 'class-validator';
+import { IsEnum } from 'class-validator';
+import { BILL_STATUS } from 'shared/enums/bill.enum';
 import { PaginationREQ } from 'shared/generics/pagination.request';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 
-export class BillGetAllByStatusSellerREQ extends PaginationREQ {
-  @IsNotEmpty()
-  status: string;
+export class BillByStatusShipperGetREQ extends PaginationREQ {
+  @IsEnum(BILL_STATUS)
+  status: BILL_STATUS;
 
-  static toCount(storeId: string, query: BillGetAllByStatusSellerREQ) {
-    return { storeId, status: query.status };
+  static toCount(userId: string, query: BillByStatusShipperGetREQ) {
+    const { status } = query;
+    return { shipperIds: userId, status, isFindShipper: status === BILL_STATUS.CONFIRMED ? true : false };
   }
 
-  static toFind(storeId: string, query: BillGetAllByStatusSellerREQ) {
+  static toFind(userId: string, query: BillByStatusShipperGetREQ) {
+    const { status } = query;
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     return [
-      { $match: { storeId, status: query.status } },
+      { $match: { shipperIds: userId, status, isFindShipper: status === BILL_STATUS.CONFIRMED ? true : false } },
       { $addFields: { storeObjId: { $toObjectId: '$storeId' } } },
       { $lookup: { from: 'stores', localField: 'storeObjId', foreignField: '_id', as: 'store' } },
       { $addFields: { storeAvatar: { $first: '$store.avatar' } } },
