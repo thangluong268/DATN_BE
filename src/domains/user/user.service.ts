@@ -40,6 +40,7 @@ import { UsersHaveStoreREQ } from './request/user-have-store.request';
 import { UserUpdateREQ } from './request/user-update.request';
 import { UserCreateRESP } from './response/user-create.response';
 import { User } from './schema/user.schema';
+import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 
 @Injectable()
 export class UserService {
@@ -69,7 +70,7 @@ export class UserService {
     const newUser = await this.userModel.create(body);
     AuthSignUpREQ.setDefault(newUser);
     await newUser.save();
-    return UserCreateRESP.of(User.toDocModel(newUser));
+    return UserCreateRESP.of(toDocModel(newUser));
   }
 
   async createUserWithoutRole(body: UserCreateREQ) {
@@ -83,12 +84,12 @@ export class UserService {
     const newUser = await this.userModel.create(body);
     UserCreateREQ.setDefault(newUser);
     await newUser.save();
-    return UserCreateRESP.of(User.toDocModel(newUser));
+    return UserCreateRESP.of(toDocModel(newUser));
   }
 
   async createUserSocial(body: any) {
     const newUser = await this.userModel.create({ ...body, role: [ROLE_NAME.USER] });
-    return User.toDocModel(newUser);
+    return toDocModel(newUser);
   }
 
   async findById(id: string) {
@@ -133,7 +134,7 @@ export class UserService {
     const notification = await this.notificationService.create(receiverId, subjectInfo, NotificationType.UPDATE_INFO, redirectId);
     this.notificationGateway.sendNotification(receiverId, notification);
 
-    return BaseResponse.withMessage<User>(User.toDocModel(updatedUser), 'Cập nhật thông tin thành công!');
+    return BaseResponse.withMessage(toDocModel(updatedUser), 'Cập nhật thông tin thành công!');
   }
 
   async getDetail(id: string) {

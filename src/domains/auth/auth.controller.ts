@@ -59,7 +59,7 @@ export class AuthController {
   @UseGuards(AuthGuard('local'))
   @Post('login')
   login(@Req() req) {
-    const user: User = req.user;
+    const user = req.user;
     return this.authService.login(user);
   }
 

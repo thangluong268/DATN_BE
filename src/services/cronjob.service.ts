@@ -16,6 +16,7 @@ import { ObjectId } from 'mongodb';
 import { Model } from 'mongoose';
 import { BILL_STATUS } from 'shared/enums/bill.enum';
 import { PolicyType } from 'shared/enums/policy.enum';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { RedisService } from './redis/redis.service';
 
 @Injectable()
@@ -120,7 +121,10 @@ export class CronjobsService {
 
   @Cron('*/1 * * * * *')
   async handleUnBanUser() {
-    await this.userModel.updateMany({ warningCount: { $lt: 3 } }, { $set: { status: true } });
+    await this.userModel.updateMany(
+      { warningCount: { $lt: 3 }, role: { $nin: [ROLE_NAME.SHIPPER] } },
+      { $set: { status: true } },
+    );
   }
 
   @Cron('*/1 * * * * *')

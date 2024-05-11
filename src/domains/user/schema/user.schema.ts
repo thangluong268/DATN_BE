@@ -71,19 +71,11 @@ export class User extends Document {
   @Prop({ type: String, enum: SOCIAL_APP })
   socialApp: SOCIAL_APP;
 
-  static toDocModel(
-    user:
-      | (Document<unknown, `object`, User> &
-          User & {
-            _id: Types.ObjectId;
-          })
-      | UpdateWriteOpResult
-      | (FlattenMaps<User> & {
-          _id: Types.ObjectId;
-        }),
-  ): User {
-    return user['_doc'] ? user['_doc'] : user;
-  }
+  @Prop({ type: String })
+  emailShipper: string;
+
+  @Prop({ type: String })
+  addressShipper: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

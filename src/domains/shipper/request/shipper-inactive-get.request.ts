@@ -1,6 +1,6 @@
 import { IsOptional, IsString } from 'class-validator';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { PaginationREQ } from 'shared/generics/pagination.request';
-import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 
 export class ShipperInActiveGetREQ extends PaginationREQ {
   @IsOptional()
@@ -9,13 +9,14 @@ export class ShipperInActiveGetREQ extends PaginationREQ {
 
   static toCondition(query: ShipperInActiveGetREQ) {
     const { search } = query;
-    const condition = { isActive: false };
+    const condition = { status: false, role: ROLE_NAME.SHIPPER };
     if (search) {
       condition['$or'] = [
-        { name: { $regex: query.search, $options: 'i' } },
+        { fullName: { $regex: query.search, $options: 'i' } },
         { email: { $regex: query.search, $options: 'i' } },
+        { emailShipper: { $regex: query.search, $options: 'i' } },
         { phone: { $regex: query.search, $options: 'i' } },
-        { address: { $regex: query.search, $options: 'i' } },
+        { addressShipper: { $regex: query.search, $options: 'i' } },
       ];
     }
     return condition;

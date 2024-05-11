@@ -1,5 +1,5 @@
+import { User } from 'domains/user/schema/user.schema';
 import { GenderType } from 'shared/enums/common.enum';
-import { Shipper } from '../schema/shipper.schema';
 
 export class ShipperInActiveRESP {
   id: string;
@@ -11,15 +11,15 @@ export class ShipperInActiveRESP {
   gender: GenderType;
   createdAt: Date;
 
-  static of(shipper: Shipper): ShipperInActiveRESP {
+  static of(shipper: User): ShipperInActiveRESP {
     return {
       id: shipper._id,
       avatar: shipper.avatar,
-      name: shipper.name,
-      email: shipper.email,
+      name: shipper.fullName,
+      email: shipper.emailShipper,
       phone: shipper.phone,
-      address: shipper.address,
-      gender: shipper.gender,
+      address: shipper.addressShipper,
+      gender: shipper.gender as GenderType,
       createdAt: shipper['createdAt'],
     };
   }
