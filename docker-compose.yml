@@ -1,7 +1,6 @@
 version: '3.7'
 services:
   dtex-be:
-    build: .
     container_name: dtex-be
     image: dtex-be:latest
     restart: always
