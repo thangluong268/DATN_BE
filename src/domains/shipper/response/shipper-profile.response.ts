@@ -10,6 +10,7 @@ export class ShipperProfileRESP {
   phone: string;
   gender: string;
   status: boolean;
+  wallet: number;
   createdAt: string;
 
   static of(shipper: User): ShipperProfileRESP {
@@ -23,6 +24,7 @@ export class ShipperProfileRESP {
       phone: shipper.phone,
       gender: shipper.gender,
       status: shipper.status,
+      wallet: shipper.wallet,
       createdAt: shipper['createdAt'],
     };
   }

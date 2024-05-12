@@ -212,10 +212,11 @@ export class ShipperService {
       .findOne({ _id: new ObjectId(billId), status: BILL_STATUS.DELIVERING, shipperIds: userId })
       .lean();
     if (!bill) throw new NotFoundException('Đơn hàng không hợp lệ!');
-    await this.billModel.findByIdAndUpdate(billId, { isShipperConfirmed: true });
     const taxFee = Math.ceil(bill.deliveryFee * TAX_RATE);
+    await this.billModel.findByIdAndUpdate(billId, { isShipperConfirmed: true });
     await this.taxModel.create({ shipperId: userId, totalPrice: bill.deliveryFee, taxFee, paymentId: bill.paymentId });
     await this.financeModel.create({ revenue: taxFee });
+    await this.userModel.findByIdAndUpdate(userId, { $inc: { wallet: bill.deliveryFee - taxFee } });
     return BaseResponse.withMessage({}, 'Xác nhận giao hàng thành công!');
   }
 
