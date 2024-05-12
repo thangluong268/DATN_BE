@@ -118,7 +118,11 @@ export class ShipperService {
       this.billModel.aggregate(BillByStatusShipperGetREQ.toFind(userId, query) as any),
       this.billModel.countDocuments(BillByStatusShipperGetREQ.toCount(userId, query)),
     ]);
-    return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách đơn hàng thành công!');
+    const res = data.map((bill) => {
+      const totalPriceReceive = bill.deliveryFee - Math.ceil(bill.deliveryFee * TAX_RATE);
+      return { ...bill, totalPriceReceive };
+    });
+    return PaginationResponse.ofWithTotalAndMessage(res, total, 'Lấy danh sách đơn hàng thành công!');
   }
 
   async getMyProfile(userId: string) {
