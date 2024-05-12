@@ -1,9 +1,9 @@
-import { IsString } from 'class-validator';
+import { PasswordValidator } from 'shared/validators/password.validator';
 
 export class ShipperChangePasswordREQ {
-  @IsString()
+  @PasswordValidator()
   oldPassword: string;
 
-  @IsString()
+  @PasswordValidator()
   newPassword: string;
 }

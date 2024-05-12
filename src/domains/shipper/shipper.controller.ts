@@ -82,7 +82,7 @@ export class ShipperController {
 
   @Roles(ROLE_NAME.SHIPPER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
-  @Patch('password')
+  @Patch('change-password')
   changePassword(@Req() req, @Body() body: ShipperChangePasswordREQ) {
     return this.shipperService.changePassword(req.user._id.toString(), body);
   }

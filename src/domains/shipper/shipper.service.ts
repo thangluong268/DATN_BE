@@ -137,9 +137,8 @@ export class ShipperService {
     this.logger.log(`Change password shipper`);
     const { oldPassword, newPassword } = body;
     const shipper = await this.userModel.findById(userId).lean();
-    const hashedOldPassword = await bcrypt.hash(oldPassword, SALT_ROUNDS);
     const hashedNewPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
-    const isMatched = await bcrypt.compare(hashedOldPassword, shipper.password);
+    const isMatched = await bcrypt.compare(oldPassword, shipper.password);
     if (!isMatched) throw new BadRequestException('Mật khẩu cũ không chính xác!');
     await this.userModel.findByIdAndUpdate(userId, { password: hashedNewPassword });
     return BaseResponse.withMessage({}, 'Đổi mật khẩu thành công!');
