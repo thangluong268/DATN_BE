@@ -184,7 +184,7 @@ export class ShipperService {
       status: BILL_STATUS.DELIVERING,
       isShipperConfirmed: false,
     });
-    return count <= NUM_OF_ALLOW_DELIVERING_BILL;
+    return count < NUM_OF_ALLOW_DELIVERING_BILL;
   }
 
   async refuseBillToDelivery(userId: string, billId: string) {
