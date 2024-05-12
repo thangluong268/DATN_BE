@@ -12,6 +12,7 @@ import { User } from 'domains/user/schema/user.schema';
 import { ObjectId } from 'mongodb';
 import { Model } from 'mongoose';
 import { MailService } from 'services/mail/mail.service';
+import { NUM_OF_ALLOW_DELIVERING_BILL } from 'shared/constants/bill.constant';
 import { BILL_STATUS } from 'shared/enums/bill.enum';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { SHIPPER_BEHAVIOR_BILL } from 'shared/enums/shipper.enum';
@@ -167,12 +168,23 @@ export class ShipperService {
       .findOne({ _id: new ObjectId(billId), status: BILL_STATUS.CONFIRMED, isFindShipper: true, shipperIds: userId })
       .lean();
     if (!bill) throw new NotFoundException('Đơn hàng không hợp lệ!');
+    const isAllow = await this.isAllowNumOfDeliveringBill(userId);
+    if (!isAllow) throw new BadRequestException('Không thể nhận quá 5 đơn hàng cùng lúc!');
     await this.billModel.findByIdAndUpdate(billId, {
       status: BILL_STATUS.DELIVERING,
       isFindShipper: false,
       shipperIds: [userId],
     });
     return BaseResponse.withMessage({}, 'Nhận đơn hàng thành công');
+  }
+
+  async isAllowNumOfDeliveringBill(userId: string) {
+    const count = await this.billModel.countDocuments({
+      shipperIds: userId,
+      status: BILL_STATUS.DELIVERING,
+      isShipperConfirmed: false,
+    });
+    return count <= NUM_OF_ALLOW_DELIVERING_BILL;
   }
 
   async refuseBillToDelivery(userId: string, billId: string) {
