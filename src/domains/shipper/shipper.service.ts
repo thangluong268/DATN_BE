@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { SALT_ROUNDS, TAX_RATE } from 'app.config';
 import * as bcrypt from 'bcrypt';
@@ -24,9 +24,12 @@ import { ShipperDownloadExcelDTO } from './dto/shipper-download-excel.dto';
 import { ShipperActiveREQ } from './request/shipper-active.request';
 import { ShipperBehaviorBillREQ } from './request/shipper-behavior-bill.request';
 import { BillByStatusShipperGetREQ } from './request/shipper-bill-by-status.request';
+import { ShipperChangePasswordREQ } from './request/shipper-change-password.request';
 import { ShipperCreateREQ } from './request/shipper-create.request';
 import { ShipperGetREQ } from './request/shipper-get.request';
+import { ShipperUpdateREQ } from './request/shipper-update.request';
 import { ShipperRESP } from './response/shipper-inactive.response';
+import { ShipperProfileRESP } from './response/shipper-profile.response';
 
 @Injectable()
 export class ShipperService {
@@ -115,6 +118,31 @@ export class ShipperService {
       this.billModel.countDocuments(BillByStatusShipperGetREQ.toCount(userId, query)),
     ]);
     return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách đơn hàng thành công!');
+  }
+
+  async getMyProfile(userId: string) {
+    this.logger.log(`Get my profile`);
+    const shipper = await this.userModel.findById(userId).lean();
+    if (!shipper) throw new NotFoundException('Tài khoản không tồn tại!');
+    return BaseResponse.withMessage(ShipperProfileRESP.of(shipper), 'Lấy thông tin tài khoản thành công');
+  }
+
+  async updateProfile(userId: string, body: ShipperUpdateREQ) {
+    this.logger.log(`Update shipper`);
+    const updatedShipper = await this.userModel.findByIdAndUpdate(userId, body, { lean: true, new: true });
+    return BaseResponse.withMessage(ShipperProfileRESP.of(updatedShipper), 'Cập nhật thông tin tài khoản thành công');
+  }
+
+  async changePassword(userId: string, body: ShipperChangePasswordREQ) {
+    this.logger.log(`Change password shipper`);
+    const { oldPassword, newPassword } = body;
+    const shipper = await this.userModel.findById(userId).lean();
+    const hashedOldPassword = await bcrypt.hash(oldPassword, SALT_ROUNDS);
+    const hashedNewPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    const isMatched = await bcrypt.compare(hashedOldPassword, shipper.password);
+    if (!isMatched) throw new BadRequestException('Mật khẩu cũ không chính xác!');
+    await this.userModel.findByIdAndUpdate(userId, { password: hashedNewPassword });
+    return BaseResponse.withMessage({}, 'Đổi mật khẩu thành công!');
   }
 
   async behaviorBill(userId: string, billId: string, body: ShipperBehaviorBillREQ) {

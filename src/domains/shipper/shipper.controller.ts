@@ -9,8 +9,10 @@ import { parseExcelResponse } from 'shared/helpers/excel.helper';
 import { ShipperActiveREQ } from './request/shipper-active.request';
 import { ShipperBehaviorBillREQ } from './request/shipper-behavior-bill.request';
 import { BillByStatusShipperGetREQ } from './request/shipper-bill-by-status.request';
+import { ShipperChangePasswordREQ } from './request/shipper-change-password.request';
 import { ShipperCreateREQ } from './request/shipper-create.request';
 import { ShipperGetREQ } from './request/shipper-get.request';
+import { ShipperUpdateREQ } from './request/shipper-update.request';
 import { ShipperService } from './shipper.service';
 
 @Controller('shippers')
@@ -38,6 +40,13 @@ export class ShipperController {
     return this.shipperService.getBillsByStatus(req.user._id.toString(), query);
   }
 
+  @Roles(ROLE_NAME.SHIPPER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Get('profile')
+  getMyProfile(@Req() req) {
+    return this.shipperService.getMyProfile(req.user._id);
+  }
+
   @Post()
   create(@Body() body: ShipperCreateREQ) {
     return this.shipperService.create(body);
@@ -62,5 +71,19 @@ export class ShipperController {
   @Patch('bills/:billId/behavior')
   behaviorBill(@Req() req, @Param('billId') billId: string, @Body() body: ShipperBehaviorBillREQ) {
     return this.shipperService.behaviorBill(req.user._id.toString(), billId, body);
+  }
+
+  @Roles(ROLE_NAME.SHIPPER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Patch()
+  updateProfile(@Req() req, @Body() body: ShipperUpdateREQ) {
+    return this.shipperService.updateProfile(req.user._id.toString(), body);
+  }
+
+  @Roles(ROLE_NAME.SHIPPER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Patch('password')
+  changePassword(@Req() req, @Body() body: ShipperChangePasswordREQ) {
+    return this.shipperService.changePassword(req.user._id.toString(), body);
   }
 }

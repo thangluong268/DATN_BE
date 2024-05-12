@@ -25,11 +25,6 @@ export class AuthController {
     return this.authService.refreshToken(userId, refreshToken);
   }
 
-  @Get('test')
-  async test(): Promise<any> {
-    return BaseResponse.ok();
-  }
-
   @Get('login/google')
   @UseGuards(GoogleOAuthGuard)
   async googleLogin(): Promise<any> {
