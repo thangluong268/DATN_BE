@@ -21,6 +21,8 @@ export class BillByStatusShipperGetREQ extends PaginationREQ {
       { $lookup: { from: 'stores', localField: 'storeObjId', foreignField: '_id', as: 'store' } },
       { $addFields: { storeAvatar: { $first: '$store.avatar' } } },
       { $addFields: { storeName: { $first: '$store.name' } } },
+      { $addFields: { storeAddress: { $first: '$store.address' } } },
+      { $addFields: { storePhone: { $first: '$store.phoneNumber' } } },
       { $project: { storeObjId: 0, store: 0, paymentId: 0, isPaid: 0, shipperIds: 0 } },
       { $sort: { createdAt: -1 } },
     ] as any[];
