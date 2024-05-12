@@ -536,11 +536,4 @@ export class BillService {
     });
     return BaseResponse.withMessage({}, 'Xác nhận giao hàng thành công!');
   }
-
-  async backBill(userId: string, billId: string) {
-    this.logger.log(`Back Bill: ${billId}`);
-    /**
-     * TO DO...
-     */
-  }
 }

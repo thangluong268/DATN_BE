@@ -7,6 +7,7 @@ import { Bill } from 'domains/bill/schema/bill.schema';
 import { Finance } from 'domains/finance/schema/finance.schema';
 import { Tax } from 'domains/tax/schema/tax.schema';
 import { UserBillTracking } from 'domains/user-bill-tracking/schema/user-bill-tracking.schema';
+import { UserBillTrackingService } from 'domains/user-bill-tracking/user-bill-tracking.service';
 import { User } from 'domains/user/schema/user.schema';
 import { ObjectId } from 'mongodb';
 import { Model } from 'mongoose';
@@ -21,6 +22,7 @@ import { generatePassword } from 'shared/helpers/generate-password.helper';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { ShipperDownloadExcelDTO } from './dto/shipper-download-excel.dto';
 import { ShipperActiveREQ } from './request/shipper-active.request';
+import { ShipperBehaviorBillREQ } from './request/shipper-behavior-bill.request';
 import { BillByStatusShipperGetREQ } from './request/shipper-bill-by-status.request';
 import { ShipperCreateREQ } from './request/shipper-create.request';
 import { ShipperGetREQ } from './request/shipper-get.request';
@@ -44,6 +46,8 @@ export class ShipperService {
 
     @InjectModel(UserBillTracking.name)
     private readonly userBillTrackingModel: Model<UserBillTracking>,
+
+    private readonly userBillTrackingService: UserBillTrackingService,
 
     private readonly mailService: MailService,
   ) {}
@@ -113,8 +117,9 @@ export class ShipperService {
     return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách đơn hàng thành công!');
   }
 
-  async behaviorBill(userId: string, billId: string, behavior: SHIPPER_BEHAVIOR_BILL) {
+  async behaviorBill(userId: string, billId: string, body: ShipperBehaviorBillREQ) {
     this.logger.log(`Behavior bill by shipper`);
+    const { behavior, reason } = body;
     switch (behavior) {
       case SHIPPER_BEHAVIOR_BILL.ACCEPT:
         return await this.acceptBillToDelivery(userId, billId);
@@ -123,7 +128,7 @@ export class ShipperService {
       case SHIPPER_BEHAVIOR_BILL.CONFIRM_DELIVERED:
         return await this.confirmDeliveredBill(userId, billId);
       case SHIPPER_BEHAVIOR_BILL.BACK:
-        break;
+        return await this.backBill(userId, billId, reason);
       default:
         break;
     }
@@ -169,6 +174,23 @@ export class ShipperService {
     await this.taxModel.create({ shipperId: userId, totalPrice: bill.deliveryFee, taxFee, paymentId: bill.paymentId });
     await this.financeModel.create({ revenue: taxFee });
     return BaseResponse.withMessage({}, 'Xác nhận giao hàng thành công!');
+  }
+
+  async backBill(shipperId: string, billId: string, reason: string) {
+    this.logger.log(`Back Bill: ${billId}`);
+    const bill = await this.billModel.findOne({
+      _id: new ObjectId(billId),
+      status: BILL_STATUS.DELIVERING,
+      shipperIds: shipperId,
+    });
+    if (!bill) throw new NotFoundException('Đơn hàng không hợp lệ!');
+    const userId = bill.userId;
+    await this.userBillTrackingService.checkUserNotAllowDoBehavior(userId, BILL_STATUS.BACK);
+    bill.status = BILL_STATUS.BACK;
+    bill.reason = reason;
+    await bill.save();
+    await this.userBillTrackingService.handleUserBillTracking(userId, BILL_STATUS.BACK);
+    return BaseResponse.withMessage({}, 'Trả đơn hàng thành công!');
   }
 
   /**

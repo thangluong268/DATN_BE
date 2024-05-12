@@ -5,9 +5,9 @@ import { AuthJwtATGuard } from 'domains/auth/guards/auth-jwt-at.guard';
 import { AuthRoleGuard } from 'domains/auth/guards/auth-role.guard';
 import { Response } from 'express';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
-import { SHIPPER_BEHAVIOR_BILL } from 'shared/enums/shipper.enum';
 import { parseExcelResponse } from 'shared/helpers/excel.helper';
 import { ShipperActiveREQ } from './request/shipper-active.request';
+import { ShipperBehaviorBillREQ } from './request/shipper-behavior-bill.request';
 import { BillByStatusShipperGetREQ } from './request/shipper-bill-by-status.request';
 import { ShipperCreateREQ } from './request/shipper-create.request';
 import { ShipperGetREQ } from './request/shipper-get.request';
@@ -60,7 +60,7 @@ export class ShipperController {
   @Roles(ROLE_NAME.SHIPPER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Patch('bills/:billId/behavior')
-  behaviorBill(@Req() req, @Param('billId') billId: string, @Query('behavior') behavior: SHIPPER_BEHAVIOR_BILL) {
-    return this.shipperService.behaviorBill(req.user._id.toString(), billId, behavior);
+  behaviorBill(@Req() req, @Param('billId') billId: string, @Body() body: ShipperBehaviorBillREQ) {
+    return this.shipperService.behaviorBill(req.user._id.toString(), billId, body);
   }
 }

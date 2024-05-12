@@ -117,13 +117,6 @@ export class BillController {
     return this.billService.confirmRefundBill(req.user._id.toString(), billId);
   }
 
-  @Roles(ROLE_NAME.SHIPPER)
-  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
-  @Patch(':billId/back')
-  backBill(@Req() req, @Param('billId') billId: string) {
-    return this.billService.backBill(req.user._id.toString(), billId);
-  }
-
   @Roles(ROLE_NAME.SELLER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Patch('seller/:id')
