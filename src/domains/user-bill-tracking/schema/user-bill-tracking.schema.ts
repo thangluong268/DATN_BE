@@ -10,6 +10,9 @@ export class UserBillTracking extends Document {
   @Prop({ type: String, required: true })
   userId: string;
 
+  @Prop({ type: String })
+  shipperId: string;
+
   @Prop({ type: Number, default: 1 })
   numOfBehavior: number;
 

@@ -9,6 +9,9 @@ export class Tax extends Document {
   @Prop({ type: String })
   storeId: string;
 
+  @Prop({ type: String })
+  shipperId: string;
+
   @Prop({ type: Number })
   totalPrice: number;
 

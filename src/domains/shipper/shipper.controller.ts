@@ -1,30 +1,41 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import * as dayjs from 'dayjs';
 import { Roles } from 'domains/auth/decorators/auth-role.decorator';
 import { AuthJwtATGuard } from 'domains/auth/guards/auth-jwt-at.guard';
 import { AuthRoleGuard } from 'domains/auth/guards/auth-role.guard';
+import { Response } from 'express';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
+import { SHIPPER_BEHAVIOR_BILL } from 'shared/enums/shipper.enum';
+import { parseExcelResponse } from 'shared/helpers/excel.helper';
 import { ShipperActiveREQ } from './request/shipper-active.request';
 import { BillByStatusShipperGetREQ } from './request/shipper-bill-by-status.request';
 import { ShipperCreateREQ } from './request/shipper-create.request';
-import { ShipperInActiveGetREQ } from './request/shipper-inactive-get.request';
+import { ShipperGetREQ } from './request/shipper-get.request';
 import { ShipperService } from './shipper.service';
 
 @Controller('shippers')
 export class ShipperController {
   constructor(private readonly shipperService: ShipperService) {}
 
+  @Roles(ROLE_NAME.MANAGER)
+  @Get('excel')
+  async downloadExcelShipper(@Res() response: Response) {
+    const book = await this.shipperService.downloadExcelShipper();
+    await parseExcelResponse(response, book, `DTEX_Shippers_${dayjs().format('YYYY-MM-DD_HH:mm:ss')}`);
+  }
+
+  @Roles(ROLE_NAME.MANAGER)
+  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
+  @Get()
+  getShippers(@Query() query: ShipperGetREQ) {
+    return this.shipperService.getShippers(query);
+  }
+
   @Roles(ROLE_NAME.SHIPPER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Get('bills')
   getBillsByStatus(@Req() req, @Query() query: BillByStatusShipperGetREQ) {
     return this.shipperService.getBillsByStatus(req.user._id.toString(), query);
-  }
-
-  @Roles(ROLE_NAME.MANAGER)
-  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
-  @Get('in-active')
-  getShippersInActive(@Query() query: ShipperInActiveGetREQ) {
-    return this.shipperService.getShippersInActive(query);
   }
 
   @Post()
@@ -48,15 +59,8 @@ export class ShipperController {
 
   @Roles(ROLE_NAME.SHIPPER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
-  @Patch('bills/:billId/accept')
-  acceptBillToDelivery(@Req() req, @Param('billId') billId: string) {
-    return this.shipperService.acceptBillToDelivery(req.user._id.toString(), billId);
-  }
-
-  @Roles(ROLE_NAME.SHIPPER)
-  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
-  @Patch('bills/:billId/confirm-delivered')
-  confirmDeliveredBill(@Req() req, @Param('billId') billId: string) {
-    return this.shipperService.confirmDeliveredBill(req.user._id.toString(), billId);
+  @Patch('bills/:billId/behavior')
+  behaviorBill(@Req() req, @Param('billId') billId: string, @Query('behavior') behavior: SHIPPER_BEHAVIOR_BILL) {
+    return this.shipperService.behaviorBill(req.user._id.toString(), billId, behavior);
   }
 }

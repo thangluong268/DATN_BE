@@ -3,10 +3,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import * as dayjs from 'dayjs';
 import { Model } from 'mongoose';
 import {
-    BILL_STATUS_TRANSLATE_VALUE,
-    NUM_OF_BAN_VALUE_BY_STATUS,
-    NUM_OF_DAY_USER_NOT_ALLOW_DO_BEHAVIOR,
-    NUM_OF_DAY_USER_NOT_ALLOW_USE_VOUCHER,
+  BILL_STATUS_TRANSLATE_VALUE,
+  NUM_OF_BAN_VALUE_BY_STATUS,
+  NUM_OF_DAY_USER_NOT_ALLOW_DO_BEHAVIOR,
+  NUM_OF_DAY_USER_NOT_ALLOW_USE_VOUCHER,
 } from 'shared/constants/bill.constant';
 import { BILL_STATUS } from 'shared/enums/bill.enum';
 import { UserBillTracking } from './schema/user-bill-tracking.schema';
@@ -40,15 +40,12 @@ export class UserBillTrackingService {
   }
 
   async checkUserNotAllowUseVoucher(userId: string) {
-    const userRefundTracking = await this.userBillTrackingModel
-      .findOne({ userId, status: BILL_STATUS.REFUND, bannedDate: { $ne: null } })
+    const userTracking = await this.userBillTrackingModel
+      .findOne({ userId, status: { $in: [BILL_STATUS.REFUND, BILL_STATUS.BACK] }, bannedDate: { $ne: null } })
       .lean();
-    const userBackTracking = await this.userBillTrackingModel
-      .findOne({ userId, status: BILL_STATUS.BACK, bannedDate: { $ne: null } })
-      .lean();
-    if (userRefundTracking || userBackTracking)
+    if (userTracking)
       throw new BadRequestException(
-        `Bạn đã bị vô hiệu hóa sử dụng voucher trong vòng ${NUM_OF_DAY_USER_NOT_ALLOW_USE_VOUCHER - dayjs(new Date()).diff(userRefundTracking.bannedDate, 'day')} ngày !`,
+        `Bạn đã bị vô hiệu hóa sử dụng voucher trong vòng ${NUM_OF_DAY_USER_NOT_ALLOW_USE_VOUCHER - dayjs(new Date()).diff(userTracking.bannedDate, 'day')} ngày !`,
       );
   }
 }
