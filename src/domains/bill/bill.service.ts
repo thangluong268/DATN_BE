@@ -99,7 +99,7 @@ export class BillService {
       if (body.paymentMethod === PAYMENT_METHOD.CASH) {
         await session.commitTransaction();
         await this.handleBillSuccess(paymentId);
-        return BaseResponse.withMessage({}, 'Thanh toán thành công!');
+        return BaseResponse.withMessage({ urlPayment: '' }, 'Thanh toán thành công!');
       }
       const paymentBody = { paymentId, amount: totalPrice } as PaymentDTO;
       const urlPayment = await this.paymentService.processPayment(paymentBody, body.paymentMethod);
