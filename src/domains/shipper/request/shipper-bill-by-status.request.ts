@@ -15,7 +15,7 @@ export class BillByStatusShipperGetREQ extends PaginationREQ {
   static toFind(userId: string, query: BillByStatusShipperGetREQ) {
     const { status } = query;
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
-    return [
+    const pipeline = [
       { $match: { shipperIds: userId, status, isFindShipper: status === BILL_STATUS.CONFIRMED ? true : false } },
       { $addFields: { storeObjId: { $toObjectId: '$storeId' } } },
       { $lookup: { from: 'stores', localField: 'storeObjId', foreignField: '_id', as: 'store' } },
@@ -23,8 +23,10 @@ export class BillByStatusShipperGetREQ extends PaginationREQ {
       { $addFields: { storeName: { $first: '$store.name' } } },
       { $project: { storeObjId: 0, store: 0, paymentId: 0, isPaid: 0, shipperIds: 0 } },
       { $sort: { createdAt: -1 } },
-      { $skip: skip },
-      { $limit: limit },
-    ];
+    ] as any[];
+    if (status !== BILL_STATUS.CONFIRMED) {
+      pipeline.push({ $skip: skip }, { $limit: limit });
+    }
+    return pipeline;
   }
 }

@@ -122,7 +122,9 @@ export class ShipperService {
       const totalPriceReceive = bill.deliveryFee - Math.ceil(bill.deliveryFee * TAX_RATE);
       return { ...bill, totalPriceReceive };
     });
-    return PaginationResponse.ofWithTotalAndMessage(res, total, 'Lấy danh sách đơn hàng thành công!');
+    return query.status === BILL_STATUS.CONFIRMED
+      ? BaseResponse.withMessage(res, 'Lấy danh sách đơn hàng thành công!')
+      : PaginationResponse.ofWithTotalAndMessage(res, total, 'Lấy danh sách đơn hàng thành công!');
   }
 
   async getMyProfile(userId: string) {
