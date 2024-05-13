@@ -1,5 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { URL_FE } from 'app.config';
 import { CartService } from 'domains/cart/cart.service';
 import { Product } from 'domains/product/schema/product.schema';
 import { Promotion } from 'domains/promotion/schema/promotion.schema';
@@ -31,7 +32,7 @@ import { BillGetCountCharityByYearREQ } from './request/bill-get-count-charity-b
 import { BillGetRevenueStoreREQ } from './request/bill-get-revenue-store.request';
 import { BillGetTotalByStatusSellerREQ } from './request/bill-get-total-by-status-seller.request';
 import { BillReasonREQ } from './request/bill-reason.request';
-import { CountTotalByStatusRESP } from './response/bill-count-total-by-status.response';
+import { CountTotalByStatusInterface, CountTotalByStatusRESP } from './response/bill-count-total-by-status.response';
 import { Bill } from './schema/bill.schema';
 
 @Injectable()
@@ -99,7 +100,7 @@ export class BillService {
       if (body.paymentMethod === PAYMENT_METHOD.CASH) {
         await session.commitTransaction();
         await this.handleBillSuccess(paymentId);
-        return BaseResponse.withMessage({ urlPayment: '' }, 'Thanh toán thành công!');
+        return BaseResponse.withMessage({ urlPayment: `${URL_FE}/user/invoice` }, 'Thanh toán thành công!');
       }
       const paymentBody = { paymentId, amount: totalPrice } as PaymentDTO;
       const urlPayment = await this.paymentService.processPayment(paymentBody, body.paymentMethod);
@@ -217,20 +218,42 @@ export class BillService {
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const data = await this.billModel.aggregate(BillGetTotalByStatusSellerREQ.toQueryCondition(store._id, year));
     return BaseResponse.withMessage(
-      Object.keys(BILL_STATUS).map((status) => CountTotalByStatusRESP.of(status, data)),
+      Object.keys(BILL_STATUS).map((status) => CountTotalByStatusRESP.ofSeller(status, data)),
       'Lấy tổng số lượng các đơn theo trạng thái thành công!',
     );
   }
 
   async countTotalByStatusUser(userId: string) {
     this.logger.log(`Count Total By Status User: ${userId}`);
-    const data = await this.billModel.aggregate([
-      { $match: { userId: userId.toString() } },
-      { $group: { _id: '$status', count: { $sum: 1 } } },
-      { $project: { _id: 0, status: '$_id', count: 1 } },
+    /**
+     * NEW -> Đơn mới
+     * CONFIRMED -> Đang chuẩn bị
+     * DELIVERING + isShipperConfirmed = false -> Đang giao
+     * DELIVERING + isShipperConfirmed = true -> Đã giao
+     * CANCELLED -> Đã hủy
+     * REFUND -> Đã hoàn
+     * BACK -> Đã trả
+     */
+    const [newBill, confirmed, delivering, delivered, cancelled, refund, back] = await Promise.all([
+      this.billModel.countDocuments({ userId, status: BILL_STATUS.NEW }),
+      this.billModel.countDocuments({ userId, status: BILL_STATUS.CONFIRMED }),
+      this.billModel.countDocuments({ userId, status: BILL_STATUS.DELIVERING, isShipperConfirmed: false }),
+      this.billModel.countDocuments({ isShipperConfirmed: true }),
+      this.billModel.countDocuments({ userId, status: BILL_STATUS.CANCELLED }),
+      this.billModel.countDocuments({ userId, status: BILL_STATUS.REFUND }),
+      this.billModel.countDocuments({ userId, status: BILL_STATUS.BACK }),
     ]);
+    const data = [
+      { status: BILL_STATUS.NEW, count: newBill },
+      { status: BILL_STATUS.CONFIRMED, count: confirmed },
+      { status: BILL_STATUS.DELIVERING, count: delivering },
+      { status: BILL_STATUS.DELIVERED, count: delivered },
+      { status: BILL_STATUS.CANCELLED, count: cancelled },
+      { status: BILL_STATUS.REFUND, count: refund },
+      { status: BILL_STATUS.BACK, count: back },
+    ] as CountTotalByStatusInterface[];
     return BaseResponse.withMessage(
-      Object.keys(BILL_STATUS).map((status) => CountTotalByStatusRESP.of(status, data)),
+      data.map((item) => CountTotalByStatusRESP.ofUser(item)),
       'Lấy tổng số lượng các đơn theo trạng thái thành công!',
     );
   }

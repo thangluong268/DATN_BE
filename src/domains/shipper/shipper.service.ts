@@ -31,6 +31,7 @@ import { ShipperGetREQ } from './request/shipper-get.request';
 import { ShipperUpdateREQ } from './request/shipper-update.request';
 import { ShipperRESP } from './response/shipper-inactive.response';
 import { ShipperProfileRESP } from './response/shipper-profile.response';
+import { Product } from 'domains/product/schema/product.schema';
 
 @Injectable()
 export class ShipperService {
@@ -47,6 +48,9 @@ export class ShipperService {
 
     @InjectModel(Finance.name)
     private readonly financeModel: Model<Finance>,
+
+    @InjectModel(Product.name)
+    private readonly productModel: Model<Product>,
 
     @InjectModel(UserBillTracking.name)
     private readonly userBillTrackingModel: Model<UserBillTracking>,
@@ -234,6 +238,11 @@ export class ShipperService {
     if (!bill) throw new NotFoundException('Đơn hàng không hợp lệ!');
     const userId = bill.userId;
     await this.userBillTrackingService.checkUserNotAllowDoBehavior(userId, BILL_STATUS.BACK);
+    await Promise.all(
+      bill.products.map(async (product) => {
+        await this.productModel.findByIdAndUpdate(product.id, { $inc: { quantity: product.quantity } });
+      }),
+    );
     bill.status = BILL_STATUS.BACK;
     bill.reason = reason;
     await bill.save();

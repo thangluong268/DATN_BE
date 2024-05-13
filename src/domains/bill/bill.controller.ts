@@ -23,14 +23,14 @@ export class BillController {
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Get('seller/count-total-by-status')
   countTotalByStatusSeller(@Req() req, @Query() query: BillGetTotalByStatusSellerREQ) {
-    return this.billService.countTotalByStatusSeller(req.user._id, Number(query.year));
+    return this.billService.countTotalByStatusSeller(req.user._id.toString(), Number(query.year));
   }
 
   @Roles(ROLE_NAME.USER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Get('user/count-total-by-status')
   countTotalByStatusUser(@Req() req) {
-    return this.billService.countTotalByStatusUser(req.user._id);
+    return this.billService.countTotalByStatusUser(req.user._id.toString());
   }
 
   @Roles(ROLE_NAME.SELLER)

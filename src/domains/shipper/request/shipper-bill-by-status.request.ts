@@ -1,24 +1,24 @@
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsEnum } from 'class-validator';
 import { BILL_STATUS } from 'shared/enums/bill.enum';
 import { PaginationREQ } from 'shared/generics/pagination.request';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
-import { BooleanValidator } from 'shared/validators/boolean-query.validator';
 
 export class BillByStatusShipperGetREQ extends PaginationREQ {
   @IsEnum(BILL_STATUS)
   status: BILL_STATUS;
 
-  @IsOptional()
-  @BooleanValidator()
-  isShipperConfirmed: boolean;
-
   static toCondition(userId: string, query: BillByStatusShipperGetREQ) {
-    const { status, isShipperConfirmed } = query;
-    const condition = { shipperIds: userId, status } as any;
+    const { status } = query;
+    const condition = { shipperIds: userId } as any;
     if (status === BILL_STATUS.CONFIRMED) {
+      condition.status = status;
       condition.isFindShipper = true;
     } else if (status === BILL_STATUS.DELIVERING) {
-      condition.isShipperConfirmed = isShipperConfirmed || false;
+      condition.status = status;
+      condition.isShipperConfirmed = false;
+    } else if (status === BILL_STATUS.DELIVERED) {
+      condition.status = BILL_STATUS.DELIVERING;
+      condition.isShipperConfirmed = true;
     }
     return condition;
   }
@@ -27,7 +27,7 @@ export class BillByStatusShipperGetREQ extends PaginationREQ {
     const { status } = query;
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const pipeline = [
-      { $match: BillByStatusShipperGetREQ.toCondition(userId, query)},
+      { $match: BillByStatusShipperGetREQ.toCondition(userId, query) },
       { $addFields: { storeObjId: { $toObjectId: '$storeId' } } },
       { $lookup: { from: 'stores', localField: 'storeObjId', foreignField: '_id', as: 'store' } },
       { $addFields: { storeAvatar: { $first: '$store.avatar' } } },
