@@ -55,6 +55,9 @@ export class Bill extends Document {
   @Prop({ type: Date })
   deliveredDate: Date;
 
+  @Prop({ type: Date })
+  processDate: Date;
+
   @Prop({ type: String })
   reason: string;
 

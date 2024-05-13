@@ -388,12 +388,6 @@ export class BillService {
         // TO DO...
         // Notification to User
         break;
-      case BILL_STATUS.DELIVERED:
-        if (bill.paymentMethod === PAYMENT_METHOD.CASH) {
-          updatedBill.isPaid = true;
-        }
-        updatedBill.deliveredDate = new Date();
-        break;
       default:
         break;
     }
@@ -519,21 +513,18 @@ export class BillService {
 
   async confirmDeliveredBillByUser(userId: string, billId: string) {
     this.logger.log(`Confirm delivered bill by user`);
-    const bill = await this.billModel
-      .findOne({
-        _id: new ObjectId(billId),
-        status: BILL_STATUS.DELIVERING,
-        userId,
-        isShipperConfirmed: true,
-        isUserConfirmed: false,
-      })
-      .lean();
-    if (!bill) throw new NotFoundException('Đơn hàng không hợp lệ!');
-    await this.billModel.findByIdAndUpdate(billId, {
-      status: BILL_STATUS.DELIVERED,
-      isUserConfirmed: true,
-      deliveredDate: new Date(),
+    const bill = await this.billModel.findOne({
+      _id: new ObjectId(billId),
+      status: BILL_STATUS.DELIVERING,
+      userId,
+      isShipperConfirmed: true,
+      isUserConfirmed: false,
     });
+    if (!bill) throw new NotFoundException('Đơn hàng không hợp lệ!');
+    bill.status = BILL_STATUS.DELIVERED;
+    bill.isUserConfirmed = true;
+    bill.processDate = new Date();
+    await bill.save();
     return BaseResponse.withMessage({}, 'Xác nhận giao hàng thành công!');
   }
 }

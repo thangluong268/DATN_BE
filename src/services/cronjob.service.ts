@@ -207,7 +207,7 @@ export class CronjobsService {
       {
         status: BILL_STATUS.DELIVERED,
         isUserConfirmed: true,
-        deliveredDate: new Date(),
+        processDate: new Date(),
       },
     );
   }
