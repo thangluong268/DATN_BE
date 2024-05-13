@@ -58,14 +58,14 @@ export class BillController {
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Get('user')
   getAllByStatusUser(@Req() req, @Query() query: BillGetAllByStatusUserREQ) {
-    return this.billService.getAllByStatusUser(req.user._id, query);
+    return this.billService.getAllByStatusUser(req.user._id.toString(), query);
   }
 
   @Roles(ROLE_NAME.SELLER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Get('seller')
   getAllByStatusSeller(@Req() req, @Query() query: BillGetAllByStatusSellerREQ) {
-    return this.billService.getAllByStatusSeller(req.user._id, query);
+    return this.billService.getAllByStatusSeller(req.user._id.toString(), query);
   }
 
   @Roles(ROLE_NAME.ADMIN)

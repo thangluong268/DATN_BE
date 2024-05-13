@@ -116,7 +116,7 @@ export class ShipperService {
     this.logger.log(`Get bills shipper by status`);
     const [data, total] = await Promise.all([
       this.billModel.aggregate(BillByStatusShipperGetREQ.toFind(userId, query) as any),
-      this.billModel.countDocuments(BillByStatusShipperGetREQ.toCount(userId, query)),
+      this.billModel.countDocuments(BillByStatusShipperGetREQ.toCondition(userId, query)),
     ]);
     const res = data.map((bill) => {
       const totalPriceReceive = bill.deliveryFee - Math.ceil(bill.deliveryFee * TAX_RATE);

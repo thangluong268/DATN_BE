@@ -336,14 +336,14 @@ export class BillService {
     this.logger.log(`Get All By Status User: ${userId}`);
     const [data, total] = await Promise.all([
       this.billModel.aggregate(BillGetAllByStatusUserREQ.toFind(userId, query) as any),
-      this.billModel.countDocuments(BillGetAllByStatusUserREQ.toCount(userId, query)),
+      this.billModel.countDocuments(BillGetAllByStatusUserREQ.toCondition(userId, query)),
     ]);
     return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách đơn hàng thành công!');
   }
 
   async getAllByStatusSeller(userId: string, query: BillGetAllByStatusSellerREQ) {
     this.logger.log(`Get All By Status Seller: ${userId}`);
-    const store = await this.storeModel.findOne({ userId: userId.toString() }).lean();
+    const store = await this.storeModel.findOne({ userId }).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const [data, total] = await Promise.all([
       this.billModel.aggregate(BillGetAllByStatusSellerREQ.toFind(store._id.toString(), query) as any),
