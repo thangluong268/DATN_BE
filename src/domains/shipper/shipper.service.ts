@@ -4,7 +4,9 @@ import { SALT_ROUNDS, TAX_RATE, TAX_SHIPPING_RATE } from 'app.config';
 import * as bcrypt from 'bcrypt';
 import * as dayjs from 'dayjs';
 import { Bill } from 'domains/bill/schema/bill.schema';
+import { FeedbackShipper } from 'domains/feedback-shipper/schema/feedback-shipper.schema';
 import { Finance } from 'domains/finance/schema/finance.schema';
+import { Product } from 'domains/product/schema/product.schema';
 import { Tax } from 'domains/tax/schema/tax.schema';
 import { UserBillTracking } from 'domains/user-bill-tracking/schema/user-bill-tracking.schema';
 import { UserBillTrackingService } from 'domains/user-bill-tracking/user-bill-tracking.service';
@@ -31,7 +33,6 @@ import { ShipperGetREQ } from './request/shipper-get.request';
 import { ShipperUpdateREQ } from './request/shipper-update.request';
 import { ShipperRESP } from './response/shipper-inactive.response';
 import { ShipperProfileRESP } from './response/shipper-profile.response';
-import { Product } from 'domains/product/schema/product.schema';
 
 @Injectable()
 export class ShipperService {
@@ -56,6 +57,9 @@ export class ShipperService {
     private readonly userBillTrackingModel: Model<UserBillTracking>,
 
     private readonly userBillTrackingService: UserBillTrackingService,
+
+    @InjectModel(FeedbackShipper.name)
+    private readonly feedbackShipperModel: Model<FeedbackShipper>,
 
     private readonly mailService: MailService,
   ) {}
@@ -114,6 +118,12 @@ export class ShipperService {
       { $project: { _id: 1 } },
     ]);
     return shippers.map((shipper) => shipper._id.toString());
+  }
+
+  async selectShipperToDelivery(billId: string, shipperId: string) {
+    this.logger.log(`Select shipper to delivery`);
+    const numOfShippersNeedToBeSelected = 5;
+    const avgStar = await this.feedbackShipperModel.aggregate([{ $group: { _id: shipperId, avgStar: { $avg: '$star' } } }]);
   }
 
   async getBillsByStatus(userId: string, query: BillByStatusShipperGetREQ) {

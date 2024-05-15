@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Bill, BillSchema } from 'domains/bill/schema/bill.schema';
+import { FeedbackShipper, FeedbackShipperSchema } from 'domains/feedback-shipper/schema/feedback-shipper.schema';
 import { Finance, FinanceSchema } from 'domains/finance/schema/finance.schema';
 import { Product, ProductSchema } from 'domains/product/schema/product.schema';
 import { Tax, TaxSchema } from 'domains/tax/schema/tax.schema';
@@ -18,6 +19,7 @@ import { ShipperService } from './shipper.service';
       { name: Tax.name, schema: TaxSchema },
       { name: Finance.name, schema: FinanceSchema },
       { name: Product.name, schema: ProductSchema },
+      { name: FeedbackShipper.name, schema: FeedbackShipperSchema },
     ]),
     UserBillTrackingModule,
     MailModule,
