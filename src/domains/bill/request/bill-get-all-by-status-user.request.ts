@@ -9,7 +9,7 @@ export class BillGetAllByStatusUserREQ extends PaginationREQ {
 
   static toCondition(userId: string, query: BillGetAllByStatusUserREQ) {
     const { status } = query;
-    if (status === BILL_STATUS.DELIVERED) return { userId, isShipperConfirmed: true };
+    if (status === BILL_STATUS.DELIVERED) return { userId, isShipperConfirmed: true, status: { $ne: BILL_STATUS.REFUND } };
     const condition = { userId, status } as any;
     if (status === BILL_STATUS.DELIVERING) condition.isShipperConfirmed = false;
     return condition;

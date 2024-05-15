@@ -238,7 +238,7 @@ export class BillService {
       this.billModel.countDocuments({ userId, status: BILL_STATUS.NEW }),
       this.billModel.countDocuments({ userId, status: BILL_STATUS.CONFIRMED }),
       this.billModel.countDocuments({ userId, status: BILL_STATUS.DELIVERING, isShipperConfirmed: false }),
-      this.billModel.countDocuments({ isShipperConfirmed: true }),
+      this.billModel.countDocuments({ isShipperConfirmed: true, status: { $ne: BILL_STATUS.REFUND } }),
       this.billModel.countDocuments({ userId, status: BILL_STATUS.CANCELLED }),
       this.billModel.countDocuments({ userId, status: BILL_STATUS.REFUND }),
       this.billModel.countDocuments({ userId, status: BILL_STATUS.BACK }),

@@ -9,17 +9,16 @@ export class BillByStatusShipperGetREQ extends PaginationREQ {
 
   static toCondition(userId: string, query: BillByStatusShipperGetREQ) {
     const { status } = query;
-    const condition = { shipperIds: userId } as any;
+    const condition = { shipperIds: userId, status } as any;
     if (status === BILL_STATUS.CONFIRMED) {
-      condition.status = status;
       condition.isFindShipper = true;
     } else if (status === BILL_STATUS.DELIVERING) {
-      condition.status = status;
       condition.isShipperConfirmed = false;
     } else if (status === BILL_STATUS.DELIVERED) {
-      condition.status = BILL_STATUS.DELIVERING;
+      delete condition.status;
       condition.isShipperConfirmed = true;
     }
+    console.log(condition);
     return condition;
   }
 
