@@ -18,7 +18,6 @@ export class BillByStatusShipperGetREQ extends PaginationREQ {
       delete condition.status;
       condition.isShipperConfirmed = true;
     }
-    console.log(condition);
     return condition;
   }
 
@@ -33,7 +32,15 @@ export class BillByStatusShipperGetREQ extends PaginationREQ {
       { $addFields: { storeName: { $first: '$store.name' } } },
       { $addFields: { storeAddress: { $first: '$store.address' } } },
       { $addFields: { storePhone: { $first: '$store.phoneNumber' } } },
-      { $project: { storeObjId: 0, store: 0, paymentId: 0, isPaid: 0, shipperIds: 0 } },
+      { $addFields: { billId: { $toString: '$_id' } } },
+      { $lookup: { from: 'feedbackshippers', localField: 'billId', foreignField: 'billId', as: 'feedbackShipper' } },
+      {
+        $addFields: {
+          star: { $ifNull: [{ $first: '$feedbackShipper.star' }, 0] },
+          content: { $ifNull: [{ $first: '$feedbackShipper.content' }, ''] },
+        },
+      },
+      { $project: { storeObjId: 0, store: 0, paymentId: 0, isPaid: 0, shipperIds: 0, feedbackShipper: 0 } },
       { $sort: { createdAt: -1 } },
     ] as any[];
     if (status !== BILL_STATUS.CONFIRMED) {

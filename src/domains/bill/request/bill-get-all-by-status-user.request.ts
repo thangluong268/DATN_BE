@@ -25,8 +25,12 @@ export class BillGetAllByStatusUserREQ extends PaginationREQ {
       { $addFields: { storeName: { $first: '$store.name' } } },
       { $addFields: { billId: { $toString: '$_id' } } },
       { $lookup: { from: 'feedbackshippers', localField: 'billId', foreignField: 'billId', as: 'feedbackShipper' } },
-      { $addFields: { star: { $first: '$feedbackShipper.star' } } },
-      { $addFields: { content: { $first: '$feedbackShipper.content' } } },
+      {
+        $addFields: {
+          star: { $ifNull: [{ $first: '$feedbackShipper.star' }, 0] },
+          content: { $ifNull: [{ $first: '$feedbackShipper.content' }, ''] },
+        },
+      },
       { $project: { storeObjId: 0, store: 0, paymentId: 0, isPaid: 0, shipperIds: 0, feedbackShipper: 0 } },
       { $sort: { createdAt: -1 } },
       { $skip: skip },

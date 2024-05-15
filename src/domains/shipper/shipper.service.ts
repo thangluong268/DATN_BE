@@ -120,10 +120,14 @@ export class ShipperService {
     return shippers.map((shipper) => shipper._id.toString());
   }
 
-  async selectShipperToDelivery(billId: string, shipperId: string) {
+  async selectShipperToDelivery() {
     this.logger.log(`Select shipper to delivery`);
     const numOfShippersNeedToBeSelected = 5;
-    const avgStar = await this.feedbackShipperModel.aggregate([{ $group: { _id: shipperId, avgStar: { $avg: '$star' } } }]);
+    const avgStars = await this.feedbackShipperModel.aggregate([
+      { $group: { _id: '$shipperId', avgStar: { $avg: '$star' } } },
+      { $sort: { avgStar: -1 } },
+    ]);
+    console.log(avgStars);
   }
 
   async getBillsByStatus(userId: string, query: BillByStatusShipperGetREQ) {
