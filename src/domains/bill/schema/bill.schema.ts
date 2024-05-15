@@ -78,6 +78,9 @@ export class Bill extends Document {
 
   @Prop({ type: Boolean, default: false })
   isUserConfirmed: boolean;
+
+  @Prop({ type: Boolean, default: false })
+  isFeedbackShipper: boolean;
 }
 
 export const BillSchema = SchemaFactory.createForClass(Bill);

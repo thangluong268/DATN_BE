@@ -5,6 +5,7 @@ export const CREDENTIALS = process.env.CREDENTIALS === 'true';
 export const NODE_ENV = process.env.NODE_ENV;
 export const SALT_ROUNDS = Number(process.env.SALT_ROUNDS);
 export const TAX_RATE = Number(process.env.TAX_RATE);
+export const TAX_SHIPPING_RATE = Number(process.env.TAX_SHIPPING_RATE);
 
 export const {
   DATABASE_URL,

@@ -225,15 +225,6 @@ export class BillService {
 
   async countTotalByStatusUser(userId: string) {
     this.logger.log(`Count Total By Status User: ${userId}`);
-    /**
-     * NEW -> Đơn mới
-     * CONFIRMED -> Đang chuẩn bị
-     * DELIVERING + isShipperConfirmed = false -> Đang giao
-     * DELIVERING + isShipperConfirmed = true -> Đã giao
-     * CANCELLED -> Đã hủy
-     * REFUND -> Đã hoàn
-     * BACK -> Đã trả
-     */
     const [newBill, confirmed, delivering, delivered, cancelled, refund, back] = await Promise.all([
       this.billModel.countDocuments({ userId, status: BILL_STATUS.NEW }),
       this.billModel.countDocuments({ userId, status: BILL_STATUS.CONFIRMED }),

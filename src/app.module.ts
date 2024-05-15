@@ -4,6 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { BillModule } from 'domains/bill/bill.module';
 import { CartModule } from 'domains/cart/cart.module';
 import { EvaluationModule } from 'domains/evaluation/evaluation.module';
+import { FeedbackShipperModule } from 'domains/feedback-shipper/feedback-shipper.module';
 import { FeedbackModule } from 'domains/feedback/feedback.module';
 import { FinanceModule } from 'domains/finance/finance.module';
 import { PolicyModule } from 'domains/policy/policy.module';
@@ -60,6 +61,7 @@ import { SeederService } from './services/seeder.service';
     ConversationModule,
     NotificationModule,
     ShipperModule,
+    FeedbackShipperModule,
     // ElasticSearchModule,
   ],
   providers: [SeederService, CronjobsService],

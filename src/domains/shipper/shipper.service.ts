@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { SALT_ROUNDS, TAX_RATE } from 'app.config';
+import { SALT_ROUNDS, TAX_RATE, TAX_SHIPPING_RATE } from 'app.config';
 import * as bcrypt from 'bcrypt';
 import * as dayjs from 'dayjs';
 import { Bill } from 'domains/bill/schema/bill.schema';
@@ -218,7 +218,7 @@ export class ShipperService {
       .findOne({ _id: new ObjectId(billId), status: BILL_STATUS.DELIVERING, shipperIds: userId })
       .lean();
     if (!bill) throw new NotFoundException('Đơn hàng không hợp lệ!');
-    const taxFee = Math.ceil(bill.deliveryFee * TAX_RATE);
+    const taxFee = Math.ceil(bill.deliveryFee * TAX_SHIPPING_RATE);
     const updateBillData = { isShipperConfirmed: true, deliveredDate: new Date() } as any;
     if (bill.paymentMethod === PAYMENT_METHOD.CASH) updateBillData.isPaid = true;
     await this.billModel.findByIdAndUpdate(billId, updateBillData);
