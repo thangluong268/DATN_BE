@@ -21,7 +21,7 @@ export class ShipperController {
 
   @Get('test')
   async gest() {
-    return this.shipperService.selectShipperToDelivery();
+    return this.shipperService.selectShipper();
   }
 
   @Roles(ROLE_NAME.MANAGER)

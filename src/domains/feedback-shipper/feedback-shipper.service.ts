@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Bill } from 'domains/bill/schema/bill.schema';
 import { ObjectId } from 'mongodb';
@@ -21,7 +21,8 @@ export class FeedbackShipperService {
 
   async create(userId: string, body: FeedbackShipperCreateREQ) {
     this.logger.log(`Create Feedback Shipper`);
-    const bill = await this.billModel.findOne({ _id: new ObjectId(body.billId), userId }).lean();
+    const bill = await this.billModel.findOne({ _id: new ObjectId(body.billId), userId, isShipperConfirmed: true }).lean();
+    if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng');
     if (bill.isFeedbackShipper) throw new BadRequestException('Bạn chỉ được đánh giá 1 lần');
     const shipperId = bill.shipperIds[0];
     await this.feedbackShipperModel.create({ shipperId, userId, ...body });

@@ -105,30 +105,84 @@ export class ShipperService {
     this.logger.log(`Find shipper to delivery`);
     const bill = await this.billModel.findById(billId).lean();
     if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng');
-    const shipperIds = await this.selectShipper();
+    const shippers = await this.selectShipper();
+    const shipperIds = shippers.map((shipper) => shipper._id.toString());
     await this.billModel.findByIdAndUpdate(billId, { isFindShipper: true, shipperIds });
     return BaseResponse.withMessage({}, 'Tìm shipper giao hàng thành công');
   }
 
-  private async selectShipper() {
-    this.logger.log(`Select shipper`);
-    const shippers = await this.userModel.aggregate([
-      { $match: { role: ROLE_NAME.SHIPPER, status: true } },
-      { $sample: { size: 3 } },
-      { $project: { _id: 1 } },
-    ]);
-    return shippers.map((shipper) => shipper._id.toString());
-  }
-
-  async selectShipperToDelivery() {
+  async selectShipper() {
     this.logger.log(`Select shipper to delivery`);
     const numOfShippersNeedToBeSelected = 5;
-    const avgStars = await this.feedbackShipperModel.aggregate([
-      { $group: { _id: '$shipperId', avgStar: { $avg: '$star' } } },
-      { $sort: { avgStar: -1 } },
+    /**
+     * 1. Lấy những shipper có đánh giá sao cao nhất + số lượng đơn giao < 5
+     * 2. Lấy những shipper có số lượng đơn hàng giao thành công nhiều nhất
+     * 3. Lấy số lượng shipper có số lượng từ chối đơn hàng ít nhất
+     * 4. Lấy theo điều kiện 1, 2, 3
+     */
+    return await this.userModel.aggregate([
+      { $match: { role: ROLE_NAME.SHIPPER, status: true } },
+      { $addFields: { shipperId: { $toString: '$_id' } } },
+      {
+        $lookup: {
+          from: 'feedbackshippers',
+          localField: 'shipperId',
+          foreignField: 'shipperId',
+          as: 'feedbacks',
+        },
+      },
+      { $addFields: { avgStar: { $avg: '$feedbacks.star' } } },
+      { $lookup: { from: 'bills', localField: 'shipperId', foreignField: 'shipperIds', as: 'bills' } },
+      {
+        $addFields: {
+          deliveredCount: {
+            $size: {
+              $filter: {
+                input: '$bills',
+                as: 'bill',
+                cond: { $and: [{ $eq: ['$$bill.isShipperConfirmed', true] }, { $in: ['$shipperId', '$$bill.shipperIds'] }] },
+              },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          deliveringCount: {
+            $size: {
+              $filter: {
+                input: '$bills',
+                as: 'bill',
+                cond: {
+                  $and: [
+                    { $eq: ['$$bill.status', BILL_STATUS.DELIVERING] },
+                    { $eq: ['$$bill.isShipperConfirmed', false] },
+                    { $in: ['$shipperId', '$$bill.shipperIds'] },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+      { $lookup: { from: 'userbilltrackings', localField: 'shipperId', foreignField: 'shipperId', as: 'shipperTrackings' } },
+      { $addFields: { refuseCount: { $first: '$shipperTrackings.numOfBehavior' } } },
+      { $match: { deliveringCount: { $lt: NUM_OF_ALLOW_DELIVERING_BILL } } },
+      { $sort: { avgStar: -1, deliveredCount: -1, refuseCount: 1 } },
+      { $limit: numOfShippersNeedToBeSelected },
+      { $project: { _id: 1, avgStar: 1, deliveredCount: 1, refuseCount: 1, deliveringCount: 1 } },
     ]);
-    console.log(avgStars);
   }
+
+  // private async selectShipper() {
+  //   this.logger.log(`Select shipper`);
+  //   const shippers = await this.userModel.aggregate([
+  //     { $match: { role: ROLE_NAME.SHIPPER, status: true } },
+  //     { $sample: { size: 3 } },
+  //     { $project: { _id: 1 } },
+  //   ]);
+  //   return shippers.map((shipper) => shipper._id.toString());
+  // }
 
   async getBillsByStatus(userId: string, query: BillByStatusShipperGetREQ) {
     this.logger.log(`Get bills shipper by status`);
