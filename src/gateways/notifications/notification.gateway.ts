@@ -75,7 +75,7 @@ export class NotificationGateway implements OnGatewayInit, OnGatewayConnection, 
 
   @SubscribeMessage(WS_EVENT.NOTIFICATION.GET_NOTIFICATIONS)
   async getNotifications(@ConnectedSocket() client: AuthSocket, @MessageBody() body: PaginationREQ) {
-    this.logger.log(`User ${client.userId} get notifications`);
+    this.logger.log(`User ${client.userId} get notifications, with body: ${JSON.stringify(body)}`);
     const data = await this.notificationService.getNotifications(client.userId, body);
     client.join(client.userId);
     return { event: WS_EVENT.NOTIFICATION.GET_NOTIFICATIONS, data };
