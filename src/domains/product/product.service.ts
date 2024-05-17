@@ -5,9 +5,13 @@ import { Bill } from 'domains/bill/schema/bill.schema';
 import { Evaluation } from 'domains/evaluation/schema/evaluation.schema';
 import { Feedback } from 'domains/feedback/schema/feedback.schema';
 import { Store } from 'domains/store/schema/store.schema';
+import { User } from 'domains/user/schema/user.schema';
+import { NotificationSubjectInfoDTO } from 'gateways/notifications/dto/notification-subject-info.dto';
 import { ObjectId } from 'mongodb';
 import { Model, Types } from 'mongoose';
+import { NOTIFICATION_LINK } from 'shared/constants/notification.constant';
 import { BILL_STATUS, PRODUCT_TYPE } from 'shared/enums/bill.enum';
+import { NotificationType } from 'shared/enums/notification.enum';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationREQ } from 'shared/generics/pagination.request';
@@ -26,6 +30,8 @@ import { ProductGetRandomREQ } from './request/product-get-random.request';
 import { ProductsGetREQ } from './request/product-get.request';
 import { ProductUpdateREQ } from './request/product-update.request';
 import { Product } from './schema/product.schema';
+import { NotificationService } from 'gateways/notifications/notification.service';
+import { NotificationGateway } from 'gateways/notifications/notification.gateway';
 
 @Injectable()
 export class ProductService {
@@ -47,7 +53,13 @@ export class ProductService {
     @InjectModel(Store.name)
     private readonly storeModel: Model<Store>,
 
+    @InjectModel(User.name)
+    private readonly userModel: Model<User>,
+
     private readonly categoryService: CategoryService,
+
+    private readonly notificationService: NotificationService,
+    private readonly notificationGateway: NotificationGateway,
 
     // private readonly esService: ESService,
   ) {}
@@ -56,11 +68,20 @@ export class ProductService {
     this.logger.log(`Create Product: ${userId}`);
     const store = await this.storeModel.findOne({ userId: userId.toString() }).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
-    const category = await this.categoryService.findById(body.categoryId);
-    if (!category) throw new NotFoundException('Không tìm thấy danh mục này!');
     const newProduct = await this.productModel.create({ ...body, storeId: store._id });
     await this.evaluationModel.create({ productId: newProduct._id.toString() });
     // await this.esService.indexProduct(toDocModel(newProduct));
+
+    // Send notification to users follow store
+    const usersFollow = await this.userModel.find({ followStores: store._id.toString() }).select('_id').lean();
+    const userIdsFollow = usersFollow.map((user) => user._id.toString());
+    const subjectInfo = NotificationSubjectInfoDTO.ofStore(store);
+    const link = NOTIFICATION_LINK[NotificationType.NEW_POST] + newProduct._id.toString();
+    for (const receiverId of userIdsFollow) {
+      const notification = await this.notificationService.create(receiverId, subjectInfo, NotificationType.NEW_POST, link);
+      this.notificationGateway.sendNotification(receiverId, notification);
+    }
+
     return BaseResponse.withMessage<Product>(toDocModel(newProduct), 'Tạo sản phẩm thành công!');
   }
 

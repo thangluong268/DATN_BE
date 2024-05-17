@@ -17,6 +17,7 @@ import { NotificationGateway } from 'gateways/notifications/notification.gateway
 import { NotificationService } from 'gateways/notifications/notification.service';
 import { NotificationUpdateREQ } from 'gateways/notifications/request/notification-update.request';
 import { Model } from 'mongoose';
+import { NOTIFICATION_LINK } from 'shared/constants/notification.constant';
 import { SOCIAL_APP } from 'shared/constants/user.constant';
 import { BILL_STATUS } from 'shared/enums/bill.enum';
 import { NotificationType } from 'shared/enums/notification.enum';
@@ -27,6 +28,7 @@ import { PaginationREQ } from 'shared/generics/pagination.request';
 import { PaginationResponse } from 'shared/generics/pagination.response';
 import { createExcelFile } from 'shared/helpers/excel.helper';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
+import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 import { ForgetPassREQ } from '../auth/request/forget-password.request';
 import { AuthSignUpREQ } from '../auth/request/sign-up.request';
 import { USER_DATA } from './data/sample.data';
@@ -40,7 +42,6 @@ import { UsersHaveStoreREQ } from './request/user-have-store.request';
 import { UserUpdateREQ } from './request/user-update.request';
 import { UserCreateRESP } from './response/user-create.response';
 import { User } from './schema/user.schema';
-import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 
 @Injectable()
 export class UserService {
@@ -130,8 +131,8 @@ export class UserService {
     // Send notification
     const subjectInfo = NotificationSubjectInfoDTO.ofUser(updatedUser);
     const receiverId = updatedUser._id.toString();
-    const redirectId = updatedUser._id.toString();
-    const notification = await this.notificationService.create(receiverId, subjectInfo, NotificationType.UPDATE_INFO, redirectId);
+    const link = NOTIFICATION_LINK[NotificationType.UPDATE_INFO];
+    const notification = await this.notificationService.create(receiverId, subjectInfo, NotificationType.UPDATE_INFO, link);
     this.notificationGateway.sendNotification(receiverId, notification);
 
     return BaseResponse.withMessage(toDocModel(updatedUser), 'Cập nhật thông tin thành công!');
@@ -265,10 +266,10 @@ export class UserService {
     await this.userModel.findByIdAndUpdate(userId, { followStores: user.followStores });
 
     // Send notification
-    const subjectInfo = NotificationSubjectInfoDTO.ofStore(store);
+    const subjectInfo = NotificationSubjectInfoDTO.ofUser(user);
     const receiverId = store.userId;
-    const redirectId = userId;
-    const notification = await this.notificationService.create(receiverId, subjectInfo, NotificationType.FOLLOW, redirectId);
+    const link = NOTIFICATION_LINK[NotificationType.FOLLOW];
+    const notification = await this.notificationService.create(receiverId, subjectInfo, NotificationType.FOLLOW, link);
     this.notificationGateway.sendNotification(receiverId, notification);
 
     return BaseResponse.withMessage({}, index == -1 ? 'Follow cửa hàng thành công!' : 'Hủy follow cửa hàng thành công!');
@@ -297,12 +298,12 @@ export class UserService {
 
     // Sender side
     const subjectInfo = NotificationSubjectInfoDTO.ofUser(receiver);
-    const redirectId = receiverId;
+    const link = '';
     const newNotificationSender = await this.notificationService.create(
       senderId, // receiverId
       subjectInfo,
       NotificationType.ACCEPTED_ADD_FRIEND_OF_SENDER,
-      redirectId,
+      link,
     );
     this.notificationGateway.sendNotification(senderId, newNotificationSender);
 

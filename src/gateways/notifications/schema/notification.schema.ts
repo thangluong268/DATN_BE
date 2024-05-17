@@ -25,7 +25,7 @@ export class Notification extends Document {
   type: NotificationType;
 
   @Prop({ type: String })
-  redirectId: string;
+  link: string;
 
   @Prop({ type: Boolean, default: false })
   isRead: boolean;

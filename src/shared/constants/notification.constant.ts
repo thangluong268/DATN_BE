@@ -12,3 +12,16 @@ export const NOTIFICATION_CONTENT = {
   [NotificationType.EVALUATION]: 'đã bày tỏ cảm xúc về sản phẩm của bạn.',
   [NotificationType.FEEDBACK]: 'đã gửi phản hồi về sản phẩm của bạn.',
 };
+
+export const NOTIFICATION_LINK = {
+  [NotificationType.UPDATE_INFO]: '/user/profile',
+  [NotificationType.FOLLOW]: '',
+  [NotificationType.SENT_ADD_FRIEND]: '',
+  [NotificationType.ACCEPTED_ADD_FRIEND_OF_SENDER]: '',
+  [NotificationType.ACCEPTED_ADD_FRIEND_OF_RECEIVER]: '',
+  [NotificationType.REJECT_ADD_FRIEND]: '',
+  [NotificationType.NEW_POST]: '/product/', // + product id
+  [NotificationType.BILL]: '/user/invoice',
+  [NotificationType.EVALUATION]: '/product/', // + product id
+  [NotificationType.FEEDBACK]: '/product/', // + product id
+};

@@ -26,7 +26,7 @@ export class NotificationService {
     return { data: data.map((notification) => NotificationGetRESP.of(notification)), total };
   }
 
-  async create(receiverId: string, subjectInfo: NotificationSubjectInfoDTO, type: NotificationType, redirectId?: string) {
+  async create(receiverId: string, subjectInfo: NotificationSubjectInfoDTO, type: NotificationType, link: string) {
     const content = this.getContent(type);
     const newNotification = await this.notificationModel.create({
       receiverId,
@@ -35,7 +35,7 @@ export class NotificationService {
       subjectName: subjectInfo.subjectName,
       content,
       type,
-      redirectId,
+      link,
     });
     return NotificationGetRESP.of(newNotification);
   }

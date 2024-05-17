@@ -4,6 +4,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { TAX_RATE } from 'app.config';
 import * as dayjs from 'dayjs';
 import { Bill } from 'domains/bill/schema/bill.schema';
+import { Cart } from 'domains/cart/schema/cart.schema';
 import { Finance } from 'domains/finance/schema/finance.schema';
 import { Product } from 'domains/product/schema/product.schema';
 import { Promotion } from 'domains/promotion/schema/promotion.schema';
@@ -50,6 +51,9 @@ export class CronjobsService {
     @InjectModel(Finance.name)
     private readonly financeModel: Model<Finance>,
 
+    @InjectModel(Cart.name)
+    private readonly cartModel: Model<Cart>,
+
     private readonly redisService: RedisService,
   ) {}
 
@@ -61,6 +65,25 @@ export class CronjobsService {
   @Cron('*/1 * * * * *')
   async disableProduct() {
     await this.productModel.updateMany({ quantity: { $lte: 0 }, status: true }, { $set: { status: false } });
+  }
+
+  @Cron('*/1 * * * * *')
+  async clearProductInactiveInCart() {
+    const products = await this.productModel.find({ status: false }).select('_id').lean();
+    const productIds = products.map((product) => product._id);
+    if (productIds.length === 0) return;
+    await this.cartModel.updateMany({ 'products.id': { $in: productIds } }, { $pull: { products: { id: { $in: productIds } } } });
+  }
+
+  @Cron('*/1 * * * * *')
+  async cleanCart() {
+    const carts = await this.cartModel
+      .find({ products: { $size: 0 } })
+      .select('_id')
+      .lean();
+    const cartIds = carts.map((cart) => cart._id);
+    if (cartIds.length === 0) return;
+    await this.cartModel.deleteMany({ _id: { $in: cartIds } });
   }
 
   @Cron('*/1 * * * * *')

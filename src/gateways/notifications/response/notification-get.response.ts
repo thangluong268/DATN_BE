@@ -9,6 +9,7 @@ export class NotificationGetRESP {
   subjectName: string;
   content: string;
   type: NotificationType;
+  link: string;
   isRead: boolean;
   updatedAt: Date;
 
@@ -21,6 +22,7 @@ export class NotificationGetRESP {
       subjectName: notification.subjectName,
       content: notification.content,
       type: notification.type,
+      link: notification.link,
       isRead: notification.isRead,
       updatedAt: notification['updatedAt'],
     };
