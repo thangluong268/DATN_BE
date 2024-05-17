@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install production dependencies
-RUN yarn install
+RUN npm install
 
 # Copy the source code into the container
 COPY src ./src
@@ -18,7 +18,7 @@ COPY tsconfig*.json ./
 
 
 # Build your NestJS application
-RUN yarn build
+RUN npm run build
 
 # Stage 2: Create a production-ready image
 FROM node:lts-bookworm-slim
@@ -36,4 +36,4 @@ COPY --from=build /app/dist ./dist
 EXPOSE 5000
 
 # Start your NestJS application in production mode
-CMD ["yarn", "start:prod"]
+CMD ["npm", "run", "start:prod"]
