@@ -88,13 +88,13 @@ export class NotificationGateway implements OnGatewayInit, OnGatewayConnection, 
     this.io.to(client.userId).emit(WS_EVENT.NOTIFICATION.READ_NOTIFICATION, data);
   }
 
-  // @SubscribeMessage(WS_EVENT.NOTIFICATION.COUNT_NEW_NOTIFICATIONS)
-  // async countNewNotifications(@ConnectedSocket() client: AuthSocket) {
-  //   this.logger.log(`Count new notifications`);
-  //   const data = await this.notificationService.countNewNotifications(client.userId);
-  //   client.join(client.userId);
-  //   return { event: WS_EVENT.NOTIFICATION.COUNT_NEW_NOTIFICATIONS, data };
-  // }
+  @SubscribeMessage(WS_EVENT.NOTIFICATION.COUNT_NEW_NOTIFICATIONS)
+  async countNewNotifications(@ConnectedSocket() client: AuthSocket) {
+    this.logger.log(`Count new notifications`);
+    const data = await this.notificationService.countNewNotifications(client.userId);
+    client.join(client.userId);
+    return { event: WS_EVENT.NOTIFICATION.COUNT_NEW_NOTIFICATIONS, data };
+  }
 
   async handleConnection(client: Socket): Promise<void> {
     this.logger.log(`WS Client with id: ${client.id} connected!`);

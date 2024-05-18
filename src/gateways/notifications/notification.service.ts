@@ -81,4 +81,9 @@ export class NotificationService {
   async getOne(receiverId: string, subjectId: string, type: NotificationType) {
     return await this.notificationModel.findOne({ receiverId, subjectId, type });
   }
+
+  async countNewNotifications(userId: string) {
+    this.logger.log(`Count new notifications`);
+    return await this.notificationModel.countDocuments({ receiverId: userId, isRead: false });
+  }
 }
