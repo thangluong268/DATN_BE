@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IsNotEmpty, IsOptional } from 'class-validator';
-import { Document, FlattenMaps, Types, UpdateWriteOpResult } from 'mongoose';
+import { Document } from 'mongoose';
 import { SOCIAL_APP } from 'shared/constants/user.constant';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 

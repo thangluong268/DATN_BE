@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ProductInfoDTO } from 'domains/bill/dto/product-info.dto';
 import { ProductDTO } from 'domains/product/dto/product.dto';
 import { Product } from 'domains/product/schema/product.schema';
 import { Store } from 'domains/store/schema/store.schema';

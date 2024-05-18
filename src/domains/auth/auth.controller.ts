@@ -1,8 +1,6 @@
 import { Body, Controller, Delete, Get, HttpStatus, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { BaseResponse } from 'shared/generics/base.response';
 import { ROLE_NAME } from '../../shared/enums/role-name.enum';
-import { User } from '../user/schema/user.schema';
 import { AuthService } from './auth.service';
 import { Roles } from './decorators/auth-role.decorator';
 import { AuthJwtATGuard } from './guards/auth-jwt-at.guard';
