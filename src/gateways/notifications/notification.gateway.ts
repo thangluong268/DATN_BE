@@ -22,7 +22,7 @@ import { Namespace, Socket } from 'socket.io';
 import { NotificationSubjectInfoDTO } from './dto/notification-subject-info.dto';
 import { NotificationService } from './notification.service';
 import { NotificationCreateREQ } from './request/notification-create.request';
-import { NotificationReadREQ } from './request/notification-update.request';
+import { NotificationReadREQ } from './request/notification-read.request';
 import { NotificationGetRESP } from './response/notification-get.response';
 
 @WebSocketGateway({

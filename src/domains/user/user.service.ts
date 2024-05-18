@@ -15,7 +15,6 @@ import { Store } from 'domains/store/schema/store.schema';
 import { NotificationSubjectInfoDTO } from 'gateways/notifications/dto/notification-subject-info.dto';
 import { NotificationGateway } from 'gateways/notifications/notification.gateway';
 import { NotificationService } from 'gateways/notifications/notification.service';
-import { NotificationUpdateREQ } from 'gateways/notifications/request/notification-update.request';
 import { Model } from 'mongoose';
 import { NOTIFICATION_LINK } from 'shared/constants/notification.constant';
 import { SOCIAL_APP } from 'shared/constants/user.constant';
@@ -42,6 +41,7 @@ import { UsersHaveStoreREQ } from './request/user-have-store.request';
 import { UserUpdateREQ } from './request/user-update.request';
 import { UserCreateRESP } from './response/user-create.response';
 import { User } from './schema/user.schema';
+import { NotificationUpdateREQ } from 'gateways/notifications/request/notification-update.request';
 
 @Injectable()
 export class UserService {
