@@ -11,7 +11,7 @@ export class NotificationGetRESP {
   type: NotificationType;
   link: string;
   isRead: boolean;
-  updatedAt: Date;
+  createdAt: Date;
 
   static of(notification: Notification): NotificationGetRESP {
     return {
@@ -24,7 +24,7 @@ export class NotificationGetRESP {
       type: notification.type,
       link: notification.link,
       isRead: notification.isRead,
-      updatedAt: notification['updatedAt'],
+      createdAt: notification['createdAt'],
     };
   }
 }

@@ -24,7 +24,7 @@ export class NotificationService {
     this.logger.log(`Get notifications of user ${userId}`);
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const [data, total] = await Promise.all([
-      this.notificationModel.find({ receiverId: userId }).sort({ isRead: 1, updatedAt: -1 }).limit(limit).skip(skip).lean(),
+      this.notificationModel.find({ receiverId: userId }).sort({ isRead: 1, createdAt: -1 }).limit(limit).skip(skip).lean(),
       this.notificationModel.countDocuments({ receiverId: userId }),
     ]);
     return { data: data.map((notification) => NotificationGetRESP.of(notification)), total };
