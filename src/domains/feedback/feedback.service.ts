@@ -1,7 +1,15 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { Product } from 'domains/product/schema/product.schema';
+import { Store } from 'domains/store/schema/store.schema';
+import { User } from 'domains/user/schema/user.schema';
 import { UserService } from 'domains/user/user.service';
+import { NotificationSubjectInfoDTO } from 'gateways/notifications/dto/notification-subject-info.dto';
+import { NotificationGateway } from 'gateways/notifications/notification.gateway';
+import { NotificationService } from 'gateways/notifications/notification.service';
 import { Model } from 'mongoose';
+import { NOTIFICATION_LINK } from 'shared/constants/notification.constant';
+import { NotificationType } from 'shared/enums/notification.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationResponse } from 'shared/generics/pagination.response';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
@@ -19,7 +27,19 @@ export class FeedbackService {
     @InjectModel(Feedback.name)
     private readonly feedbackModel: Model<Feedback>,
 
+    @InjectModel(User.name)
+    private readonly userModel: Model<User>,
+
+    @InjectModel(Product.name)
+    private readonly productModel: Model<Product>,
+
+    @InjectModel(Store.name)
+    private readonly storeModel: Model<Store>,
+
     private readonly userService: UserService,
+
+    private readonly notificationService: NotificationService,
+    private readonly notificationGateway: NotificationGateway,
   ) {}
 
   async create(userId: string, productId: string, feedback: FeedbackCreateREQ) {
@@ -29,6 +49,17 @@ export class FeedbackService {
     if (numOfFeedback > 3) throw new BadRequestException('Bạn chỉ được feedback 3 lần trên một sản phẩm');
     if (numOfFeedback === 0) await this.userService.updateWallet(userId, 5000, 'plus');
     const newFeedback = await this.feedbackModel.create({ ...feedback, userId, productId });
+
+    const user = await this.userModel.findById(userId).lean();
+    const product = await this.productModel.findById(productId).lean();
+    const store = await this.storeModel.findById(product.storeId).lean();
+    // Send notification
+    const subjectInfo = NotificationSubjectInfoDTO.ofUser(user);
+    const receiverId = store.userId;
+    const link = NOTIFICATION_LINK[NotificationType.FEEDBACK] + productId;
+    const notification = await this.notificationService.create(receiverId, subjectInfo, NotificationType.FEEDBACK, link);
+    this.notificationGateway.sendNotification(receiverId, notification);
+
     return BaseResponse.withMessage(toDocModel(newFeedback), 'Tạo feedback thành công');
   }
 

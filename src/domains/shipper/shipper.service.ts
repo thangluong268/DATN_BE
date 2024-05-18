@@ -4,18 +4,23 @@ import { SALT_ROUNDS, TAX_RATE, TAX_SHIPPING_RATE } from 'app.config';
 import * as bcrypt from 'bcrypt';
 import * as dayjs from 'dayjs';
 import { Bill } from 'domains/bill/schema/bill.schema';
-import { FeedbackShipper } from 'domains/feedback-shipper/schema/feedback-shipper.schema';
 import { Finance } from 'domains/finance/schema/finance.schema';
 import { Product } from 'domains/product/schema/product.schema';
+import { Store } from 'domains/store/schema/store.schema';
 import { Tax } from 'domains/tax/schema/tax.schema';
 import { UserBillTracking } from 'domains/user-bill-tracking/schema/user-bill-tracking.schema';
 import { UserBillTrackingService } from 'domains/user-bill-tracking/user-bill-tracking.service';
 import { User } from 'domains/user/schema/user.schema';
+import { NotificationSubjectInfoDTO } from 'gateways/notifications/dto/notification-subject-info.dto';
+import { NotificationGateway } from 'gateways/notifications/notification.gateway';
+import { NotificationService } from 'gateways/notifications/notification.service';
 import { ObjectId } from 'mongodb';
 import { Model } from 'mongoose';
 import { MailService } from 'services/mail/mail.service';
 import { NUM_OF_ALLOW_DELIVERING_BILL } from 'shared/constants/bill.constant';
-import { BILL_STATUS, PAYMENT_METHOD } from 'shared/enums/bill.enum';
+import { NOTIFICATION_LINK } from 'shared/constants/notification.constant';
+import { BILL_STATUS, BILL_STATUS_NOTIFICATION, PAYMENT_METHOD } from 'shared/enums/bill.enum';
+import { NotificationType } from 'shared/enums/notification.enum';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { SHIPPER_BEHAVIOR_BILL } from 'shared/enums/shipper.enum';
 import { BaseResponse } from 'shared/generics/base.response';
@@ -56,10 +61,13 @@ export class ShipperService {
     @InjectModel(UserBillTracking.name)
     private readonly userBillTrackingModel: Model<UserBillTracking>,
 
+    @InjectModel(Store.name)
+    private readonly storeModel: Model<Store>,
+
     private readonly userBillTrackingService: UserBillTrackingService,
 
-    @InjectModel(FeedbackShipper.name)
-    private readonly feedbackShipperModel: Model<FeedbackShipper>,
+    private readonly notificationService: NotificationService,
+    private readonly notificationGateway: NotificationGateway,
 
     private readonly mailService: MailService,
   ) {}
@@ -253,6 +261,35 @@ export class ShipperService {
       isFindShipper: false,
       shipperIds: [userId],
     });
+
+    const store = await this.storeModel.findById(bill.storeId).lean();
+    // Send notification to seller
+    const subjectInfoToSeller = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const receiverIdToSeller = store.userId;
+    const linkToSeller = NOTIFICATION_LINK[BILL_STATUS.DELIVERING] + bill.storeId;
+    const billStatusToSeller = BILL_STATUS.DELIVERING;
+    const notificationToSeller = await this.notificationService.create(
+      receiverIdToSeller,
+      subjectInfoToSeller,
+      NotificationType.BILL,
+      linkToSeller,
+      billStatusToSeller,
+    );
+    this.notificationGateway.sendNotification(receiverIdToSeller, notificationToSeller);
+
+    // Send notification to user
+    const subjectInfoToUser = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const receiverIdToUser = bill.userId;
+    const linkToUser = NOTIFICATION_LINK[NotificationType.BILL];
+    const billStatusToUser = BILL_STATUS.DELIVERING;
+    const notificationToUser = await this.notificationService.create(
+      receiverIdToUser,
+      subjectInfoToUser,
+      NotificationType.BILL,
+      linkToUser,
+      billStatusToUser,
+    );
+    this.notificationGateway.sendNotification(receiverIdToUser, notificationToUser);
     return BaseResponse.withMessage({}, 'Nhận đơn hàng thành công');
   }
 
@@ -293,6 +330,35 @@ export class ShipperService {
     await this.taxModel.create({ shipperId: userId, totalPrice: bill.deliveryFee, taxFee, paymentId: bill.paymentId });
     await this.financeModel.create({ revenue: taxFee });
     await this.userModel.findByIdAndUpdate(userId, { $inc: { wallet: bill.deliveryFee - taxFee } });
+
+    const store = await this.storeModel.findById(bill.storeId).lean();
+    // Send notification to seller
+    const subjectInfoToSeller = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const receiverIdToSeller = store.userId;
+    const linkToSeller = NOTIFICATION_LINK[BILL_STATUS.DELIVERED] + bill.storeId;
+    const billStatusToSeller = BILL_STATUS.DELIVERED;
+    const notificationToSeller = await this.notificationService.create(
+      receiverIdToSeller,
+      subjectInfoToSeller,
+      NotificationType.BILL,
+      linkToSeller,
+      billStatusToSeller,
+    );
+    this.notificationGateway.sendNotification(receiverIdToSeller, notificationToSeller);
+
+    // Send notification to user
+    const subjectInfoToUser = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const receiverIdToUser = bill.userId;
+    const linkToUser = NOTIFICATION_LINK[NotificationType.BILL];
+    const billStatusToUser = BILL_STATUS.DELIVERED;
+    const notificationToUser = await this.notificationService.create(
+      receiverIdToUser,
+      subjectInfoToUser,
+      NotificationType.BILL,
+      linkToUser,
+      billStatusToUser,
+    );
+    this.notificationGateway.sendNotification(receiverIdToUser, notificationToUser);
     return BaseResponse.withMessage({}, 'Xác nhận giao hàng thành công!');
   }
 
@@ -315,6 +381,36 @@ export class ShipperService {
     bill.reason = reason;
     await bill.save();
     await this.userBillTrackingService.handleUserBillTracking(userId, BILL_STATUS.BACK);
+
+    const store = await this.storeModel.findById(bill.storeId).lean();
+    // Send notification to seller
+    const subjectInfoToSeller = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const receiverIdToSeller = store.userId;
+    const linkToSeller = NOTIFICATION_LINK[BILL_STATUS.BACK] + bill.storeId;
+    const billStatusToSeller = BILL_STATUS_NOTIFICATION.BACK_SELLER;
+    const notificationToSeller = await this.notificationService.create(
+      receiverIdToSeller,
+      subjectInfoToSeller,
+      NotificationType.BILL,
+      linkToSeller,
+      billStatusToSeller,
+    );
+    this.notificationGateway.sendNotification(receiverIdToSeller, notificationToSeller);
+
+    // Send notification to user
+    const subjectInfoToUser = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const receiverIdToUser = bill.userId;
+    const linkToUser = NOTIFICATION_LINK[NotificationType.BILL];
+    const billStatusToUser = BILL_STATUS_NOTIFICATION.BACK_USER;
+    const notificationToUser = await this.notificationService.create(
+      receiverIdToUser,
+      subjectInfoToUser,
+      NotificationType.BILL,
+      linkToUser,
+      billStatusToUser,
+    );
+    this.notificationGateway.sendNotification(receiverIdToUser, notificationToUser);
+
     return BaseResponse.withMessage({}, 'Trả đơn hàng thành công!');
   }
 

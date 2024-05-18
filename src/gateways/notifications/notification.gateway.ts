@@ -22,7 +22,7 @@ import { Namespace, Socket } from 'socket.io';
 import { NotificationSubjectInfoDTO } from './dto/notification-subject-info.dto';
 import { NotificationService } from './notification.service';
 import { NotificationCreateREQ } from './request/notification-create.request';
-import { NotificationUpdateREQ } from './request/notification-update.request';
+import { NotificationReadREQ } from './request/notification-update.request';
 import { NotificationGetRESP } from './response/notification-get.response';
 
 @WebSocketGateway({
@@ -82,9 +82,9 @@ export class NotificationGateway implements OnGatewayInit, OnGatewayConnection, 
   }
 
   @SubscribeMessage(WS_EVENT.NOTIFICATION.READ_NOTIFICATION)
-  async updateNotifications(@ConnectedSocket() client: AuthSocket, @MessageBody() body: NotificationUpdateREQ) {
+  async readNotifications(@ConnectedSocket() client: AuthSocket, @MessageBody() body: NotificationReadREQ) {
     this.logger.log(`Read notifications`);
-    const data = await this.notificationService.update(body);
+    const data = await this.notificationService.readNotifications(body);
     this.io.to(client.userId).emit(WS_EVENT.NOTIFICATION.READ_NOTIFICATION, data);
   }
 

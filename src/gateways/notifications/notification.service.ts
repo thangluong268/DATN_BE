@@ -2,11 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { NOTIFICATION_CONTENT } from 'shared/constants/notification.constant';
+import { BILL_STATUS, BILL_STATUS_NOTIFICATION } from 'shared/enums/bill.enum';
 import { NotificationType } from 'shared/enums/notification.enum';
 import { PaginationREQ } from 'shared/generics/pagination.request';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { NotificationSubjectInfoDTO } from './dto/notification-subject-info.dto';
-import { NotificationUpdateREQ } from './request/notification-update.request';
+import { NotificationReadREQ } from './request/notification-update.request';
 import { NotificationGetRESP } from './response/notification-get.response';
 import { Notification } from './schema/notification.schema';
 
@@ -26,8 +27,15 @@ export class NotificationService {
     return { data: data.map((notification) => NotificationGetRESP.of(notification)), total };
   }
 
-  async create(receiverId: string, subjectInfo: NotificationSubjectInfoDTO, type: NotificationType, link: string) {
-    const content = this.getContent(type);
+  async create(
+    receiverId: string,
+    subjectInfo: NotificationSubjectInfoDTO,
+    type: NotificationType,
+    link: string,
+    billStatus?: BILL_STATUS | BILL_STATUS_NOTIFICATION,
+  ) {
+    const typeToGetContent = billStatus ? billStatus : type;
+    const content = this.getContent(typeToGetContent);
     const newNotification = await this.notificationModel.create({
       receiverId,
       subjectId: subjectInfo.subjectId,
@@ -40,39 +48,22 @@ export class NotificationService {
     return NotificationGetRESP.of(newNotification);
   }
 
-  getContent(type: NotificationType, sub?: any) {
-    // sub là tên sản phẩm
-    /**
-     * NEW_POST: sub là tên sản phẩm
-     * BILL: sub là trạng thái đơn hàng
-     * EVALUATION: sub là emoji
-     */
-    switch (type) {
-      case NotificationType.UPDATE_INFO:
-      case NotificationType.FOLLOW:
-      case NotificationType.SENT_ADD_FRIEND:
-      case NotificationType.ACCEPTED_ADD_FRIEND_OF_SENDER:
-      case NotificationType.ACCEPTED_ADD_FRIEND_OF_RECEIVER:
-      case NotificationType.REJECT_ADD_FRIEND:
-      case NotificationType.FEEDBACK:
-        return NOTIFICATION_CONTENT[type];
-      case NotificationType.NEW_POST:
-      case NotificationType.BILL:
-      case NotificationType.EVALUATION:
-        return `${NOTIFICATION_CONTENT[type]} ${sub}.`;
-      default:
-        return '';
-    }
+  getContent(type: NotificationType | BILL_STATUS | BILL_STATUS_NOTIFICATION) {
+    return `${NOTIFICATION_CONTENT[type]}`;
   }
 
-  async update(body: NotificationUpdateREQ) {
-    const { notificationId, ...data } = body;
-    const updatedNotification = await this.notificationModel.findByIdAndUpdate(
-      notificationId,
-      { ...data },
-      { lean: true, new: true },
+  async readNotifications(body: NotificationReadREQ) {
+    const { notificationIds } = body;
+    return await Promise.all(
+      notificationIds.map(async (notificationId) => {
+        const updatedNotification = await this.notificationModel.findByIdAndUpdate(
+          notificationId,
+          { isRead: true },
+          { lean: true, new: true },
+        );
+        return NotificationGetRESP.of(updatedNotification);
+      }),
     );
-    return NotificationGetRESP.of(updatedNotification);
   }
 
   async getOne(receiverId: string, subjectId: string, type: NotificationType) {

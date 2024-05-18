@@ -81,14 +81,14 @@ export class VNPayController {
     if (secureHash === signed) {
       const code = vnp_Params['vnp_ResponseCode'];
       if (code !== '00') {
-        await this.billService.handleBillFail(paymentId);
+        this.billService.handleBillFail(paymentId);
         res.redirect(`${URL_FE}/error`);
       } else {
-        await this.billService.handleBillSuccess(paymentId);
+        this.billService.handleBillSuccess(paymentId);
         res.redirect(`${URL_FE}/user/invoice`);
       }
     } else {
-      await this.billService.handleBillFail(paymentId);
+      this.billService.handleBillFail(paymentId);
       res.redirect(`${URL_FE}/error`);
     }
   }

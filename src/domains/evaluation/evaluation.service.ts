@@ -2,8 +2,13 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Bill } from 'domains/bill/schema/bill.schema';
 import { Store } from 'domains/store/schema/store.schema';
+import { User } from 'domains/user/schema/user.schema';
+import { NotificationSubjectInfoDTO } from 'gateways/notifications/dto/notification-subject-info.dto';
+import { NotificationGateway } from 'gateways/notifications/notification.gateway';
 import { NotificationService } from 'gateways/notifications/notification.service';
 import { Model } from 'mongoose';
+import { NOTIFICATION_LINK } from 'shared/constants/notification.constant';
+import { NotificationType } from 'shared/enums/notification.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { Product } from '../product/schema/product.schema';
 import { EmojiDTO } from './dto/evaluation.dto';
@@ -26,7 +31,11 @@ export class EvaluationService {
     @InjectModel(Bill.name)
     private readonly billModel: Model<Bill>,
 
+    @InjectModel(User.name)
+    private readonly userModel: Model<User>,
+
     private readonly notificationService: NotificationService,
+    private readonly notificationGateway: NotificationGateway,
   ) {}
 
   async create(productId: string) {
@@ -36,22 +45,22 @@ export class EvaluationService {
 
   async expressedEmoji(userId: string, productId: string, name: string) {
     this.logger.log(`Expressed Emoji: ${userId} - ${productId} - ${name}`);
+    const user = await this.userModel.findById(userId).lean();
     const product = await this.productModel.findById(productId).lean();
     if (!product) throw new NotFoundException('Không tìm thấy sản phẩm này!');
     const store = await this.storeModel.findById(product.storeId).lean();
-    if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
-    // const isEvaluation = await this.evaluationModel.findOne({
-    //   productId,
-    //   'hadEvaluation.userId': userId,
-    //   'hadEvaluation.isHad': true,
-    // });
     const evaluation = await this.evaluationModel.findOne({ productId });
-    if (!evaluation) {
-      throw new NotFoundException('Không tìm thấy đánh giá cho sản phẩm này!');
-    }
-    const index = evaluation.hadEvaluation.findIndex((had) => had.userId.toString() === userId.toString());
-    if (index == -1) {
-      evaluation.hadEvaluation.push({ userId, isHad: true });
+    if (!evaluation) throw new NotFoundException('Không tìm thấy đánh giá cho sản phẩm này!');
+    const index = evaluation.userIds.findIndex((userIdExpressed) => userIdExpressed === userId);
+    if (index === -1) {
+      evaluation.userIds.push(userId);
+
+      // Send notification
+      const subjectInfo = NotificationSubjectInfoDTO.ofUser(user);
+      const receiverId = store.userId;
+      const link = NOTIFICATION_LINK[NotificationType.EVALUATION] + productId;
+      const notification = await this.notificationService.create(receiverId, subjectInfo, NotificationType.EVALUATION, link);
+      this.notificationGateway.sendNotification(receiverId, notification);
     }
     await this.updateEmoji(userId, name, evaluation);
     return BaseResponse.withMessage(true, 'Đánh giá thành công!');

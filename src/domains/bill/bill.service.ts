@@ -1,13 +1,15 @@
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { URL_FE } from 'app.config';
-import { CartService } from 'domains/cart/cart.service';
+import { Cart } from 'domains/cart/schema/cart.schema';
 import { Product } from 'domains/product/schema/product.schema';
 import { Promotion } from 'domains/promotion/schema/promotion.schema';
 import { Store } from 'domains/store/schema/store.schema';
 import { Tax } from 'domains/tax/schema/tax.schema';
 import { UserBillTrackingService } from 'domains/user-bill-tracking/user-bill-tracking.service';
 import { User } from 'domains/user/schema/user.schema';
+import { NotificationSubjectInfoDTO } from 'gateways/notifications/dto/notification-subject-info.dto';
+import { NotificationGateway } from 'gateways/notifications/notification.gateway';
 import { NotificationService } from 'gateways/notifications/notification.service';
 import { ObjectId } from 'mongodb';
 import { Connection, Model } from 'mongoose';
@@ -16,7 +18,9 @@ import { PaypalGateway, VNPayGateway } from 'payment/payment.gateway';
 import { PaymentService } from 'payment/payment.service';
 import { PaypalPaymentService } from 'payment/paypal/paypal.service';
 import { RedisService } from 'services/redis/redis.service';
-import { BILL_STATUS, PAYMENT_METHOD, PRODUCT_TYPE } from 'shared/enums/bill.enum';
+import { NOTIFICATION_LINK } from 'shared/constants/notification.constant';
+import { BILL_STATUS, BILL_STATUS_NOTIFICATION, PAYMENT_METHOD, PRODUCT_TYPE } from 'shared/enums/bill.enum';
+import { NotificationType } from 'shared/enums/notification.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationResponse } from 'shared/generics/pagination.response';
 import { isBlank } from 'shared/validators/query.validator';
@@ -51,7 +55,8 @@ export class BillService {
     @InjectModel(Product.name)
     private readonly productModel: Model<Product>,
 
-    private readonly cartService: CartService,
+    @InjectModel(Cart.name)
+    private readonly cartModel: Model<Cart>,
 
     @InjectModel(Promotion.name)
     private readonly promotionModel: Model<Promotion>,
@@ -63,7 +68,9 @@ export class BillService {
     private readonly storeModel: Model<Store>,
 
     private readonly userBillTrackingService: UserBillTrackingService,
+
     private readonly notificationService: NotificationService,
+    private readonly notificationGateway: NotificationGateway,
 
     private readonly paymentService: PaymentService,
     private readonly paypalPaymentService: PaypalPaymentService,
@@ -113,15 +120,6 @@ export class BillService {
       await session.endSession();
     }
   }
-
-  // async calculateTax(carts: CartInfoDTO[], paymentId: string, session: ClientSession) {
-  //   for (const [index, cart] of carts.entries()) {
-  //     const taxFee = Math.ceil(carts[index]['totalPricePayment'] * TAX_RATE);
-  //     const totalPrice = carts[index]['totalPricePayment'];
-  //     carts[index]['totalPricePayment'] -= taxFee;
-  //     await this.taxModel.create([{ storeId: cart.storeId, totalPrice, taxFee, paymentId }], { session });
-  //   }
-  // }
 
   async calculateDiscount(userId: string, numOfCoins: number, promotionId: string, carts: CartInfoDTO[]) {
     const coinsValue = numOfCoins; // 1 xu = 1đ
@@ -182,16 +180,23 @@ export class BillService {
     this.logger.log(`Handle Bill Success: ${paymentId}`);
     let userId = null;
     const bills = await this.billModel.find({ paymentId }).lean();
-    bills.forEach(async (bill) => {
+    for (const bill of bills) {
       userId = bill.userId;
-      await this.cartService.removeMultiProductInCart(bill.userId, bill.storeId, bill.products);
-      bill.products.forEach(async (product) => {
+      // Remove product in cart
+      const productIds = bill.products.map((product) => new ObjectId(product.id));
+      await this.cartModel.updateMany(
+        { 'products.id': { $in: productIds } },
+        { $pull: { products: { id: { $in: productIds } } } },
+      );
+      // Update quantity product
+      for (const product of bill.products) {
         await this.productModel.findByIdAndUpdate(product.id, { $inc: { quantity: -product.quantity } });
-      });
+      }
+      // Update isPaid if paymentMethod is not cash
       await this.billModel.findByIdAndUpdate(bill._id, {
-        isPaid: bill.paymentMethod === PAYMENT_METHOD.CASH ? false : true,
+        isPaid: bill.paymentMethod !== PAYMENT_METHOD.CASH ? true : false,
       });
-    });
+    }
     const redisClient = this.redisService.getClient();
     const data = await redisClient.get(paymentId);
     if (data) {
@@ -204,6 +209,14 @@ export class BillService {
         $push: { userUses: userId },
       });
     }
+    // Send notification
+    const subjectProduct = bills[0].products[0];
+    const subjectInfo = NotificationSubjectInfoDTO.ofProduct(subjectProduct);
+    const receiverId = userId;
+    const link = NOTIFICATION_LINK[NotificationType.BILL];
+    const billStatus = BILL_STATUS.NEW;
+    const notification = await this.notificationService.create(receiverId, subjectInfo, NotificationType.BILL, link, billStatus);
+    this.notificationGateway.sendNotification(receiverId, notification);
   }
 
   async handleBillFail(paymentId: string) {
@@ -399,8 +412,20 @@ export class BillService {
     const updatedBill = await this.billModel.findByIdAndUpdate({ _id: billId }, { status }, { new: true });
     switch (status) {
       case BILL_STATUS.CONFIRMED:
-        // TO DO...
         // Notification to User
+        // Send notification
+        const subjectInfo = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+        const receiverId = bill.userId;
+        const link = NOTIFICATION_LINK[NotificationType.BILL];
+        const billStatus = BILL_STATUS.CONFIRMED;
+        const notification = await this.notificationService.create(
+          receiverId,
+          subjectInfo,
+          NotificationType.BILL,
+          link,
+          billStatus,
+        );
+        this.notificationGateway.sendNotification(receiverId, notification);
         break;
       default:
         break;
@@ -438,6 +463,14 @@ export class BillService {
     await this.userBillTrackingService.checkUserNotAllowDoBehavior(userId, BILL_STATUS.CANCELLED);
     await this.handleCancelBill(bill, body.reason);
     await this.userBillTrackingService.handleUserBillTracking(userId, BILL_STATUS.CANCELLED);
+
+    // Send notification
+    const subjectInfo = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const receiverId = userId;
+    const link = NOTIFICATION_LINK[NotificationType.BILL];
+    const billStatus = BILL_STATUS.CANCELLED;
+    const notification = await this.notificationService.create(receiverId, subjectInfo, NotificationType.BILL, link, billStatus);
+    this.notificationGateway.sendNotification(receiverId, notification);
     return BaseResponse.withMessage({}, 'Hủy đơn hàng thành công!');
   }
 
@@ -450,6 +483,14 @@ export class BillService {
     if (bill.status !== BILL_STATUS.NEW && bill.status !== BILL_STATUS.CONFIRMED)
       throw new BadRequestException('Không thể hủy đơn hàng này!');
     await this.handleCancelBill(bill, body.reason);
+
+    // Send notification
+    const subjectInfo = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const receiverId = bill.userId;
+    const link = NOTIFICATION_LINK[NotificationType.BILL];
+    const billStatus = BILL_STATUS.CANCELLED;
+    const notification = await this.notificationService.create(receiverId, subjectInfo, NotificationType.BILL, link, billStatus);
+    this.notificationGateway.sendNotification(receiverId, notification);
     return BaseResponse.withMessage({}, 'Hủy đơn hàng thành công!');
   }
 
@@ -504,6 +545,36 @@ export class BillService {
     bill.reason = body.reason;
     await bill.save();
     await this.userBillTrackingService.handleUserBillTracking(userId, BILL_STATUS.REFUND);
+
+    const store = await this.storeModel.findById(bill.storeId).lean();
+    // Send notification to seller
+    const subjectInfoToSeller = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const receiverIdToSeller = store.userId;
+    const linkToSeller = NOTIFICATION_LINK[BILL_STATUS.REFUND] + bill.storeId;
+    const billStatusToSeller = BILL_STATUS_NOTIFICATION.REFUND_SELLER;
+    const notificationToSeller = await this.notificationService.create(
+      receiverIdToSeller,
+      subjectInfoToSeller,
+      NotificationType.BILL,
+      linkToSeller,
+      billStatusToSeller,
+    );
+    this.notificationGateway.sendNotification(receiverIdToSeller, notificationToSeller);
+
+    // Send notification to user
+    const subjectInfoToUser = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const receiverIdToUser = bill.userId;
+    const linkToUser = NOTIFICATION_LINK[NotificationType.BILL];
+    const billStatusToUser = BILL_STATUS_NOTIFICATION.REFUND_USER;
+    const notificationToUser = await this.notificationService.create(
+      receiverIdToUser,
+      subjectInfoToUser,
+      NotificationType.BILL,
+      linkToUser,
+      billStatusToUser,
+    );
+    this.notificationGateway.sendNotification(receiverIdToUser, notificationToUser);
+
     return BaseResponse.withMessage({}, 'Hoàn đơn hàng thành công!');
   }
 
@@ -522,6 +593,14 @@ export class BillService {
     );
     bill.isRefundSuccess = true;
     await bill.save();
+
+    // Send notification
+    const subjectInfo = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const receiverId = bill.userId;
+    const link = NOTIFICATION_LINK[NotificationType.BILL];
+    const billStatus = BILL_STATUS_NOTIFICATION.CONFIRMED_REFUND;
+    const notification = await this.notificationService.create(receiverId, subjectInfo, NotificationType.BILL, link, billStatus);
+    this.notificationGateway.sendNotification(receiverId, notification);
     return BaseResponse.withMessage({}, 'Xác nhận hoàn trả đơn hàng thành công!');
   }
 
@@ -539,6 +618,15 @@ export class BillService {
     bill.isUserConfirmed = true;
     bill.processDate = new Date();
     await bill.save();
+
+    const store = await this.storeModel.findById(bill.storeId).lean();
+    // Send notification
+    const subjectInfo = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const receiverId = store.userId;
+    const link = NOTIFICATION_LINK[BILL_STATUS.DELIVERED] + bill.storeId;
+    const billStatus = BILL_STATUS_NOTIFICATION.CONFIRM_DELIVERED_BY_USER;
+    const notification = await this.notificationService.create(receiverId, subjectInfo, NotificationType.BILL, link, billStatus);
+    this.notificationGateway.sendNotification(receiverId, notification);
     return BaseResponse.withMessage({}, 'Xác nhận giao hàng thành công!');
   }
 }

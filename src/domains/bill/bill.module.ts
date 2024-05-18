@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CartModule } from 'domains/cart/cart.module';
+import { Cart, CartSchema } from 'domains/cart/schema/cart.schema';
 import { Product, ProductSchema } from 'domains/product/schema/product.schema';
 import { Promotion, PromotionSchema } from 'domains/promotion/schema/promotion.schema';
 import { Store, StoreSchema } from 'domains/store/schema/store.schema';
@@ -24,6 +25,7 @@ import { Bill, BillSchema } from './schema/bill.schema';
       { name: Product.name, schema: ProductSchema },
       { name: Tax.name, schema: TaxSchema },
       { name: Store.name, schema: StoreSchema },
+      { name: Cart.name, schema: CartSchema },
     ]),
     forwardRef(() => CartModule),
     NotificationModule,

@@ -16,10 +16,10 @@ export class PayPalController {
     const data = await this.paypalPaymentService.capturePayPalPayment(orderId);
     const paymentId = data.purchase_units[0].reference_id;
     if (data.status !== 'COMPLETED') {
-      await this.billService.handleBillFail(paymentId);
+      this.billService.handleBillFail(paymentId);
       res.redirect(`${URL_FE}/error`);
     } else {
-      await this.billService.handleBillSuccess(paymentId);
+      this.billService.handleBillSuccess(paymentId);
       res.redirect(`${URL_FE}/user/invoice`);
     }
   }

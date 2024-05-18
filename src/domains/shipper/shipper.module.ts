@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Bill, BillSchema } from 'domains/bill/schema/bill.schema';
-import { FeedbackShipper, FeedbackShipperSchema } from 'domains/feedback-shipper/schema/feedback-shipper.schema';
 import { Finance, FinanceSchema } from 'domains/finance/schema/finance.schema';
 import { Product, ProductSchema } from 'domains/product/schema/product.schema';
+import { Store, StoreSchema } from 'domains/store/schema/store.schema';
 import { Tax, TaxSchema } from 'domains/tax/schema/tax.schema';
 import { UserBillTrackingModule } from 'domains/user-bill-tracking/user-bill-tracking.module';
 import { User, UserSchema } from 'domains/user/schema/user.schema';
+import { NotificationModule } from 'gateways/notifications/notification.module';
 import { MailModule } from 'services/mail/mail.module';
 import { ShipperController } from './shipper.controller';
 import { ShipperService } from './shipper.service';
@@ -19,8 +20,9 @@ import { ShipperService } from './shipper.service';
       { name: Tax.name, schema: TaxSchema },
       { name: Finance.name, schema: FinanceSchema },
       { name: Product.name, schema: ProductSchema },
-      { name: FeedbackShipper.name, schema: FeedbackShipperSchema },
+      { name: Store.name, schema: StoreSchema },
     ]),
+    NotificationModule,
     UserBillTrackingModule,
     MailModule,
   ],

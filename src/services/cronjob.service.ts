@@ -76,13 +76,23 @@ export class CronjobsService {
   }
 
   @Cron('*/1 * * * * *')
+  async updateTotalPriceInCart() {
+    const carts = await this.cartModel.find().lean();
+    if (carts.length === 0) return;
+    for (const cart of carts) {
+      const newTotalPrice = cart.products.reduce((total, product) => total + product.newPrice * product.quantity, 0);
+      await this.cartModel.findByIdAndUpdate(cart._id, { totalPrice: newTotalPrice });
+    }
+  }
+
+  @Cron('*/1 * * * * *')
   async cleanCart() {
     const carts = await this.cartModel
       .find({ products: { $size: 0 } })
       .select('_id')
       .lean();
+    if (carts.length === 0) return;
     const cartIds = carts.map((cart) => cart._id);
-    if (cartIds.length === 0) return;
     await this.cartModel.deleteMany({ _id: { $in: cartIds } });
   }
 

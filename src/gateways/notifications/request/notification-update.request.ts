@@ -1,20 +1,8 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { NotificationType } from 'shared/enums/notification.enum';
-import { BooleanValidator } from 'shared/validators/boolean-query.validator';
+import { Type } from 'class-transformer';
+import { IsArray } from 'class-validator';
 
-export class NotificationUpdateREQ {
-  @IsString()
-  notificationId: string;
-
-  @IsOptional()
-  @BooleanValidator()
-  isRead?: boolean;
-
-  @IsOptional()
-  @IsString()
-  content?: string;
-
-  @IsOptional()
-  @IsEnum(NotificationType)
-  type?: NotificationType;
+export class NotificationReadREQ {
+  @IsArray()
+  @Type(() => String)
+  notificationIds: string[];
 }

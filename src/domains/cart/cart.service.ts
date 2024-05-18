@@ -148,19 +148,4 @@ export class CartService {
     await cart.save();
     return BaseResponse.withMessage({}, 'Xóa sản phẩm khỏi giỏ hàng thành công!');
   }
-
-  async removeMultiProductInCart(userId: string, storeId: string, products: ProductInfoDTO[]) {
-    this.logger.log(`Remove Multi Product In Cart: ${userId} - ${storeId}`);
-    const cart = await this.cartModel.findOne({ userId, storeId });
-    products.forEach((product) => {
-      const index = cart.products.findIndex((p) => p.id.toString() === product.id.toString());
-      cart.products.splice(index, 1);
-    });
-    if (cart.products.length === 0) {
-      await this.cartModel.findByIdAndDelete(cart._id);
-      return;
-    }
-    cart.totalPrice = this.getTotalPrice(cart.products);
-    await cart.save();
-  }
 }

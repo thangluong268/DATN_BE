@@ -14,7 +14,7 @@ export class EvaluationController {
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Put('user')
   expressedEmoji(@Req() req, @Query('productId') productId: string, @Body() body: EvaluationEmojiREQ) {
-    return this.evaluationService.expressedEmoji(req.user._id, productId, body.name);
+    return this.evaluationService.expressedEmoji(req.user._id.toString(), productId, body.name);
   }
 
   @Get()
