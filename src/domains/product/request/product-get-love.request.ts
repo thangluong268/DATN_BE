@@ -8,7 +8,7 @@ export class ProductsGetLoveREQ extends PaginationREQ {
 
   static toQueryConditionFindProduct(query: ProductsGetLoveREQ) {
     const { search } = query;
-    const condition: any = {};
+    const condition: any = { status: true };
     if (search) {
       condition.$or = [
         { name: { $regex: search, $options: 'i' } },

@@ -6,6 +6,7 @@ export class ProductGetMostInStoreREQ {
 
   static toQueryCondition(limit: number) {
     return [
+      { $match: { status: true } },
       {
         $group: {
           _id: '$storeId',

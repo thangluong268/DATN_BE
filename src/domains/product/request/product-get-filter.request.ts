@@ -30,7 +30,7 @@ export class ProductGetFilterREQ extends PaginationREQ {
   static toQueryCondition(query: ProductGetFilterREQ) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { search, page, limit, ...filterQuery } = query;
-    let condition: any = {};
+    let condition: any = { status: true };
     if (search) {
       condition.$or = [
         { name: { $regex: search, $options: 'i' } },

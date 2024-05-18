@@ -7,6 +7,8 @@ import { Feedback } from 'domains/feedback/schema/feedback.schema';
 import { Store } from 'domains/store/schema/store.schema';
 import { User } from 'domains/user/schema/user.schema';
 import { NotificationSubjectInfoDTO } from 'gateways/notifications/dto/notification-subject-info.dto';
+import { NotificationGateway } from 'gateways/notifications/notification.gateway';
+import { NotificationService } from 'gateways/notifications/notification.service';
 import { ObjectId } from 'mongodb';
 import { Model, Types } from 'mongoose';
 import { NOTIFICATION_LINK } from 'shared/constants/notification.constant';
@@ -30,8 +32,6 @@ import { ProductGetRandomREQ } from './request/product-get-random.request';
 import { ProductsGetREQ } from './request/product-get.request';
 import { ProductUpdateREQ } from './request/product-update.request';
 import { Product } from './schema/product.schema';
-import { NotificationService } from 'gateways/notifications/notification.service';
-import { NotificationGateway } from 'gateways/notifications/notification.gateway';
 
 @Injectable()
 export class ProductService {
@@ -409,7 +409,7 @@ export class ProductService {
 
   async getProductById(id: string) {
     this.logger.log(`Get Product By Id: ${id}`);
-    const product = await this.productModel.findById(id).lean();
+    const product = await this.productModel.findById(id, { status: true }).lean();
     if (!product) throw new NotFoundException('Không tìm thấy sản phẩm này!');
     const type = product.newPrice === 0 ? PRODUCT_TYPE.GIVE : PRODUCT_TYPE.SELL;
     const quantityDelivered = await this.billService.countProductDelivered(id, type, BILL_STATUS.DELIVERED);
