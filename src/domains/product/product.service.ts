@@ -280,16 +280,7 @@ export class ProductService {
 
   async getProductsRandom(query: ProductGetRandomREQ) {
     this.logger.log(`Get Products Random`);
-    const products = await this.productModel.aggregate([
-      { $match: { status: true } },
-      { $addFields: { productId: { $toString: '$_id' } } },
-      { $lookup: { from: 'evaluations', localField: 'productId', foreignField: 'productId', as: 'evaluation' } },
-      { $addFields: { countEmoji: { $size: { $first: '$evaluation.emojis' } } } },
-      { $sort: { countEmoji: -1 } },
-      { $project: { productId: 1, countEmoji: 1 } },
-      { $limit: 10 },
-    ]);
-    console.log(products);
+    return await this.productModel.aggregate(ProductGetRandomREQ.toFind(query) as any);
   }
 
   async getProductsFilter(query: ProductGetFilterREQ) {
