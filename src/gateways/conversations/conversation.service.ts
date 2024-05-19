@@ -56,7 +56,7 @@ export class ConversationService {
       { $addFields: { messageId: { $toObjectId: '$lastMessageId' } } },
       { $lookup: { from: 'messages', localField: 'messageId', foreignField: '_id', as: 'messages' } },
       { $addFields: { isRead: { $first: '$messages.isRead' } } },
-      { $addFields: { isMine: { $eq: ['$lastSenderId', userId] } } },
+      { $addFields: { isMine: { $eq: [{ $first: '$messages.senderId' }, userId] } } },
       { $addFields: { receiverId: { $arrayElemAt: [{ $setDifference: ['$participants', [userId]] }, 0] } } },
       { $addFields: { receiverObjId: { $toObjectId: '$receiverId' } } },
       { $lookup: { from: 'users', localField: 'receiverObjId', foreignField: '_id', as: 'receiver' } },
