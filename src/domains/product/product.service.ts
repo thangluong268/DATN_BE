@@ -94,7 +94,13 @@ export class ProductService {
     const sortTypeQuery = 'desc';
     const sortValueQuery = 'productName';
     sortByConditions(products, sortTypeQuery, sortValueQuery);
-    return PaginationResponse.ofWithTotalAndMessage(products, total, 'Lấy sản phẩm thành công!');
+    const data = await Promise.all(
+      products.map(async (product) => {
+        const store = await this.storeModel.findById(product.storeId).lean();
+        return { ...product, storeName: store.name, storeAvatar: store.avatar };
+      }),
+    );
+    return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy sản phẩm thành công!');
   }
 
   async getProducts(query: ProductsGetREQ) {
@@ -105,7 +111,13 @@ export class ProductService {
     const products = await this.productModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).skip(skip).limit(limit);
     const { sortTypeQuery, sortValueQuery } = ProductsGetREQ.toSortCondition(query);
     sortByConditions(products, sortTypeQuery, sortValueQuery);
-    return PaginationResponse.ofWithTotalAndMessage(products, total, 'Lấy sản phẩm thành công!');
+    const data = await Promise.all(
+      products.map(async (product) => {
+        const store = await this.storeModel.findById(product.storeId).lean();
+        return { ...product, storeName: store.name, storeAvatar: store.avatar };
+      }),
+    );
+    return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy sản phẩm thành công!');
   }
 
   async getProductsBySeller(userId: string, query: ProductsGetREQ) {
@@ -159,6 +171,7 @@ export class ProductService {
           ...product,
           categoryName: category.name,
           storeName: store.name,
+          storeAvatar: store.avatar,
           quantitySold,
           quantityGive,
           revenue,
@@ -185,6 +198,7 @@ export class ProductService {
           ...product,
           categoryName: category.name,
           storeName: store.name,
+          storeAvatar: store.avatar,
         };
       }),
     );
@@ -194,11 +208,17 @@ export class ProductService {
   async getProductsOtherInStore(query: ProductGetOtherInStoreREQ) {
     this.logger.log(`Get Products Other In Store: ${JSON.stringify(query)}`);
     const { storeId, productId } = query;
-    const products = await this.productModel
-      .find({ _id: { $ne: productId }, storeId, status: true }, {}, { lean: true })
-      .sort({ createdAt: -1 })
-      .limit(12);
-    return BaseResponse.withMessage(products, 'Lấy danh sách sản phẩm khác thành công!');
+    const data = await this.productModel.aggregate([
+      { $match: { storeId, status: true, _id: { $ne: new ObjectId(productId) } } },
+      { $addFields: { storeIdObj: { $toObjectId: '$storeId' } } },
+      { $lookup: { from: 'stores', localField: 'storeIdObj', foreignField: '_id', as: 'store' } },
+      { $addFields: { storeName: { $first: '$store.name' } } },
+      { $addFields: { storeAvatar: { $first: '$store.avatar' } } },
+      { $sort: { createdAt: -1 } },
+      { $limit: 12 },
+      { $project: { store: 0, storeIdObj: 0 } },
+    ]);
+    return BaseResponse.withMessage(data, 'Lấy danh sách sản phẩm khác thành công!');
   }
 
   async getProductsLasted(limitQuery: number) {
@@ -385,6 +405,7 @@ export class ProductService {
           ...product,
           categoryName: category.name,
           storeName: store.name,
+          storeAvatar: store.avatar,
           quantitySold,
           quantityGive,
           revenue,
@@ -447,8 +468,10 @@ export class ProductService {
     }
     const totalStars = Object.keys(star).reduce((acc, key) => acc + star[key] * Number(key), 0);
     const averageStar = totalFeedback > 0 ? Number((totalStars / totalFeedback).toFixed(2)) : 0;
+    const store = await this.storeModel.findById(product.storeId).lean();
+    const productInfo = { ...product, storeName: store.name, storeAvatar: store.avatar };
     return BaseResponse.withMessage(
-      { product, quantityDelivered, emojis, starPercent, averageStar, totalFeedback },
+      { product: productInfo, quantityDelivered, emojis, starPercent, averageStar, totalFeedback },
       'Lấy thông tin sản phẩm bởi Manager thành công!',
     );
   }
