@@ -8,6 +8,7 @@ import { Store } from 'domains/store/schema/store.schema';
 import { Tax } from 'domains/tax/schema/tax.schema';
 import { UserBillTrackingService } from 'domains/user-bill-tracking/user-bill-tracking.service';
 import { User } from 'domains/user/schema/user.schema';
+import { ConversationGateway } from 'gateways/conversations/conversation.gateway';
 import { NotificationSubjectInfoDTO } from 'gateways/notifications/dto/notification-subject-info.dto';
 import { NotificationGateway } from 'gateways/notifications/notification.gateway';
 import { NotificationService } from 'gateways/notifications/notification.service';
@@ -18,7 +19,7 @@ import { PaypalGateway, VNPayGateway } from 'payment/payment.gateway';
 import { PaymentService } from 'payment/payment.service';
 import { PaypalPaymentService } from 'payment/paypal/paypal.service';
 import { RedisService } from 'services/redis/redis.service';
-import { NOTIFICATION_LINK } from 'shared/constants/notification.constant';
+import { NOTIFICATION_CONTENT_AUTO_BILL_SUCCESS, NOTIFICATION_LINK } from 'shared/constants/notification.constant';
 import { BILL_STATUS, BILL_STATUS_NOTIFICATION, PAYMENT_METHOD, PRODUCT_TYPE } from 'shared/enums/bill.enum';
 import { NotificationType } from 'shared/enums/notification.enum';
 import { BaseResponse } from 'shared/generics/base.response';
@@ -71,6 +72,8 @@ export class BillService {
 
     private readonly notificationService: NotificationService,
     private readonly notificationGateway: NotificationGateway,
+
+    private readonly conversationGateway: ConversationGateway,
 
     private readonly paymentService: PaymentService,
     private readonly paypalPaymentService: PaypalPaymentService,
@@ -195,6 +198,15 @@ export class BillService {
       // Update isPaid if paymentMethod is not cash
       await this.billModel.findByIdAndUpdate(bill._id, {
         isPaid: bill.paymentMethod !== PAYMENT_METHOD.CASH ? true : false,
+      });
+
+      const store = await this.storeModel.findById(bill.storeId).lean();
+      const seller = await this.userModel.findById(store.userId).lean();
+
+      // Send message to user
+      this.conversationGateway.sendMessageServer(seller._id.toString(), {
+        text: NOTIFICATION_CONTENT_AUTO_BILL_SUCCESS(store.name),
+        receiverId: bill.userId,
       });
     }
     const redisClient = this.redisService.getClient();

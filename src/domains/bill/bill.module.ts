@@ -14,6 +14,7 @@ import { RedisModule } from 'services/redis/redis.module';
 import { BillController } from './bill.controller';
 import { BillService } from './bill.service';
 import { Bill, BillSchema } from './schema/bill.schema';
+import { ConversationModule } from 'gateways/conversations/conversation.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { Bill, BillSchema } from './schema/bill.schema';
     NotificationModule,
     PaymentModule,
     UserBillTrackingModule,
+    ConversationModule,
   ],
   controllers: [BillController],
   providers: [BillService],

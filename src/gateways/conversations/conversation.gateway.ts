@@ -80,6 +80,16 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     this.io.to(conversation._id).emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, text);
   }
 
+  async sendMessageServer(userId: string, body: MessageCreateREQ) {
+    this.logger.log(`User ${userId} sent message: ${body.receiverId}`);
+    const { text, receiverId } = body;
+    await this.conversationService.createIfIsFirstConversation(userId, receiverId);
+    const conversation = await this.conversationService.findOneByParticipants(userId, receiverId);
+    const newMessage = await this.messageService.create(conversation._id, userId, text);
+    await this.conversationService.updateLastMessage(conversation._id, newMessage._id, newMessage.text);
+    this.io.to(conversation._id).emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, text);
+  }
+
   @SubscribeMessage(WS_EVENT.CONVERSATION.GET_CONVERSATION)
   async getConversation(@ConnectedSocket() client: AuthSocket, @MessageBody() body: ConversationGetREQ): Promise<WsResponse> {
     this.logger.log(`User ${client.userId} get conversation`);

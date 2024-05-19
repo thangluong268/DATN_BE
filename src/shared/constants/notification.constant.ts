@@ -41,3 +41,6 @@ export const NOTIFICATION_LINK = {
   [BILL_STATUS.BACK]: `/shop/seller/`, // + store id
   [BILL_STATUS.REFUND]: `/shop/seller/`, // + store id
 };
+
+export const NOTIFICATION_CONTENT_AUTO_BILL_SUCCESS = (storeName: string) =>
+  `Cảm ơn bạn đã mua sắm tại ${storeName}.\nMọi thắc mắc vui lòng liên hệ shop để được hỗ trợ.`;
