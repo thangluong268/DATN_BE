@@ -10,15 +10,6 @@ export class Conversation extends Document {
   participants: string[];
 
   @Prop({ type: String })
-  lastSenderId: string;
-
-  @Prop({ type: String })
-  lastSenderName: string;
-
-  @Prop({ type: String })
-  lastSenderAvatar: string;
-
-  @Prop({ type: String })
   lastMessageId: string;
 
   @Prop({ type: String })

@@ -36,11 +36,13 @@ export class MessageService {
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.messageModel.countDocuments(condition);
     const messages = await this.messageModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).skip(skip).limit(limit);
-    const messagesRes: MessageGetAllByConversationRES[] = [];
-    for (const message of messages) {
-      const sender = await this.userService.findById(message.senderId);
-      messagesRes.push(MessageGetAllByConversationRES.of(userId, message, sender));
-    }
+
+    const messagesRes: MessageGetAllByConversationRES[] = await Promise.all(
+      messages.map(async (message) => {
+        const sender = await this.userService.findById(message.senderId);
+        return MessageGetAllByConversationRES.of(userId, message, sender);
+      }),
+    );
     await this.messageModel.updateMany({ conversationId, senderId: { $ne: userId }, isRead: false }, { isRead: true });
     return PaginationResponse.ofWithTotal(messagesRes, total);
   }

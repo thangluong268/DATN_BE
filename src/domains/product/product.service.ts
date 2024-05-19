@@ -10,7 +10,7 @@ import { NotificationSubjectInfoDTO } from 'gateways/notifications/dto/notificat
 import { NotificationGateway } from 'gateways/notifications/notification.gateway';
 import { NotificationService } from 'gateways/notifications/notification.service';
 import { ObjectId } from 'mongodb';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { NOTIFICATION_LINK } from 'shared/constants/notification.constant';
 import { BILL_STATUS, PRODUCT_TYPE } from 'shared/enums/bill.enum';
 import { NotificationType } from 'shared/enums/notification.enum';
@@ -129,6 +129,7 @@ export class ProductService {
           ...product,
           categoryName: category.name,
           storeName: store.name,
+          storeAvatar: store.avatar,
           quantitySold,
           quantityGive,
           revenue,
@@ -218,6 +219,7 @@ export class ProductService {
       },
       { $unwind: '$store' },
       { $addFields: { storeName: '$store.name' } },
+      { $addFields: { storeAvatar: '$store.avatar' } },
       { $project: { store: 0, storeIdObj: 0 } },
     ]);
     return BaseResponse.withMessage(products, 'Lấy danh sách sản phẩm mới nhất thành công!');
@@ -276,22 +278,18 @@ export class ProductService {
     return BaseResponse.withMessage(data, 'Lấy danh sách sản phẩm bán chạy nhất thành công!');
   }
 
-  async getProductsRandom(query: ProductGetRandomREQ, body: string[]) {
-    this.logger.log(`Get Products Random: ${JSON.stringify(query)}`);
-    const limit = query.limit || 10;
-    const excludeIds = body.map((id) => new Types.ObjectId(id));
-    const products = await this.productModel.aggregate(ProductGetRandomREQ.toQueryCondition(query, excludeIds));
-    const remainingLimit = limit - products.length;
-    if (remainingLimit < limit) {
-      const currentExcludeIds = products.map((product) => product._id);
-      excludeIds.push(...currentExcludeIds);
-      const otherProducts = await this.productModel.aggregate(
-        ProductGetRandomREQ.toQueryConditionRemain(remainingLimit, excludeIds),
-      );
-      products.push(...otherProducts);
-    }
-    const nextCursor = products.length > 0 ? products[products.length - 1]['createdAt'] : null;
-    return BaseResponse.withMessage({ products, nextCursor }, 'Lấy danh sách sản phẩm ngẫu nhiên thành công!');
+  async getProductsRandom(query: ProductGetRandomREQ) {
+    this.logger.log(`Get Products Random`);
+    const products = await this.productModel.aggregate([
+      { $match: { status: true } },
+      { $addFields: { productId: { $toString: '$_id' } } },
+      { $lookup: { from: 'evaluations', localField: 'productId', foreignField: 'productId', as: 'evaluation' } },
+      { $addFields: { countEmoji: { $size: { $first: '$evaluation.emojis' } } } },
+      { $sort: { countEmoji: -1 } },
+      { $project: { productId: 1, countEmoji: 1 } },
+      { $limit: 10 },
+    ]);
+    console.log(products);
   }
 
   async getProductsFilter(query: ProductGetFilterREQ) {
@@ -417,7 +415,7 @@ export class ProductService {
     const store = await this.storeModel.findById(product.storeId).lean();
     const data = { ...product };
     return BaseResponse.withMessage(
-      { data, quantityDelivered, categoryName: category.name, storeName: store.name },
+      { data, quantityDelivered, categoryName: category.name, storeName: store.name, storeAvatar: store.avatar },
       'Lấy thông tin sản phẩm thành công!',
     );
   }

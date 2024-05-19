@@ -53,9 +53,9 @@ export class ProductController {
     return this.productService.getProductsMostInStore(Number(query.limit));
   }
 
-  @Post('product/random')
-  getProductsRandom(@Query() query: ProductGetRandomREQ, @Body() body: string[]) {
-    return this.productService.getProductsRandom(query, body);
+  @Get('product/random')
+  getProductsRandom(@Query() query: ProductGetRandomREQ) {
+    return this.productService.getProductsRandom(query);
   }
 
   @Get('product-filter')

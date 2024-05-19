@@ -38,14 +38,10 @@ export class ConversationService {
     return await this.conversationModel.findOne({ participants: { $all: [senderId, receiverId] } }, {}, { lean: true });
   }
 
-  async updateLastMessage(conversationId: string, senderId: string, messageId: string, messageText: string) {
-    const user = await this.userService.findById(senderId);
+  async updateLastMessage(conversationId: string, messageId: string, messageText: string) {
     await this.conversationModel.updateOne(
       { _id: conversationId },
       {
-        lastSenderId: senderId,
-        lastSenderName: user.fullName,
-        lastSenderAvatar: user.avatar,
         lastMessageId: messageId,
         lastMessageText: messageText,
       },
@@ -61,11 +57,15 @@ export class ConversationService {
       { $lookup: { from: 'messages', localField: 'messageId', foreignField: '_id', as: 'messages' } },
       { $addFields: { isRead: { $first: '$messages.isRead' } } },
       { $addFields: { isMine: { $eq: ['$lastSenderId', userId] } } },
+      { $addFields: { receiverId: { $arrayElemAt: [{ $setDifference: ['$participants', [userId]] }, 0] } } },
+      { $addFields: { receiverObjId: { $toObjectId: '$receiverId' } } },
+      { $lookup: { from: 'users', localField: 'receiverObjId', foreignField: '_id', as: 'receiver' } },
+      { $addFields: { receiver: { $first: '$receiver' } } },
       { $sort: { updatedAt: -1 } },
       { $skip: skip },
       { $limit: limit },
     ]);
-    return data.map((conversation) => ConversationPreviewGetRES.of(userId, conversation));
+    return data.map((conversation) => ConversationPreviewGetRES.of(conversation));
   }
 
   async countUnRead(userId: string) {
