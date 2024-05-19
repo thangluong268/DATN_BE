@@ -1,19 +1,22 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { Conversation } from 'gateways/conversations/schema/conversation.schema';
 import { Model } from 'mongoose';
 import { PaginationREQ } from 'shared/generics/pagination.request';
-import { PaginationResponse } from 'shared/generics/pagination.response';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
+import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 import { UserService } from '../user/user.service';
 import { MessageGetAllByConversationRES } from './response/message-get-all-by-conversation.response';
 import { Message } from './schema/message.schema';
-import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 
 @Injectable()
 export class MessageService {
   constructor(
     @InjectModel(Message.name)
     private readonly messageModel: Model<Message>,
+
+    @InjectModel(Conversation.name)
+    private readonly conversationModel: Model<Conversation>,
 
     private readonly userService: UserService,
   ) {}
@@ -45,7 +48,19 @@ export class MessageService {
       .map((message) => message._id);
     await this.updateReadStatus(messageIdsToRead);
 
-    return PaginationResponse.ofWithTotal(messagesRes, total);
+    console.log(messagesRes);
+
+    const unReadCount = await this.messageModel.countDocuments({ senderId: { $ne: userId }, conversationId, isRead: false });
+    if (messageIdsToRead.length > 0) {
+      await this.conversationModel.updateOne(
+        { _id: conversationId, 'participants.userId': userId },
+        { 'participants.$.unReadCount': unReadCount },
+      );
+    }
+
+    console.log(messagesRes);
+
+    return { data: messagesRes, total, unReadCount };
   }
 
   async findById(id: string) {

@@ -10,9 +10,11 @@ export class ConversationPreviewGetRES {
   lastMessageText: string;
   lastTime: Date;
   isMine: boolean;
-  isRead: boolean;
+  isReadLastMessage: boolean;
+  isReadAll: boolean;
 
   static of(
+    userId: string,
     conversation: FlattenMaps<Conversation> & {
       _id: Types.ObjectId;
       updatedAt: Date;
@@ -20,6 +22,7 @@ export class ConversationPreviewGetRES {
       isRead: boolean;
     },
   ): ConversationPreviewGetRES {
+    const myInfo = conversation.participants.find((participant) => participant.userId === userId);
     return {
       conversationId: conversation._id.toString(),
       lastSenderId: conversation.lastSenderId,
@@ -29,7 +32,8 @@ export class ConversationPreviewGetRES {
       lastMessageText: conversation.lastMessageText,
       lastTime: conversation.updatedAt,
       isMine: conversation.isMine,
-      isRead: conversation.isRead,
+      isReadLastMessage: conversation.isRead,
+      isReadAll: myInfo.unReadCount === 0,
     };
   }
 }
