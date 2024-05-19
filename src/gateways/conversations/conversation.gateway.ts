@@ -96,7 +96,7 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const userId = client.userId;
     const { receiverId, ...query } = body;
     const conversation = await this.conversationService.findOneByParticipants(userId, receiverId);
-    const data = await this.messageService.findByConversation(userId, conversation._id, query);
+    const data = await this.messageService.findByConversation(userId, receiverId, conversation._id, query);
     client.join(conversation._id);
     return { event: WS_EVENT.CONVERSATION.GET_CONVERSATION, data };
   }

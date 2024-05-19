@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Conversation } from 'gateways/conversations/schema/conversation.schema';
 import { Model } from 'mongoose';
 import { PaginationREQ } from 'shared/generics/pagination.request';
-import { PaginationResponse } from 'shared/generics/pagination.response';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 import { UserService } from '../user/user.service';
@@ -31,20 +30,16 @@ export class MessageService {
     return toDocModel(newMessage);
   }
 
-  async findByConversation(userId: string, conversationId: string, query: PaginationREQ) {
+  async findByConversation(userId: string, receiverId: string, conversationId: string, query: PaginationREQ) {
     const condition = { conversationId };
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
-    const total = await this.messageModel.countDocuments(condition);
     const messages = await this.messageModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).skip(skip).limit(limit);
 
-    const messagesRes: MessageGetAllByConversationRES[] = await Promise.all(
-      messages.map(async (message) => {
-        const sender = await this.userService.findById(message.senderId);
-        return MessageGetAllByConversationRES.of(userId, message, sender);
-      }),
-    );
+    const data: MessageGetAllByConversationRES[] = messages.map((message) => MessageGetAllByConversationRES.of(userId, message));
+    const receiver = await this.userService.findById(receiverId);
+
     await this.messageModel.updateMany({ conversationId, senderId: { $ne: userId }, isRead: false }, { isRead: true });
-    return PaginationResponse.ofWithTotal(messagesRes, total);
+    return { data, conversationId, receiverId, receiverName: receiver.fullName, receiverAvatar: receiver.avatar };
   }
 
   async findById(id: string) {
