@@ -6,7 +6,7 @@ import { PaginationREQ } from 'shared/generics/pagination.request';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 import { ConversationPreviewGetRES } from './response/conversation-preview-get.response';
-import { Conversation, ParticipantsInterface } from './schema/conversation.schema';
+import { Conversation } from './schema/conversation.schema';
 
 @Injectable()
 export class ConversationService {
@@ -19,18 +19,12 @@ export class ConversationService {
   ) {}
 
   async create(senderId: string, receiverId: string) {
-    const participants = [
-      { userId: senderId, unReadCount: 0 },
-      { userId: receiverId, unReadCount: 0 },
-    ] as ParticipantsInterface[];
-    const newConversation = await this.conversationModel.create({ participants });
+    const newConversation = await this.conversationModel.create({ participants: [senderId, receiverId] });
     return toDocModel(newConversation);
   }
 
   async isFirstConversation(senderId: string, receiverId: string) {
-    const conversation = await this.conversationModel.findOne({
-      participants: { $all: [{ $elemMatch: { userId: senderId } }, { $elemMatch: { userId: receiverId } }] },
-    });
+    const conversation = await this.conversationModel.findOne({ participants: { $all: [senderId, receiverId] } });
     return !conversation;
   }
 
@@ -41,24 +35,19 @@ export class ConversationService {
   }
 
   async findOneByParticipants(senderId: string, receiverId: string) {
-    return await this.conversationModel.findOne(
-      { participants: { $all: [{ $elemMatch: { userId: senderId } }, { $elemMatch: { userId: receiverId } }] } },
-      {},
-      { lean: true },
-    );
+    return await this.conversationModel.findOne({ participants: { $all: [senderId, receiverId] } }, {}, { lean: true });
   }
 
-  async updateLastMessage(conversationId: string, senderId: string, messageId: string, messageText: string, receiverId: string) {
+  async updateLastMessage(conversationId: string, senderId: string, messageId: string, messageText: string) {
     const user = await this.userService.findById(senderId);
     await this.conversationModel.updateOne(
-      { _id: conversationId, 'participants.userId': receiverId },
+      { _id: conversationId },
       {
         lastSenderId: senderId,
         lastSenderName: user.fullName,
         lastSenderAvatar: user.avatar,
         lastMessageId: messageId,
         lastMessageText: messageText,
-        $inc: { 'participants.$.unReadCount': 1 },
       },
     );
   }
@@ -67,7 +56,7 @@ export class ConversationService {
     this.logger.log(`Find preview conversations of user ${userId}`);
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const data = await this.conversationModel.aggregate([
-      { $match: { participants: { $elemMatch: { userId } } } },
+      { $match: { participants: userId } },
       { $addFields: { messageId: { $toObjectId: '$lastMessageId' } } },
       { $lookup: { from: 'messages', localField: 'messageId', foreignField: '_id', as: 'messages' } },
       { $addFields: { isRead: { $first: '$messages.isRead' } } },
@@ -81,8 +70,15 @@ export class ConversationService {
 
   async countUnRead(userId: string) {
     this.logger.log(`Count unread messages of user ${userId}`);
-    return await this.conversationModel.countDocuments({
-      participants: { $elemMatch: { userId, unReadCount: { $gt: 0 } } },
-    });
+    const count = await this.conversationModel.aggregate([
+      { $match: { participants: userId } },
+      { $addFields: { messageId: { $toObjectId: '$lastMessageId' } } },
+      { $lookup: { from: 'messages', localField: 'messageId', foreignField: '_id', as: 'messages' } },
+      { $addFields: { isRead: { $first: '$messages.isRead' } } },
+      { $match: { isRead: false, lastSenderId: { $ne: userId } } },
+      { $group: { _id: null, count: { $sum: 1 } } },
+      { $project: { _id: 0, count: 1 } },
+    ]);
+    return count.length > 0 ? count[0].count : 0;
   }
 }

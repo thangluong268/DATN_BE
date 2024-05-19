@@ -76,7 +76,7 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     await this.conversationService.createIfIsFirstConversation(userId, receiverId);
     const conversation = await this.conversationService.findOneByParticipants(userId, receiverId);
     const newMessage = await this.messageService.create(conversation._id, userId, text);
-    await this.conversationService.updateLastMessage(conversation._id, userId, newMessage._id, newMessage.text, receiverId);
+    await this.conversationService.updateLastMessage(conversation._id, userId, newMessage._id, newMessage.text);
     this.io.to(conversation._id).emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, text);
   }
 

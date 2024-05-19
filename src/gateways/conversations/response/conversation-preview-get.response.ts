@@ -3,6 +3,7 @@ import { Conversation } from '../schema/conversation.schema';
 
 export class ConversationPreviewGetRES {
   conversationId: string;
+  receiverId: string;
   lastSenderId: string;
   lastSenderName: string;
   lastSenderAvatar: string;
@@ -11,7 +12,6 @@ export class ConversationPreviewGetRES {
   lastTime: Date;
   isMine: boolean;
   isReadLastMessage: boolean;
-  isReadAll: boolean;
 
   static of(
     userId: string,
@@ -22,9 +22,9 @@ export class ConversationPreviewGetRES {
       isRead: boolean;
     },
   ): ConversationPreviewGetRES {
-    const myInfo = conversation.participants.find((participant) => participant.userId === userId);
     return {
       conversationId: conversation._id.toString(),
+      receiverId: conversation.participants.find((participant) => participant !== userId),
       lastSenderId: conversation.lastSenderId,
       lastSenderName: conversation.lastSenderName,
       lastSenderAvatar: conversation.lastSenderAvatar,
@@ -33,7 +33,6 @@ export class ConversationPreviewGetRES {
       lastTime: conversation.updatedAt,
       isMine: conversation.isMine,
       isReadLastMessage: conversation.isRead,
-      isReadAll: myInfo.unReadCount === 0,
     };
   }
 }

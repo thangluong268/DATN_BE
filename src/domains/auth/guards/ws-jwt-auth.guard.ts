@@ -21,25 +21,18 @@ export class WsGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean | any> {
-    if (context.getType() !== 'ws') {
-      return true;
-    }
+    if (context.getType() !== 'ws') return true;
+
     const client: Socket = context.switchToWs().getClient();
-    // const token = client.handshake.auth.authorization?.split(' ')[1];
-    const token = client.handshake.headers.authorization?.split(' ')[1];
+    const token = client.handshake.auth.authorization?.split(' ')[1];
+    // const token = client.handshake.headers.authorization?.split(' ')[1];
 
-    if (!token) {
-      return false;
-    }
+    if (!token) return false;
 
-    const jwtPayLoad = (await this.jwtService.verifyAsync(token, {
-      secret: JWT_ACCESS_TOKEN_SECRET,
-    })) as JwtPayload;
+    const jwtPayLoad = (await this.jwtService.verifyAsync(token, { secret: JWT_ACCESS_TOKEN_SECRET })) as JwtPayload;
 
     const user = await this.userModel.findById(jwtPayLoad.userId).lean();
-    if (!user) {
-      return false;
-    }
+    if (!user) return false;
 
     client['userId'] = user._id.toString();
 

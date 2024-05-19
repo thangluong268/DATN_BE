@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, FlattenMaps, Types, UpdateWriteOpResult } from 'mongoose';
+import { Document } from 'mongoose';
 
 @Schema({
   versionKey: false,
@@ -17,20 +17,6 @@ export class Message extends Document {
 
   @Prop({ type: Boolean, default: false })
   isRead: boolean;
-
-  static toDocModel(
-    message:
-      | (Document<unknown, `object`, Message> &
-          Message & {
-            _id: Types.ObjectId;
-          })
-      | UpdateWriteOpResult
-      | (FlattenMaps<Message> & {
-          _id: Types.ObjectId;
-        }),
-  ): Message {
-    return message['_doc'] ? message['_doc'] : message;
-  }
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message);

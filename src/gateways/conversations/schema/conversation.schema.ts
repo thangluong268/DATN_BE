@@ -1,18 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-export interface ParticipantsInterface {
-  userId: string;
-  unReadCount: number;
-}
-
 @Schema({
   versionKey: false,
   timestamps: true,
 })
 export class Conversation extends Document {
-  @Prop({ type: [Object] })
-  participants: ParticipantsInterface[];
+  @Prop({ type: [String] })
+  participants: string[];
 
   @Prop({ type: String })
   lastSenderId: string;
