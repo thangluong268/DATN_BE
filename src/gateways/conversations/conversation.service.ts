@@ -29,6 +29,7 @@ export class ConversationService {
   }
 
   async createIfIsFirstConversation(senderId: string, receiverId: string) {
+    this.logger.log(`Create conversation between ${senderId} and ${receiverId}`);
     const isFirstConversation = await this.isFirstConversation(senderId, receiverId);
     if (isFirstConversation) return await this.create(senderId, receiverId);
   }
@@ -37,7 +38,7 @@ export class ConversationService {
     return await this.conversationModel.findOne({ participants: { $all: [senderId, receiverId] } }, {}, { lean: true });
   }
 
-  async updateLastMessage(conversationId: string, senderId: string, message: string) {
+  async updateLastMessage(conversationId: string, senderId: string, messageId: string, messageText: string) {
     const user = await this.userService.findById(senderId);
     await this.conversationModel.findByIdAndUpdate(
       { _id: conversationId },
@@ -45,19 +46,39 @@ export class ConversationService {
         lastSenderId: senderId,
         lastSenderName: user.fullName,
         lastSenderAvatar: user.avatar,
-        lastMessage: message,
+        lastMessageId: messageId,
+        lastMessageText: messageText,
       },
     );
   }
 
   async findPreviews(userId: string, query: PaginationREQ) {
+    this.logger.log(`Find preview conversations of user ${userId}`);
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
-    const conversations = await this.conversationModel
-      .find({ participants: userId })
-      .sort({ updatedAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
-    return conversations.map((conversation) => ConversationPreviewGetRES.of(userId, conversation));
+    const data = await this.conversationModel.aggregate([
+      { $match: { participants: userId } },
+      { $addFields: { messageId: { $toObjectId: '$lastMessageId' } } },
+      { $lookup: { from: 'messages', localField: 'messageId', foreignField: '_id', as: 'messages' } },
+      { $addFields: { isRead: { $first: '$messages.isRead' } } },
+      { $addFields: { isMine: { $eq: ['$lastSenderId', userId] } } },
+      { $sort: { updatedAt: -1 } },
+      { $skip: skip },
+      { $limit: limit },
+    ]);
+    return data.map((conversation) => ConversationPreviewGetRES.of(conversation));
+  }
+
+  async countUnRead(userId: string) {
+    this.logger.log(`Count unread messages of user ${userId}`);
+    const count = await this.conversationModel.aggregate([
+      { $match: { participants: userId } },
+      { $addFields: { messageId: { $toObjectId: '$lastMessageId' } } },
+      { $lookup: { from: 'messages', localField: 'messageId', foreignField: '_id', as: 'messages' } },
+      { $addFields: { isRead: { $first: '$messages.isRead' } } },
+      { $match: { isRead: false } },
+      { $group: { _id: null, count: { $sum: 1 } } },
+      { $project: { _id: 0, count: 1 } },
+    ]);
+    return count.length > 0 ? count[0].count : 0;
   }
 }

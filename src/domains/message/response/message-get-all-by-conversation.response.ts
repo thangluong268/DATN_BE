@@ -10,6 +10,7 @@ export class MessageGetAllByConversationRES {
   text: string;
   isRead: boolean;
   isMine: boolean;
+  createdAt: Date;
 
   static of(currentUserId: string, message: Message, sender: User): MessageGetAllByConversationRES {
     return {
@@ -21,6 +22,7 @@ export class MessageGetAllByConversationRES {
       text: message.text,
       isRead: message.isRead,
       isMine: message.senderId === currentUserId,
+      createdAt: message['createdAt'],
     };
   }
 }

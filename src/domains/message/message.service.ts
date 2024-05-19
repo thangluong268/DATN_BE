@@ -7,6 +7,7 @@ import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { UserService } from '../user/user.service';
 import { MessageGetAllByConversationRES } from './response/message-get-all-by-conversation.response';
 import { Message } from './schema/message.schema';
+import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 
 @Injectable()
 export class MessageService {
@@ -18,11 +19,12 @@ export class MessageService {
   ) {}
 
   async create(conversationId: string, userId: string, text: string) {
-    await this.messageModel.create({
+    const newMessage = await this.messageModel.create({
       conversationId,
       text,
       senderId: userId,
     });
+    return toDocModel(newMessage);
   }
 
   async findByConversation(userId: string, conversationId: string, query: PaginationREQ) {

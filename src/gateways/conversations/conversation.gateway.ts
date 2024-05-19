@@ -75,8 +75,8 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const userId = client.userId;
     await this.conversationService.createIfIsFirstConversation(userId, receiverId);
     const conversation = await this.conversationService.findOneByParticipants(userId, receiverId);
-    await this.messageService.create(conversation._id, userId, text);
-    await this.conversationService.updateLastMessage(conversation._id, userId, text);
+    const newMessage = await this.messageService.create(conversation._id, userId, text);
+    await this.conversationService.updateLastMessage(conversation._id, userId, newMessage._id, newMessage.text);
     this.io.to(conversation._id).emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, text);
   }
 
@@ -118,6 +118,13 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
       userName: user.fullName,
       isTyping: body.isTyping,
     });
+  }
+
+  @SubscribeMessage(WS_EVENT.CONVERSATION.COUNT_UNREAD)
+  async countUnRead(@ConnectedSocket() client: AuthSocket): Promise<WsResponse> {
+    this.logger.log(`User ${client.userId} count unread`);
+    const data = await this.conversationService.countUnRead(client.userId);
+    return { event: WS_EVENT.CONVERSATION.COUNT_UNREAD, data };
   }
 
   // @SubscribeMessage(WS_EVENT.CONVERSATION.IS_ONLINE)

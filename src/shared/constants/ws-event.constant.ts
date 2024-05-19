@@ -4,6 +4,7 @@ export const WS_EVENT = {
     GET_CONVERSATION: 'getConversation',
     GET_PREVIEW_CONVERSATIONS: 'getPreviewConversations',
     DELETE_MESSAGE: 'deleteMessage',
+    COUNT_UNREAD: 'countUnread',
     IS_TYPING: 'isTyping',
     IS_ONLINE: 'isOnline',
     JOIN_ROOM: 'joinRoom',

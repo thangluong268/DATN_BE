@@ -19,7 +19,10 @@ export class Conversation extends Document {
   lastSenderAvatar: string;
 
   @Prop({ type: String })
-  lastMessage: string;
+  lastMessageId: string;
+
+  @Prop({ type: String })
+  lastMessageText: string;
 }
 
 export const ConversationSchema = SchemaFactory.createForClass(Conversation);

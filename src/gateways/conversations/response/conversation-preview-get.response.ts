@@ -6,24 +6,30 @@ export class ConversationPreviewGetRES {
   lastSenderId: string;
   lastSenderName: string;
   lastSenderAvatar: string;
-  lastMessage: string;
+  lastMessageId: string;
+  lastMessageText: string;
   lastTime: Date;
   isMine: boolean;
+  isRead: boolean;
 
   static of(
-    userId: string,
     conversation: FlattenMaps<Conversation> & {
       _id: Types.ObjectId;
+      updatedAt: Date;
+      isMine: boolean;
+      isRead: boolean;
     },
-  ) {
+  ): ConversationPreviewGetRES {
     return {
       conversationId: conversation._id.toString(),
       lastSenderId: conversation.lastSenderId,
       lastSenderName: conversation.lastSenderName,
       lastSenderAvatar: conversation.lastSenderAvatar,
-      lastMessage: conversation.lastMessage,
-      lastTime: conversation['updatedAt'],
-      isMine: conversation.lastSenderId === userId,
+      lastMessageId: conversation.lastMessageId,
+      lastMessageText: conversation.lastMessageText,
+      lastTime: conversation.updatedAt,
+      isMine: conversation.isMine,
+      isRead: conversation.isRead,
     };
   }
 }
