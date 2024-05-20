@@ -53,7 +53,7 @@ export class MessageService {
         : await this.userService.findById(receiverId);
     const receiverName = receiverRole === ROLE_NAME.SELLER ? receiver['name'] : receiver['fullName'];
     await this.messageModel.updateMany({ conversationId, senderId: { $ne: userId }, isRead: false }, { isRead: true });
-    return { data, conversationId, receiverId, receiverName, receiverAvatar: receiver.avatar };
+    return { data: data.reverse(), conversationId, receiverId, receiverName, receiverAvatar: receiver.avatar };
   }
 
   async findById(id: string) {
