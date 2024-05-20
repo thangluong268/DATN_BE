@@ -108,7 +108,7 @@ export class ConversationService {
       { $skip: skip },
       { $limit: limit },
     ]);
-    return await Promise.all(
+    const res = await Promise.all(
       data.map(async (conversation) => {
         const receiver =
           conversation.receiverRole === ROLE_NAME.SELLER
@@ -117,6 +117,7 @@ export class ConversationService {
         return ConversationPreviewGetRES.of(conversation, senderRole, receiver);
       }),
     );
+    return { role: senderRole, data: res };
   }
 
   async countUnRead(userId: string, senderRole: ROLE_NAME) {
