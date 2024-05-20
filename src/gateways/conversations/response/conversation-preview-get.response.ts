@@ -27,10 +27,11 @@ export class ConversationPreviewGetRES {
     },
     senderRole: ROLE_NAME,
     receiver: User | Store,
+    receiverId: string,
   ): ConversationPreviewGetRES {
     return {
       conversationId: conversation._id.toString(),
-      receiverId: receiver._id.toString(),
+      receiverId,
       receiverName: conversation.receiverRole === ROLE_NAME.SELLER ? receiver['name'] : receiver['fullName'],
       receiverAvatar: receiver.avatar,
       receiverRole: conversation.receiverRole,

@@ -114,7 +114,7 @@ export class ConversationService {
           conversation.receiverRole === ROLE_NAME.SELLER
             ? await this.storeModel.findOne({ userId: conversation.receiverId }).lean()
             : await this.userService.findById(conversation.receiverId);
-        return ConversationPreviewGetRES.of(conversation, senderRole, receiver);
+        return ConversationPreviewGetRES.of(conversation, senderRole, receiver, conversation.receiverId);
       }),
     );
     return { role: senderRole, data: res };
