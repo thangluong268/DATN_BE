@@ -9,6 +9,8 @@ export class ConversationPreviewGetRES {
   receiverId: string;
   receiverName: string;
   receiverAvatar: string;
+  receiverRole: ROLE_NAME;
+  senderRole: ROLE_NAME;
   lastMessageId: string;
   lastMessageText: string;
   lastTime: Date;
@@ -21,15 +23,18 @@ export class ConversationPreviewGetRES {
       updatedAt: Date;
       isMine: boolean;
       isRead: boolean;
+      receiverRole: ROLE_NAME;
     },
-    receiverRole: ROLE_NAME,
+    senderRole: ROLE_NAME,
     receiver: User | Store,
   ): ConversationPreviewGetRES {
     return {
       conversationId: conversation._id.toString(),
       receiverId: receiver._id.toString(),
-      receiverName: receiverRole === ROLE_NAME.SELLER ? receiver['name'] : receiver['fullName'],
+      receiverName: conversation.receiverRole === ROLE_NAME.SELLER ? receiver['name'] : receiver['fullName'],
       receiverAvatar: receiver.avatar,
+      receiverRole: conversation.receiverRole,
+      senderRole,
       lastMessageId: conversation.lastMessageId,
       lastMessageText: conversation.lastMessageText,
       lastTime: conversation.updatedAt,
