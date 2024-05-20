@@ -22,6 +22,7 @@ import { RedisService } from 'services/redis/redis.service';
 import { NOTIFICATION_CONTENT_AUTO_BILL_SUCCESS, NOTIFICATION_LINK } from 'shared/constants/notification.constant';
 import { BILL_STATUS, BILL_STATUS_NOTIFICATION, PAYMENT_METHOD, PRODUCT_TYPE } from 'shared/enums/bill.enum';
 import { NotificationType } from 'shared/enums/notification.enum';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationResponse } from 'shared/generics/pagination.response';
 import { isBlank } from 'shared/validators/query.validator';
@@ -205,8 +206,10 @@ export class BillService {
 
       // Send message to user
       this.conversationGateway.sendMessageServer(seller._id.toString(), {
+        senderRole: ROLE_NAME.SELLER,
         text: NOTIFICATION_CONTENT_AUTO_BILL_SUCCESS(store.name),
         receiverId: bill.userId,
+        receiverRole: ROLE_NAME.USER,
       });
     }
     const redisClient = this.redisService.getClient();

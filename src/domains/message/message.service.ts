@@ -1,12 +1,14 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { Store } from 'domains/store/schema/store.schema';
+import { ConversationRoomREQ } from 'gateways/conversations/request/conversation-room.request';
 import { Conversation } from 'gateways/conversations/schema/conversation.schema';
 import { Model } from 'mongoose';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { PaginationREQ } from 'shared/generics/pagination.request';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 import { UserService } from '../user/user.service';
-import { MessageGetAllByConversationRES } from './response/message-get-all-by-conversation.response';
 import { Message } from './schema/message.schema';
 
 @Injectable()
@@ -17,6 +19,9 @@ export class MessageService {
 
     @InjectModel(Conversation.name)
     private readonly conversationModel: Model<Conversation>,
+
+    @InjectModel(Store.name)
+    private readonly storeModel: Model<Store>,
 
     private readonly userService: UserService,
   ) {}
@@ -30,16 +35,25 @@ export class MessageService {
     return toDocModel(newMessage);
   }
 
-  async findByConversation(userId: string, receiverId: string, conversationId: string, query: PaginationREQ) {
-    const condition = { conversationId };
+  async findByConversation(userId: string, body: ConversationRoomREQ, conversationId: string, query: PaginationREQ) {
+    const { receiverId, receiverRole } = body;
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
-    const messages = await this.messageModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).skip(skip).limit(limit);
+    const data = await this.messageModel.aggregate([
+      { $match: { conversationId: conversationId.toString() } },
+      { $addFields: { isMine: { $eq: ['$senderId', userId] } } },
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limit },
+      { $project: { _id: 0, id: '$_id', text: 1, isRead: 1, isMine: 1, createdAt: 1 } },
+    ]);
 
-    const data: MessageGetAllByConversationRES[] = messages.map((message) => MessageGetAllByConversationRES.of(userId, message));
-    const receiver = await this.userService.findById(receiverId);
-
+    const receiver =
+      receiverRole === ROLE_NAME.SELLER
+        ? await this.storeModel.findOne({ userId: receiverId }).lean()
+        : await this.userService.findById(receiverId);
+    const receiverName = receiverRole === ROLE_NAME.SELLER ? receiver['name'] : receiver['fullName'];
     await this.messageModel.updateMany({ conversationId, senderId: { $ne: userId }, isRead: false }, { isRead: true });
-    return { data, conversationId, receiverId, receiverName: receiver.fullName, receiverAvatar: receiver.avatar };
+    return { data, conversationId, receiverId, receiverName, receiverAvatar: receiver.avatar };
   }
 
   async findById(id: string) {

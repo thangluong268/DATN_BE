@@ -1,11 +1,16 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsEnum, IsString } from 'class-validator';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
 
 export class MessageCreateREQ {
-  @IsNotEmpty()
-  @IsString()
-  text: string;
+  @IsEnum(ROLE_NAME)
+  senderRole: ROLE_NAME;
 
-  @IsNotEmpty()
   @IsString()
   receiverId: string;
+
+  @IsEnum(ROLE_NAME)
+  receiverRole: ROLE_NAME;
+
+  @IsString()
+  text: string;
 }

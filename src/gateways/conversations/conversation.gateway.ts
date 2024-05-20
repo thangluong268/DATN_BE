@@ -19,12 +19,12 @@ import { MessageIsTypingREQ } from 'domains/message/request/message-is-typing.re
 import { UserService } from 'domains/user/user.service';
 import { AllExceptionsSocketFilter } from 'filter/ws-exception.filter';
 import { WS_EVENT } from 'shared/constants/ws-event.constant';
-import { PaginationREQ } from 'shared/generics/pagination.request';
 import { Namespace, Socket } from 'socket.io';
 import { ConversationService } from './conversation.service';
+import { ConversationCountUnReadREQ } from './request/conversation-coun-unread.request';
 import { ConversationGetREQ } from './request/conversation-get.request';
-import { ConversationJoinRoomREQ } from './request/conversation-join-room.request';
-import { ConversationLeaveRoomREQ } from './request/conversation-leave-room.request';
+import { ConversationPreviewGetREQ } from './request/conversation-preview-get.request';
+import { ConversationRoomREQ } from './request/conversation-room.request';
 
 @WebSocketGateway({
   namespace: 'conversation',
@@ -47,9 +47,9 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
   }
 
   @SubscribeMessage(WS_EVENT.CONVERSATION.JOIN_ROOM)
-  async joinRoom(@ConnectedSocket() client: AuthSocket, @MessageBody() body: ConversationJoinRoomREQ) {
+  async joinRoom(@ConnectedSocket() client: AuthSocket, @MessageBody() body: ConversationRoomREQ) {
     this.logger.log(`User ${client.userId} and user ${body.receiverId} joined rom`);
-    const conversation = await this.conversationService.findOneByParticipants(client.userId, body.receiverId);
+    const conversation = await this.conversationService.findOneByParticipants(client.userId, body);
     client.join(conversation._id);
     this.io.emit(
       WS_EVENT.CONVERSATION.JOIN_ROOM,
@@ -58,9 +58,9 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
   }
 
   @SubscribeMessage(WS_EVENT.CONVERSATION.LEAVE_ROOM)
-  async leaveRoom(@ConnectedSocket() client: AuthSocket, @MessageBody() body: ConversationLeaveRoomREQ) {
+  async leaveRoom(@ConnectedSocket() client: AuthSocket, @MessageBody() body: ConversationRoomREQ) {
     this.logger.log(`User ${client.userId} and user ${body.receiverId} have left rom`);
-    const conversation = await this.conversationService.findOneByParticipants(client.userId, body.receiverId);
+    const conversation = await this.conversationService.findOneByParticipants(client.userId, body);
     client.leave(conversation._id);
     this.io.emit(
       WS_EVENT.CONVERSATION.LEAVE_ROOM,
@@ -71,41 +71,45 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
   @SubscribeMessage(WS_EVENT.CONVERSATION.SEND_MESSAGE)
   async sendMessage(@ConnectedSocket() client: AuthSocket, @MessageBody() body: MessageCreateREQ) {
     this.logger.log(`User ${client.userId} sent message: ${body.text}`);
-    const { text, receiverId } = body;
     const userId = client.userId;
-    await this.conversationService.createIfIsFirstConversation(userId, receiverId);
-    const conversation = await this.conversationService.findOneByParticipants(userId, receiverId);
-    const newMessage = await this.messageService.create(conversation._id, userId, text);
+    await this.conversationService.createIfIsFirstConversation(userId, body);
+    const conversation = await this.conversationService.findOneByParticipants(userId, body);
+    const newMessage = await this.messageService.create(conversation._id, userId, body.text);
     await this.conversationService.updateLastMessage(conversation._id, newMessage._id, newMessage.text);
-    this.io.to(conversation._id).emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, text);
+    client.join(conversation._id);
+    this.io.to(conversation._id).emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
   }
 
   async sendMessageServer(userId: string, body: MessageCreateREQ) {
     this.logger.log(`User ${userId} sent message: ${body.receiverId}`);
-    const { text, receiverId } = body;
-    await this.conversationService.createIfIsFirstConversation(userId, receiverId);
-    const conversation = await this.conversationService.findOneByParticipants(userId, receiverId);
-    const newMessage = await this.messageService.create(conversation._id, userId, text);
+    await this.conversationService.createIfIsFirstConversation(userId, body);
+    const conversation = await this.conversationService.findOneByParticipants(userId, body);
+    const newMessage = await this.messageService.create(conversation._id, userId, body.text);
     await this.conversationService.updateLastMessage(conversation._id, newMessage._id, newMessage.text);
-    this.io.to(conversation._id).emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, text);
+    this.io.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
   }
 
   @SubscribeMessage(WS_EVENT.CONVERSATION.GET_CONVERSATION)
   async getConversation(@ConnectedSocket() client: AuthSocket, @MessageBody() body: ConversationGetREQ): Promise<WsResponse> {
     this.logger.log(`User ${client.userId} get conversation`);
     const userId = client.userId;
-    const { receiverId, ...query } = body;
-    const conversation = await this.conversationService.findOneByParticipants(userId, receiverId);
-    const data = await this.messageService.findByConversation(userId, receiverId, conversation._id, query);
+    const query = { page: body.page, limit: body.limit };
+    const req = { senderRole: body.senderRole, receiverId: body.receiverId, receiverRole: body.receiverRole };
+    const conversation = await this.conversationService.findOneByParticipants(userId, req);
+    const data = await this.messageService.findByConversation(userId, req, conversation._id, query);
     client.join(conversation._id);
     return { event: WS_EVENT.CONVERSATION.GET_CONVERSATION, data };
   }
 
   @SubscribeMessage(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS)
-  async getPreviewConversation(@ConnectedSocket() client: AuthSocket, @MessageBody() body: PaginationREQ): Promise<WsResponse> {
+  async getPreviewConversation(
+    @ConnectedSocket() client: AuthSocket,
+    @MessageBody() body: ConversationPreviewGetREQ,
+  ): Promise<WsResponse> {
     this.logger.log(`User ${client.userId} get preview conversation`);
     const userId = client.userId;
-    const data = await this.conversationService.findPreviews(userId, body);
+    const { senderRole, ...query } = body;
+    const data = await this.conversationService.findPreviews(userId, senderRole, query);
     return { event: WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS, data };
   }
 
@@ -121,19 +125,20 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
   @SubscribeMessage(WS_EVENT.CONVERSATION.IS_TYPING)
   async isTyping(@ConnectedSocket() client: AuthSocket, @MessageBody() body: MessageIsTypingREQ) {
     const userId = client.userId;
+    const { isTyping, ...req } = body;
     const user = await this.userService.findById(userId);
-    const conversation = await this.conversationService.findOneByParticipants(userId, body.receiverId);
+    const conversation = await this.conversationService.findOneByParticipants(userId, req);
     client.join(conversation._id);
     client.broadcast.to(conversation._id).emit(WS_EVENT.CONVERSATION.IS_TYPING, {
       userName: user.fullName,
-      isTyping: body.isTyping,
+      isTyping: isTyping,
     });
   }
 
   @SubscribeMessage(WS_EVENT.CONVERSATION.COUNT_UNREAD)
-  async countUnRead(@ConnectedSocket() client: AuthSocket): Promise<WsResponse> {
+  async countUnRead(@ConnectedSocket() client: AuthSocket, @MessageBody() body: ConversationCountUnReadREQ): Promise<WsResponse> {
     this.logger.log(`User ${client.userId} count unread`);
-    const data = await this.conversationService.countUnRead(client.userId);
+    const data = await this.conversationService.countUnRead(client.userId, body.senderRole);
     return { event: WS_EVENT.CONVERSATION.COUNT_UNREAD, data };
   }
 
