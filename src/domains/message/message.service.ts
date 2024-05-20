@@ -56,6 +56,17 @@ export class MessageService {
     return { data: data.reverse(), conversationId, receiverId, receiverName, receiverAvatar: receiver.avatar };
   }
 
+  async findByConversationOne(userId: string, conversationId: string) {
+    const data = await this.messageModel.aggregate([
+      { $match: { conversationId: conversationId.toString() } },
+      { $addFields: { isMine: { $eq: ['$senderId', userId] } } },
+      { $sort: { createdAt: -1 } },
+      { $limit: 1 },
+      { $project: { _id: 0, id: '$_id', text: 1, isRead: 1, isMine: 1, createdAt: 1 } },
+    ]);
+    return data[0];
+  }
+
   async findById(id: string) {
     return await this.messageModel.findById(id, {}, { lean: true });
   }

@@ -120,6 +120,46 @@ export class ConversationService {
     return { role: senderRole, data: res };
   }
 
+  async findPreviewsOne(userId: string, senderRole: ROLE_NAME) {
+    this.logger.log(`Find preview conversations of user ${userId}`);
+    const data = await this.conversationModel.aggregate([
+      { $match: { participants: { userId, role: senderRole } } },
+      { $addFields: { messageId: { $toObjectId: '$lastMessageId' } } },
+      { $lookup: { from: 'messages', localField: 'messageId', foreignField: '_id', as: 'messages' } },
+      { $addFields: { isRead: { $first: '$messages.isRead' } } },
+      { $addFields: { isMine: { $eq: [{ $first: '$messages.senderId' }, userId] } } },
+      {
+        $addFields: {
+          receiver: {
+            $arrayElemAt: [
+              {
+                $filter: {
+                  input: '$participants',
+                  as: 'participant',
+                  cond: { $ne: ['$$participant.userId', userId] },
+                },
+              },
+              0,
+            ],
+          },
+        },
+      },
+      { $addFields: { receiverId: '$receiver.userId', receiverRole: '$receiver.role' } },
+      { $sort: { updatedAt: -1 } },
+      { $limit: 1 },
+    ]);
+    const res = await Promise.all(
+      data.map(async (conversation) => {
+        const receiver =
+          conversation.receiverRole === ROLE_NAME.SELLER
+            ? await this.storeModel.findOne({ userId: conversation.receiverId }).lean()
+            : await this.userService.findById(conversation.receiverId);
+        return ConversationPreviewGetRES.of(conversation, senderRole, receiver, conversation.receiverId);
+      }),
+    );
+    return { role: senderRole, data: res[0] };
+  }
+
   async countUnRead(userId: string, senderRole: ROLE_NAME) {
     this.logger.log(`Count unread messages of user ${userId}`);
     const data = await this.conversationModel.aggregate([
@@ -127,6 +167,7 @@ export class ConversationService {
       { $addFields: { messageId: { $toObjectId: '$lastMessageId' } } },
       { $lookup: { from: 'messages', localField: 'messageId', foreignField: '_id', as: 'messages' } },
       { $addFields: { isRead: { $first: '$messages.isRead' } } },
+      { $addFields: { lastSenderId: { $first: '$messages.senderId' } } },
       { $match: { isRead: false, lastSenderId: { $ne: userId } } },
       { $group: { _id: null, count: { $sum: 1 } } },
       { $project: { _id: 0, count: 1 } },

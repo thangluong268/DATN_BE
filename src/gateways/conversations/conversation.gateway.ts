@@ -76,8 +76,12 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const conversation = await this.conversationService.findOneByParticipants(userId, body);
     const newMessage = await this.messageService.create(conversation._id, userId, body.text);
     await this.conversationService.updateLastMessage(conversation._id, newMessage._id, newMessage.text);
+    const dataConversation = await this.messageService.findByConversationOne(userId, conversation._id);
+    const dataPreview = await this.conversationService.findPreviewsOne(userId, body.senderRole);
     client.join(conversation._id);
     this.io.to(conversation._id).emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
+    this.io.to(conversation._id).emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, dataConversation);
+    this.io.to(conversation._id).emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, dataPreview);
   }
 
   async sendMessageServer(userId: string, body: MessageCreateREQ) {
@@ -86,7 +90,11 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const conversation = await this.conversationService.findOneByParticipants(userId, body);
     const newMessage = await this.messageService.create(conversation._id, userId, body.text);
     await this.conversationService.updateLastMessage(conversation._id, newMessage._id, newMessage.text);
+    const dataConversation = await this.messageService.findByConversationOne(userId, conversation._id);
+    const dataPreview = await this.conversationService.findPreviewsOne(userId, body.senderRole);
     this.io.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
+    this.io.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, dataConversation);
+    this.io.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, dataPreview);
   }
 
   @SubscribeMessage(WS_EVENT.CONVERSATION.GET_CONVERSATION)
