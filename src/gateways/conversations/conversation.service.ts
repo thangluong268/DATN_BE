@@ -122,7 +122,7 @@ export class ConversationService {
 
   async countUnRead(userId: string, senderRole: ROLE_NAME) {
     this.logger.log(`Count unread messages of user ${userId}`);
-    const count = await this.conversationModel.aggregate([
+    const data = await this.conversationModel.aggregate([
       { $match: { participants: { userId, role: senderRole } } },
       { $addFields: { messageId: { $toObjectId: '$lastMessageId' } } },
       { $lookup: { from: 'messages', localField: 'messageId', foreignField: '_id', as: 'messages' } },
@@ -131,6 +131,7 @@ export class ConversationService {
       { $group: { _id: null, count: { $sum: 1 } } },
       { $project: { _id: 0, count: 1 } },
     ]);
-    return count.length > 0 ? count[0].count : 0;
+    const count = data.length > 0 ? data[0].count : 0;
+    return { role: senderRole, count };
   }
 }
