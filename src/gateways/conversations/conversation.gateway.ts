@@ -156,6 +156,7 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const userId = client.userId;
     const { isTyping, senderRole, receiverId } = body;
     const countUnRead = await this.conversationService.countUnRead(userId, senderRole);
+    const preview = await this.conversationService.findPreviewsOne(userId, senderRole);
     const senderSocket = this.userSocketMap.get(userId);
     const receiverSocket = this.userSocketMap.get(receiverId);
     const data =
@@ -163,6 +164,7 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
         ? await this.userService.findStoreByUserId(userId)
         : await this.userService.findById(userId);
     senderSocket.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnRead);
+    senderSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, preview);
     receiverSocket.broadcast.emit(WS_EVENT.CONVERSATION.IS_TYPING, {
       name: senderRole === ROLE_NAME.SELLER ? data['name'] : data['fullName'],
       isTyping: isTyping,
