@@ -157,9 +157,9 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const { isTyping, ...req } = body;
     const senderRole = body.senderRole;
     const conversation = await this.conversationService.findOneByParticipants(userId, req);
-    const countUnRead = await this.conversationService.countUnRead(userId, senderRole);
     await this.messageService.updateReadStatus(userId, conversation._id.toString());
     const preview = await this.conversationService.findPreviewsOne(userId, senderRole);
+    const countUnRead = await this.conversationService.countUnRead(userId, senderRole);
     const senderSocket = this.userSocketMap.get(userId);
     const data =
       senderRole === ROLE_NAME.SELLER
