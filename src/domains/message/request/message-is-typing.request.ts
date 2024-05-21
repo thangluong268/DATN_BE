@@ -1,7 +1,11 @@
-import { ConversationRoomREQ } from 'gateways/conversations/request/conversation-room.request';
+import { IsEnum } from 'class-validator';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BooleanValidator } from 'shared/validators/boolean-query.validator';
 
-export class MessageIsTypingREQ extends ConversationRoomREQ {
+export class MessageIsTypingREQ {
+  @IsEnum(ROLE_NAME)
+  senderRole: ROLE_NAME;
+
   @BooleanValidator()
   isTyping: boolean;
 }

@@ -11,6 +11,7 @@ export const WS_EVENT = {
     IS_ONLINE: 'isOnline',
     JOIN_ROOM: 'joinRoom',
     LEAVE_ROOM: 'leaveRoom',
+    FOCUS_CHAT: 'focusChat',
   },
   NOTIFICATION: {
     SEND_NOTIFICATION: 'sendNotification',
