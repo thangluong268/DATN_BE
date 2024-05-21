@@ -11,7 +11,6 @@ import {
   WsResponse,
 } from '@nestjs/websockets';
 
-import { AuthService } from 'domains/auth/auth.service';
 import { AuthSocket, WsGuard } from 'domains/auth/guards/ws-jwt-auth.guard';
 import { MessageService } from 'domains/message/message.service';
 import { MessageCreateREQ } from 'domains/message/request/message-create.request';
@@ -20,6 +19,7 @@ import { MessageIsTypingREQ } from 'domains/message/request/message-is-typing.re
 import { UserService } from 'domains/user/user.service';
 import { AllExceptionsSocketFilter } from 'filter/ws-exception.filter';
 import { WS_EVENT } from 'shared/constants/ws-event.constant';
+import { JwtHelper } from 'shared/helpers/jwt.helper';
 import { Namespace, Socket } from 'socket.io';
 import { ConversationService } from './conversation.service';
 import { ConversationCountUnReadREQ } from './request/conversation-coun-unread.request';
@@ -39,7 +39,7 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     private readonly conversationService: ConversationService,
     private readonly messageService: MessageService,
     private readonly userService: UserService,
-    private readonly authService: AuthService,
+    private readonly jwtHelper: JwtHelper,
   ) {}
 
   @WebSocketServer() io: Namespace;
@@ -53,8 +53,8 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
   async joinRoom(@ConnectedSocket() client: AuthSocket, @MessageBody() body: ConversationRoomREQ) {
     this.logger.log(`User ${client.userId} and user ${body.receiverId} joined rom`);
     const conversation = await this.conversationService.findOneByParticipants(client.userId, body);
-    client.join(conversation._id);
-    this.io.emit(
+    const receiverSocket = this.userSocketMap.get(body.receiverId);
+    receiverSocket.emit(
       WS_EVENT.CONVERSATION.JOIN_ROOM,
       `User ${client.userId} and user ${body.receiverId} joined rom: ${conversation._id}`,
     );
@@ -64,8 +64,8 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
   async leaveRoom(@ConnectedSocket() client: AuthSocket, @MessageBody() body: ConversationRoomREQ) {
     this.logger.log(`User ${client.userId} and user ${body.receiverId} have left rom`);
     const conversation = await this.conversationService.findOneByParticipants(client.userId, body);
-    client.leave(conversation._id);
-    this.io.emit(
+    const receiverSocket = this.userSocketMap.get(body.receiverId);
+    receiverSocket.emit(
       WS_EVENT.CONVERSATION.LEAVE_ROOM,
       `User ${client.userId} and user ${body.receiverId} have left rom: ${conversation._id}`,
     );
@@ -170,17 +170,14 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
   //   });
   // }
 
-  @UseGuards(WsGuard)
   async handleConnection(client: Socket): Promise<void> {
     this.logger.log(`WS Client with id: ${client.id} connected!`);
-    const token = client.handshake.headers.authorization?.split(' ')[1];
-    const userId = await this.authService.verifyToken(token);
-    this.userSocketMap.set(userId, client);
+    const token = client.handshake.headers.authorization;
+    const payload = this.jwtHelper.decode(token);
+    this.userSocketMap.set(payload.userId, client);
   }
 
   async handleDisconnect(client: Socket) {
     this.logger.log(`Disconnected socket id: ${client.id}`);
-    console.log(client['userId']);
-    // this.userSocketMap.delete(client.userId);
   }
 }

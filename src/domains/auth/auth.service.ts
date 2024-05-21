@@ -1,7 +1,6 @@
 import { ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
-import { WsException } from '@nestjs/websockets';
 import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
@@ -30,8 +29,8 @@ export class AuthService {
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
 
-    private readonly userService: UserService,
     private readonly userTokenService: UserTokenService,
+    private readonly userService: UserService,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -121,12 +120,5 @@ export class AuthService {
       accessToken: at,
       refreshToken: rt,
     } as TokenRESP;
-  }
-
-  async verifyToken(token: string) {
-    const jwtPayLoad = (await this.jwtService.verifyAsync(token, { secret: JWT_ACCESS_TOKEN_SECRET })) as JwtPayload;
-    const user = await this.userModel.findById(jwtPayLoad.userId).lean();
-    if (!user) throw new WsException('Token không hợp lệ!');
-    return jwtPayLoad.userId;
   }
 }
