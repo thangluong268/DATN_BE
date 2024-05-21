@@ -81,15 +81,19 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const newMessage = await this.messageService.create(conversation._id, userId, body.text);
     await this.conversationService.updateLastMessage(conversation._id, newMessage._id, newMessage.text);
     const previewSender = await this.conversationService.findPreviewsOne(userId, body.senderRole);
+    const countUnReadSender = await this.conversationService.countUnRead(userId, body.senderRole);
     const conversationReceiver = await this.messageService.findByConversationOne(body.receiverId, conversation._id);
     const previewReceiver = await this.conversationService.findPreviewsOne(body.receiverId, body.receiverRole);
+    const countUnReadReceiver = await this.conversationService.countUnRead(body.receiverId, body.receiverRole);
     const senderSocket = this.userSocketMap.get(userId);
     const receiverSocket = this.userSocketMap.get(body.receiverId);
     senderSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
     senderSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewSender);
+    senderSocket.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnReadSender);
     receiverSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
     receiverSocket.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, conversationReceiver);
     receiverSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewReceiver);
+    receiverSocket.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnReadReceiver);
   }
 
   async sendMessageServer(userId: string, body: MessageCreateREQ) {
@@ -99,15 +103,19 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const newMessage = await this.messageService.create(conversation._id, userId, body.text);
     await this.conversationService.updateLastMessage(conversation._id, newMessage._id, newMessage.text);
     const previewSender = await this.conversationService.findPreviewsOne(userId, body.senderRole);
+    const countUnReadSender = await this.conversationService.countUnRead(userId, body.senderRole);
     const conversationReceiver = await this.messageService.findByConversationOne(body.receiverId, conversation._id);
     const previewReceiver = await this.conversationService.findPreviewsOne(body.receiverId, body.receiverRole);
+    const countUnReadReceiver = await this.conversationService.countUnRead(body.receiverId, body.receiverRole);
     const senderSocket = this.userSocketMap.get(userId);
     const receiverSocket = this.userSocketMap.get(body.receiverId);
     senderSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
     senderSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewSender);
+    senderSocket.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnReadSender);
     receiverSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
     receiverSocket.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, conversationReceiver);
     receiverSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewReceiver);
+    receiverSocket.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnReadReceiver);
   }
 
   @SubscribeMessage(WS_EVENT.CONVERSATION.GET_CONVERSATION)
