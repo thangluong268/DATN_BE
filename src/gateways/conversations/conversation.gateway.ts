@@ -80,11 +80,14 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const conversation = await this.conversationService.findOneByParticipants(userId, body);
     const newMessage = await this.messageService.create(conversation._id, userId, body.text);
     await this.conversationService.updateLastMessage(conversation._id, newMessage._id, newMessage.text);
-    const previewSender = await this.conversationService.findPreviewsOne(userId, body.senderRole);
-    const countUnReadSender = await this.conversationService.countUnRead(userId, body.senderRole);
-    const conversationReceiver = await this.messageService.findByConversationOne(body.receiverId, conversation._id);
-    const previewReceiver = await this.conversationService.findPreviewsOne(body.receiverId, body.receiverRole);
-    const countUnReadReceiver = await this.conversationService.countUnRead(body.receiverId, body.receiverRole);
+    const [previewSender, countUnReadSender, conversationReceiver, previewReceiver, countUnReadReceiver] = await Promise.all([
+      this.conversationService.findPreviewsOne(userId, body.senderRole),
+      this.conversationService.countUnRead(userId, body.senderRole),
+      this.messageService.findByConversationOne(body.receiverId, conversation._id),
+      this.conversationService.findPreviewsOne(body.receiverId, body.receiverRole),
+      this.conversationService.countUnRead(body.receiverId, body.receiverRole),
+    ]);
+
     const senderSocket = this.userSocketMap.get(userId);
     const receiverSocket = this.userSocketMap.get(body.receiverId);
     senderSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
@@ -102,11 +105,13 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const conversation = await this.conversationService.findOneByParticipants(userId, body);
     const newMessage = await this.messageService.create(conversation._id, userId, body.text);
     await this.conversationService.updateLastMessage(conversation._id, newMessage._id, newMessage.text);
-    const previewSender = await this.conversationService.findPreviewsOne(userId, body.senderRole);
-    const countUnReadSender = await this.conversationService.countUnRead(userId, body.senderRole);
-    const conversationReceiver = await this.messageService.findByConversationOne(body.receiverId, conversation._id);
-    const previewReceiver = await this.conversationService.findPreviewsOne(body.receiverId, body.receiverRole);
-    const countUnReadReceiver = await this.conversationService.countUnRead(body.receiverId, body.receiverRole);
+    const [previewSender, countUnReadSender, conversationReceiver, previewReceiver, countUnReadReceiver] = await Promise.all([
+      this.conversationService.findPreviewsOne(userId, body.senderRole),
+      this.conversationService.countUnRead(userId, body.senderRole),
+      this.messageService.findByConversationOne(body.receiverId, conversation._id),
+      this.conversationService.findPreviewsOne(body.receiverId, body.receiverRole),
+      this.conversationService.countUnRead(body.receiverId, body.receiverRole),
+    ]);
     const senderSocket = this.userSocketMap.get(userId);
     const receiverSocket = this.userSocketMap.get(body.receiverId);
     senderSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
@@ -125,9 +130,11 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const query = { page: body.page, limit: body.limit };
     const req = { senderRole: body.senderRole, receiverId: body.receiverId, receiverRole: body.receiverRole };
     const conversation = await this.conversationService.findOneByParticipants(userId, req);
-    const data = await this.messageService.findByConversation(userId, req, conversation._id, query);
-    const countUnRead = await this.conversationService.countUnRead(userId, body.senderRole);
-    const preview = await this.conversationService.findPreviewsOne(userId, body.senderRole);
+    const [data, countUnRead, preview] = await Promise.all([
+      this.messageService.findByConversation(userId, req, conversation._id, query),
+      this.conversationService.countUnRead(userId, body.senderRole),
+      this.conversationService.findPreviewsOne(userId, body.senderRole),
+    ]);
     const userSocket = this.userSocketMap.get(userId);
     userSocket.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnRead);
     userSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, preview);
