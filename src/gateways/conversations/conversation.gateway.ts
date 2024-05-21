@@ -79,12 +79,18 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const conversation = await this.conversationService.findOneByParticipants(userId, body);
     const newMessage = await this.messageService.create(conversation._id, userId, body.text);
     await this.conversationService.updateLastMessage(conversation._id, newMessage._id, newMessage.text);
-    const dataConversation = await this.messageService.findByConversationOne(userId, conversation._id);
-    const dataPreview = await this.conversationService.findPreviewsOne(userId, body.senderRole);
+    const conversationSender = await this.messageService.findByConversationOne(userId, conversation._id);
+    const previewSender = await this.conversationService.findPreviewsOne(userId, body.senderRole);
+    const conversationReceiver = await this.messageService.findByConversationOne(body.receiverId, conversation._id);
+    const previewReceiver = await this.conversationService.findPreviewsOne(body.receiverId, body.receiverRole);
+    const senderSocket = this.userSocketMap.get(userId);
     const receiverSocket = this.userSocketMap.get(body.receiverId);
+    senderSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
+    senderSocket.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, conversationSender);
+    senderSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewSender);
     receiverSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
-    receiverSocket.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, dataConversation);
-    receiverSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, dataPreview);
+    receiverSocket.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, conversationReceiver);
+    receiverSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewReceiver);
   }
 
   async sendMessageServer(userId: string, body: MessageCreateREQ) {
@@ -93,12 +99,18 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const conversation = await this.conversationService.findOneByParticipants(userId, body);
     const newMessage = await this.messageService.create(conversation._id, userId, body.text);
     await this.conversationService.updateLastMessage(conversation._id, newMessage._id, newMessage.text);
-    const dataConversation = await this.messageService.findByConversationOne(userId, conversation._id);
-    const dataPreview = await this.conversationService.findPreviewsOne(userId, body.senderRole);
+    const conversationSender = await this.messageService.findByConversationOne(userId, conversation._id);
+    const previewSender = await this.conversationService.findPreviewsOne(userId, body.senderRole);
+    const conversationReceiver = await this.messageService.findByConversationOne(body.receiverId, conversation._id);
+    const previewReceiver = await this.conversationService.findPreviewsOne(body.receiverId, body.receiverRole);
+    const senderSocket = this.userSocketMap.get(userId);
     const receiverSocket = this.userSocketMap.get(body.receiverId);
+    senderSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
+    senderSocket.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, conversationSender);
+    senderSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewSender);
     receiverSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
-    receiverSocket.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, dataConversation);
-    receiverSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, dataPreview);
+    receiverSocket.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, conversationReceiver);
+    receiverSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewReceiver);
   }
 
   @SubscribeMessage(WS_EVENT.CONVERSATION.GET_CONVERSATION)
