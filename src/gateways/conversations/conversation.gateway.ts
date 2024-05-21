@@ -132,7 +132,7 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const conversation = await this.conversationService.findOneByParticipants(userId, req);
     const data = await this.messageService.findByConversation(userId, req, conversation._id, query);
     const countUnRead = await this.conversationService.countUnRead(userId, body.senderRole);
-    const preview = this.conversationService.findPreviewsOne(userId, body.senderRole);
+    const preview = await this.conversationService.findPreviewsOne(userId, body.senderRole);
     const userSocket = this.userSocketMap.get(userId);
     userSocket.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnRead);
     userSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, preview);
