@@ -19,6 +19,7 @@ import { MessageIsTypingREQ } from 'domains/message/request/message-is-typing.re
 import { UserService } from 'domains/user/user.service';
 import { AllExceptionsSocketFilter } from 'filter/ws-exception.filter';
 import { WS_EVENT } from 'shared/constants/ws-event.constant';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { JwtHelper } from 'shared/helpers/jwt.helper';
 import { Namespace, Socket } from 'socket.io';
 import { ConversationService } from './conversation.service';
@@ -83,7 +84,6 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const previewSender = await this.conversationService.findPreviewsOne(userId, body.senderRole);
     const conversationReceiver = await this.messageService.findByConversationOne(body.receiverId, conversation._id);
     const previewReceiver = await this.conversationService.findPreviewsOne(body.receiverId, body.receiverRole);
-    const countUnRead = await this.conversationService.countUnRead(body.receiverId, body.receiverRole);
     const senderSocket = this.userSocketMap.get(userId);
     const receiverSocket = this.userSocketMap.get(body.receiverId);
     senderSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
@@ -92,7 +92,6 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     receiverSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
     receiverSocket.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, conversationReceiver);
     receiverSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewReceiver);
-    receiverSocket.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnRead);
   }
 
   async sendMessageServer(userId: string, body: MessageCreateREQ) {
@@ -155,12 +154,17 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
   @SubscribeMessage(WS_EVENT.CONVERSATION.IS_TYPING)
   async isTyping(@ConnectedSocket() client: AuthSocket, @MessageBody() body: MessageIsTypingREQ) {
     const userId = client.userId;
-    const { isTyping, ...req } = body;
-    const user = await this.userService.findById(userId);
-    const conversation = await this.conversationService.findOneByParticipants(userId, req);
-    client.join(conversation._id);
-    client.broadcast.to(conversation._id).emit(WS_EVENT.CONVERSATION.IS_TYPING, {
-      userName: user.fullName,
+    const { isTyping, senderRole, receiverId } = body;
+    const countUnRead = await this.conversationService.countUnRead(userId, senderRole);
+    const senderSocket = this.userSocketMap.get(userId);
+    const receiverSocket = this.userSocketMap.get(receiverId);
+    const data =
+      senderRole === ROLE_NAME.SELLER
+        ? await this.userService.findStoreByUserId(userId)
+        : await this.userService.findById(userId);
+    senderSocket.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnRead);
+    receiverSocket.broadcast.emit(WS_EVENT.CONVERSATION.IS_TYPING, {
+      name: senderRole === ROLE_NAME.SELLER ? data['name'] : data['fullName'],
       isTyping: isTyping,
     });
   }
@@ -192,6 +196,7 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
   async handleConnection(client: Socket): Promise<void> {
     this.logger.log(`WS Client with id: ${client.id} connected!`);
     const token = client.handshake.auth.authorization;
+    // const token = client.handshake.headers.authorization;
     if (!token) return;
     const payload = this.jwtHelper.decode(token);
     this.userSocketMap.set(payload.userId, client);
