@@ -102,7 +102,8 @@ export class NotificationGateway implements OnGatewayInit, OnGatewayConnection, 
 
   async handleConnection(client: Socket): Promise<void> {
     this.logger.log(`WS Client with id: ${client.id} connected!`);
-    const token = client.handshake.headers.authorization;
+    const token = client.handshake.auth.authorization;
+    if (!token) return;
     const payload = this.jwtHelper.decode(token);
     this.userSocketMap.set(payload.userId, client);
   }
