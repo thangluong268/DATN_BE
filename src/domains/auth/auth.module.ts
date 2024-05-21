@@ -23,7 +23,7 @@ import { LocalStrategy } from './strategies/local.strategy';
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtATStrategy, JwtRTStrategy, LocalStrategy, JwtHelper, GoogleStrategy, FacebookStrategy],
-  exports: [JwtHelper],
+  exports: [JwtHelper, AuthService],
 })
 export class AuthModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

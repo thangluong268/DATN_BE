@@ -11,6 +11,7 @@ import {
   WsResponse,
 } from '@nestjs/websockets';
 
+import { AuthService } from 'domains/auth/auth.service';
 import { AuthSocket, WsGuard } from 'domains/auth/guards/ws-jwt-auth.guard';
 import { MessageService } from 'domains/message/message.service';
 import { MessageCreateREQ } from 'domains/message/request/message-create.request';
@@ -33,10 +34,12 @@ import { ConversationRoomREQ } from './request/conversation-room.request';
 @UseGuards(WsGuard)
 export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(ConversationGateway.name);
+  private readonly userSocketMap = new Map<string, Socket>();
   constructor(
     private readonly conversationService: ConversationService,
     private readonly messageService: MessageService,
     private readonly userService: UserService,
+    private readonly authService: AuthService,
   ) {}
 
   @WebSocketServer() io: Namespace;
@@ -78,10 +81,10 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     await this.conversationService.updateLastMessage(conversation._id, newMessage._id, newMessage.text);
     const dataConversation = await this.messageService.findByConversationOne(userId, conversation._id);
     const dataPreview = await this.conversationService.findPreviewsOne(userId, body.senderRole);
-    client.join(conversation._id);
-    this.io.to(conversation._id).emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
-    this.io.to(conversation._id).emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, dataConversation);
-    this.io.to(conversation._id).emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, dataPreview);
+    const receiverSocket = this.userSocketMap.get(body.receiverId);
+    receiverSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
+    receiverSocket.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, dataConversation);
+    receiverSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, dataPreview);
   }
 
   async sendMessageServer(userId: string, body: MessageCreateREQ) {
@@ -92,9 +95,10 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     await this.conversationService.updateLastMessage(conversation._id, newMessage._id, newMessage.text);
     const dataConversation = await this.messageService.findByConversationOne(userId, conversation._id);
     const dataPreview = await this.conversationService.findPreviewsOne(userId, body.senderRole);
-    this.io.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
-    this.io.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, dataConversation);
-    this.io.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, dataPreview);
+    const receiverSocket = this.userSocketMap.get(body.receiverId);
+    receiverSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
+    receiverSocket.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, dataConversation);
+    receiverSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, dataPreview);
   }
 
   @SubscribeMessage(WS_EVENT.CONVERSATION.GET_CONVERSATION)
@@ -105,7 +109,6 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const req = { senderRole: body.senderRole, receiverId: body.receiverId, receiverRole: body.receiverRole };
     const conversation = await this.conversationService.findOneByParticipants(userId, req);
     const data = await this.messageService.findByConversation(userId, req, conversation._id, query);
-    client.join(conversation._id);
     return { event: WS_EVENT.CONVERSATION.GET_CONVERSATION, data };
   }
 
@@ -167,11 +170,17 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
   //   });
   // }
 
+  @UseGuards(WsGuard)
   async handleConnection(client: Socket): Promise<void> {
     this.logger.log(`WS Client with id: ${client.id} connected!`);
+    const token = client.handshake.headers.authorization?.split(' ')[1];
+    const userId = await this.authService.verifyToken(token);
+    this.userSocketMap.set(userId, client);
   }
 
   async handleDisconnect(client: Socket) {
     this.logger.log(`Disconnected socket id: ${client.id}`);
+    console.log(client['userId']);
+    // this.userSocketMap.delete(client.userId);
   }
 }
