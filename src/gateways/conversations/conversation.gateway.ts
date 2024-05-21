@@ -83,6 +83,7 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const previewSender = await this.conversationService.findPreviewsOne(userId, body.senderRole);
     const conversationReceiver = await this.messageService.findByConversationOne(body.receiverId, conversation._id);
     const previewReceiver = await this.conversationService.findPreviewsOne(body.receiverId, body.receiverRole);
+    const countUnRead = await this.conversationService.countUnRead(body.receiverId, body.receiverRole);
     const senderSocket = this.userSocketMap.get(userId);
     const receiverSocket = this.userSocketMap.get(body.receiverId);
     senderSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
@@ -91,6 +92,7 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     receiverSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
     receiverSocket.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, conversationReceiver);
     receiverSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewReceiver);
+    receiverSocket.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnRead);
   }
 
   async sendMessageServer(userId: string, body: MessageCreateREQ) {
@@ -121,6 +123,11 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     const req = { senderRole: body.senderRole, receiverId: body.receiverId, receiverRole: body.receiverRole };
     const conversation = await this.conversationService.findOneByParticipants(userId, req);
     const data = await this.messageService.findByConversation(userId, req, conversation._id, query);
+    const countUnRead = await this.conversationService.countUnRead(userId, body.senderRole);
+    const preview = await this.conversationService.findPreviewsOne(userId, body.senderRole);
+    const userSocket = this.userSocketMap.get(userId);
+    userSocket.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnRead);
+    userSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, preview);
     return { event: WS_EVENT.CONVERSATION.GET_CONVERSATION, data };
   }
 
