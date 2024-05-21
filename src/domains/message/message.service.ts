@@ -79,4 +79,8 @@ export class MessageService {
     await this.messageModel.findByIdAndDelete(messageId, { lean: true });
     return message;
   }
+
+  async updateReadStatus(userId: string, conversationId: string) {
+    await this.messageModel.updateMany({ conversationId, senderId: { $ne: userId }, isRead: false }, { isRead: true });
+  }
 }

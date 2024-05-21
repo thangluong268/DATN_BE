@@ -154,18 +154,20 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
   @SubscribeMessage(WS_EVENT.CONVERSATION.IS_TYPING)
   async isTyping(@ConnectedSocket() client: AuthSocket, @MessageBody() body: MessageIsTypingREQ) {
     const userId = client.userId;
-    const { isTyping, senderRole, receiverId } = body;
+    const { isTyping, ...req } = body;
+    const senderRole = body.senderRole;
+    const conversation = await this.conversationService.findOneByParticipants(userId, req);
     const countUnRead = await this.conversationService.countUnRead(userId, senderRole);
+    await this.messageService.updateReadStatus(userId, conversation._id.toString());
     const preview = await this.conversationService.findPreviewsOne(userId, senderRole);
     const senderSocket = this.userSocketMap.get(userId);
-    const receiverSocket = this.userSocketMap.get(receiverId);
     const data =
       senderRole === ROLE_NAME.SELLER
         ? await this.userService.findStoreByUserId(userId)
         : await this.userService.findById(userId);
     senderSocket.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnRead);
     senderSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, preview);
-    receiverSocket.broadcast.emit(WS_EVENT.CONVERSATION.IS_TYPING, {
+    senderSocket.broadcast.emit(WS_EVENT.CONVERSATION.IS_TYPING, {
       name: senderRole === ROLE_NAME.SELLER ? data['name'] : data['fullName'],
       isTyping: isTyping,
     });
