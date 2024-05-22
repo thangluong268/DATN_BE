@@ -38,7 +38,7 @@ export class StoreController {
     await parseExcelResponse(response, book, `DTEX_Stores_${dayjs().format('YYYY-MM-DD_HH:mm:ss')}`);
   }
 
-  @Roles(ROLE_NAME.SELLER)
+  @Roles(ROLE_NAME.USER, ROLE_NAME.SELLER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Get('store/seller')
   getMyStore(@Req() req) {
