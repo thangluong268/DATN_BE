@@ -14,6 +14,7 @@ import { Product } from '../product/schema/product.schema';
 import { EmojiDTO } from './dto/evaluation.dto';
 import { EvaluationGetByUserRESP } from './response/evaluation-get-by-user.response';
 import { Evaluation } from './schema/evaluation.schema';
+import { BILL_STATUS } from 'shared/enums/bill.enum';
 
 @Injectable()
 export class EvaluationService {
@@ -98,7 +99,12 @@ export class EvaluationService {
     if (user) {
       const evaluationOfUser = evaluation.emojis.find((emoji) => emoji.userId.toString() === user.userId);
       evaluationOfUser ? (isReaction = true) : (isReaction = false);
-      const bill = await this.billModel.findOne({ userId: user.userId, products: { $elemMatch: { id: productId.toString() } } });
+      const bill = await this.billModel.findOne({
+        userId: user.userId,
+        status: { $ne: BILL_STATUS.REFUND },
+        isShipperConfirmed: true,
+        products: { $elemMatch: { id: productId.toString() } },
+      });
       isPurchased = bill ? true : false;
     }
     return BaseResponse.withMessage(
