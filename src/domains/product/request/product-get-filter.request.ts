@@ -34,10 +34,9 @@ export class ProductGetFilterREQ extends PaginationREQ {
     if (search) {
       condition.$or = [
         { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
+        // { description: { $regex: search, $options: 'i' } },
         { keywords: { $regex: search, $options: 'i' } },
-        { type: { $regex: search, $options: 'i' } },
-        { storeName: { $regex: search, $options: 'i' } },
+        // { storeName: { $regex: search, $options: 'i' } },
         { categoryId: { $regex: search, $options: 'i' } },
       ];
     }

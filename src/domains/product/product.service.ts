@@ -19,7 +19,6 @@ import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationREQ } from 'shared/generics/pagination.request';
 import { PaginationResponse } from 'shared/generics/pagination.response';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
-import sortByConditions from 'shared/helpers/sort-by-condition.helper';
 import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 import { CategoryService } from '../category/category.service';
 import { ProductCreateREQ } from './request/product-create.request';
@@ -91,9 +90,6 @@ export class ProductService {
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.productModel.countDocuments(condition);
     const products = await this.productModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).skip(skip).limit(limit);
-    const sortTypeQuery = 'desc';
-    const sortValueQuery = 'productName';
-    sortByConditions(products, sortTypeQuery, sortValueQuery);
     const data = await Promise.all(
       products.map(async (product) => {
         const store = await this.storeModel.findById(product.storeId).lean();
@@ -109,8 +105,6 @@ export class ProductService {
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.productModel.countDocuments(condition);
     const products = await this.productModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).skip(skip).limit(limit);
-    const { sortTypeQuery, sortValueQuery } = ProductsGetREQ.toSortCondition(query);
-    sortByConditions(products, sortTypeQuery, sortValueQuery);
     const data = await Promise.all(
       products.map(async (product) => {
         const store = await this.storeModel.findById(product.storeId).lean();
@@ -128,8 +122,6 @@ export class ProductService {
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.productModel.countDocuments(condition);
     const products = await this.productModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).skip(skip).limit(limit);
-    const { sortTypeQuery, sortValueQuery } = ProductsGetREQ.toSortCondition(query);
-    sortByConditions(products, sortTypeQuery, sortValueQuery);
     const productsFullInfo = await Promise.all(
       products.map(async (product) => {
         const category = await this.categoryService.findOne(product.categoryId);
@@ -158,8 +150,6 @@ export class ProductService {
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.productModel.countDocuments(condition);
     const products = await this.productModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).skip(skip).limit(limit);
-    const { sortTypeQuery, sortValueQuery } = ProductsGetREQ.toSortCondition(query);
-    sortByConditions(products, sortTypeQuery, sortValueQuery);
     const productsFullInfo = await Promise.all(
       products.map(async (product) => {
         const category = await this.categoryService.findOne(product.categoryId);
@@ -189,8 +179,6 @@ export class ProductService {
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.productModel.countDocuments(condition);
     const products = await this.productModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).skip(skip).limit(limit);
-    const { sortTypeQuery, sortValueQuery } = ProductsGetREQ.toSortCondition(query);
-    sortByConditions(products, sortTypeQuery, sortValueQuery);
     const productsFullInfo = await Promise.all(
       products.map(async (product) => {
         const category = await this.categoryService.findOne(product.categoryId);
@@ -360,7 +348,7 @@ export class ProductService {
 
   async getProductsWithDetailByManager() {
     this.logger.log(`Get Products With Detail By Manager`);
-    const products = await this.productModel.find().sort({ createdAt: -1 }).limit(100).lean();
+    const products = await this.productModel.find().sort({ createdAt: -1 }).lean();
     const data = await Promise.all(
       products.map(async (item) => {
         const productId = item._id.toString();
