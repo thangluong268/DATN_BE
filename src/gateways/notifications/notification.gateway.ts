@@ -51,13 +51,13 @@ export class NotificationGateway implements OnGatewayInit, OnGatewayConnection, 
   async joinRoom(@ConnectedSocket() client: AuthSocket) {
     this.logger.log(`User ${client.userId} joined rom`);
     const receiverSocket = this.userSocketMap.get(client.userId);
-    receiverSocket.emit(WS_EVENT.NOTIFICATION.JOIN_ROOM_NOTIFICATION, `User ${client.userId} joined rom`);
+    receiverSocket?.emit(WS_EVENT.NOTIFICATION.JOIN_ROOM_NOTIFICATION, `User ${client.userId} joined rom`);
   }
 
   async sendNotification(receiverId: string, body: NotificationGetRESP) {
     this.logger.log(`Send notification}`);
     const receiverSocket = this.userSocketMap.get(receiverId);
-    receiverSocket.emit(WS_EVENT.NOTIFICATION.SEND_NOTIFICATION, body);
+    receiverSocket?.emit(WS_EVENT.NOTIFICATION.SEND_NOTIFICATION, body);
   }
 
   @SubscribeMessage(WS_EVENT.NOTIFICATION.SENT_ADD_FRIEND_NOTIFICATION)
@@ -75,7 +75,7 @@ export class NotificationGateway implements OnGatewayInit, OnGatewayConnection, 
       redirectId,
     );
     const receiverSocket = this.userSocketMap.get(receiverId);
-    receiverSocket.emit(WS_EVENT.NOTIFICATION.SENT_ADD_FRIEND_NOTIFICATION, newNotification);
+    receiverSocket?.emit(WS_EVENT.NOTIFICATION.SENT_ADD_FRIEND_NOTIFICATION, newNotification);
   }
 
   @SubscribeMessage(WS_EVENT.NOTIFICATION.GET_NOTIFICATIONS)
@@ -90,7 +90,7 @@ export class NotificationGateway implements OnGatewayInit, OnGatewayConnection, 
     this.logger.log(`Read notifications`);
     const data = await this.notificationService.readNotifications(body);
     const receiverSocket = this.userSocketMap.get(client.userId);
-    receiverSocket.emit(WS_EVENT.NOTIFICATION.READ_NOTIFICATION, data);
+    receiverSocket?.emit(WS_EVENT.NOTIFICATION.READ_NOTIFICATION, data);
   }
 
   @SubscribeMessage(WS_EVENT.NOTIFICATION.COUNT_NEW_NOTIFICATIONS)

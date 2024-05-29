@@ -55,7 +55,7 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     this.logger.log(`User ${client.userId} and user ${body.receiverId} joined rom`);
     const conversation = await this.conversationService.findOneByParticipants(client.userId, body);
     const receiverSocket = this.userSocketMap.get(body.receiverId);
-    receiverSocket.emit(
+    receiverSocket?.emit(
       WS_EVENT.CONVERSATION.JOIN_ROOM,
       `User ${client.userId} and user ${body.receiverId} joined rom: ${conversation._id}`,
     );
@@ -66,7 +66,7 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     this.logger.log(`User ${client.userId} and user ${body.receiverId} have left rom`);
     const conversation = await this.conversationService.findOneByParticipants(client.userId, body);
     const receiverSocket = this.userSocketMap.get(body.receiverId);
-    receiverSocket.emit(
+    receiverSocket?.emit(
       WS_EVENT.CONVERSATION.LEAVE_ROOM,
       `User ${client.userId} and user ${body.receiverId} have left rom: ${conversation._id}`,
     );
@@ -93,10 +93,10 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     senderSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
     senderSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewSender);
     senderSocket.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnReadSender);
-    receiverSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
-    receiverSocket.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, conversationReceiver);
-    receiverSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewReceiver);
-    receiverSocket.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnReadReceiver);
+    receiverSocket?.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
+    receiverSocket?.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, conversationReceiver);
+    receiverSocket?.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewReceiver);
+    receiverSocket?.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnReadReceiver);
   }
 
   async sendMessageServer(userId: string, body: MessageCreateREQ) {
@@ -117,10 +117,10 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     senderSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
     senderSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewSender);
     senderSocket.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnReadSender);
-    receiverSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
-    receiverSocket.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, conversationReceiver);
-    receiverSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewReceiver);
-    receiverSocket.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnReadReceiver);
+    receiverSocket?.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
+    receiverSocket?.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, conversationReceiver);
+    receiverSocket?.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewReceiver);
+    receiverSocket?.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnReadReceiver);
   }
 
   @SubscribeMessage(WS_EVENT.CONVERSATION.GET_CONVERSATION)
