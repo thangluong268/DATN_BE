@@ -1,5 +1,4 @@
-import { Type } from 'class-transformer';
-import { IsArray, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class ProductInfoDTO {
   @IsNotEmpty()
@@ -11,10 +10,8 @@ export class ProductInfoDTO {
   @IsNotEmpty()
   type: string;
 
-  @IsNotEmpty()
-  @IsArray()
-  @Type(() => String)
-  avatar: string[];
+  @IsString()
+  avatar: string;
 
   @IsNotEmpty()
   @IsString()

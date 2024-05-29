@@ -263,8 +263,9 @@ export class ShipperService {
     });
 
     const store = await this.storeModel.findById(bill.storeId).lean();
+    const product = bill.products[0];
     // Send notification to seller
-    const subjectInfoToSeller = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const subjectInfoToSeller = NotificationSubjectInfoDTO.ofProduct(product.id, product.name, product.avatar);
     const receiverIdToSeller = store.userId;
     const linkToSeller = NOTIFICATION_LINK[BILL_STATUS.DELIVERING] + bill.storeId;
     const billStatusToSeller = BILL_STATUS.DELIVERING;
@@ -278,7 +279,7 @@ export class ShipperService {
     this.notificationGateway.sendNotification(receiverIdToSeller, notificationToSeller);
 
     // Send notification to user
-    const subjectInfoToUser = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const subjectInfoToUser = NotificationSubjectInfoDTO.ofProduct(product.id, product.name, product.avatar);
     const receiverIdToUser = bill.userId;
     const linkToUser = NOTIFICATION_LINK[NotificationType.BILL];
     const billStatusToUser = BILL_STATUS.DELIVERING;
@@ -332,8 +333,9 @@ export class ShipperService {
     await this.userModel.findByIdAndUpdate(userId, { $inc: { wallet: bill.deliveryFee - taxFee } });
 
     const store = await this.storeModel.findById(bill.storeId).lean();
+    const product = bill.products[0];
     // Send notification to seller
-    const subjectInfoToSeller = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const subjectInfoToSeller = NotificationSubjectInfoDTO.ofProduct(product.id, product.name, product.avatar);
     const receiverIdToSeller = store.userId;
     const linkToSeller = NOTIFICATION_LINK[BILL_STATUS.DELIVERED] + bill.storeId;
     const billStatusToSeller = BILL_STATUS.DELIVERED;
@@ -347,7 +349,7 @@ export class ShipperService {
     this.notificationGateway.sendNotification(receiverIdToSeller, notificationToSeller);
 
     // Send notification to user
-    const subjectInfoToUser = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const subjectInfoToUser = NotificationSubjectInfoDTO.ofProduct(product.id, product.name, product.avatar);
     const receiverIdToUser = bill.userId;
     const linkToUser = NOTIFICATION_LINK[NotificationType.BILL];
     const billStatusToUser = BILL_STATUS.DELIVERED;
@@ -383,8 +385,9 @@ export class ShipperService {
     await this.userBillTrackingService.handleUserBillTracking(userId, BILL_STATUS.BACK);
 
     const store = await this.storeModel.findById(bill.storeId).lean();
+    const product = bill.products[0];
     // Send notification to seller
-    const subjectInfoToSeller = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const subjectInfoToSeller = NotificationSubjectInfoDTO.ofProduct(product.id, product.name, product.avatar);
     const receiverIdToSeller = store.userId;
     const linkToSeller = NOTIFICATION_LINK[BILL_STATUS.BACK] + bill.storeId;
     const billStatusToSeller = BILL_STATUS_NOTIFICATION.BACK_SELLER;
@@ -398,7 +401,7 @@ export class ShipperService {
     this.notificationGateway.sendNotification(receiverIdToSeller, notificationToSeller);
 
     // Send notification to user
-    const subjectInfoToUser = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const subjectInfoToUser = NotificationSubjectInfoDTO.ofProduct(product.id, product.name, product.avatar);
     const receiverIdToUser = bill.userId;
     const linkToUser = NOTIFICATION_LINK[NotificationType.BILL];
     const billStatusToUser = BILL_STATUS_NOTIFICATION.BACK_USER;

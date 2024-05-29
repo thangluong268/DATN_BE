@@ -226,7 +226,7 @@ export class BillService {
     }
     // Send notification
     const subjectProduct = bills[0].products[0];
-    const subjectInfo = NotificationSubjectInfoDTO.ofProduct(subjectProduct);
+    const subjectInfo = NotificationSubjectInfoDTO.ofProduct(subjectProduct.id, subjectProduct.name, subjectProduct.avatar);
     const receiverId = userId;
     const link = NOTIFICATION_LINK[NotificationType.BILL];
     const billStatus = BILL_STATUS.NEW;
@@ -429,7 +429,8 @@ export class BillService {
       case BILL_STATUS.CONFIRMED:
         // Notification to User
         // Send notification
-        const subjectInfo = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+        const product = bill.products[0];
+        const subjectInfo = NotificationSubjectInfoDTO.ofProduct(product.id, product.name, product.avatar);
         const receiverId = bill.userId;
         const link = NOTIFICATION_LINK[NotificationType.BILL];
         const billStatus = BILL_STATUS.CONFIRMED;
@@ -480,7 +481,8 @@ export class BillService {
     await this.userBillTrackingService.handleUserBillTracking(userId, BILL_STATUS.CANCELLED);
 
     // Send notification
-    const subjectInfo = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const product = bill.products[0];
+    const subjectInfo = NotificationSubjectInfoDTO.ofProduct(product.id, product.name, product.avatar);
     const receiverId = userId;
     const link = NOTIFICATION_LINK[NotificationType.BILL];
     const billStatus = BILL_STATUS.CANCELLED;
@@ -500,7 +502,8 @@ export class BillService {
     await this.handleCancelBill(bill, body.reason);
 
     // Send notification
-    const subjectInfo = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const product = bill.products[0];
+    const subjectInfo = NotificationSubjectInfoDTO.ofProduct(product.id, product.name, product.avatar);
     const receiverId = bill.userId;
     const link = NOTIFICATION_LINK[NotificationType.BILL];
     const billStatus = BILL_STATUS.CANCELLED;
@@ -563,7 +566,8 @@ export class BillService {
 
     const store = await this.storeModel.findById(bill.storeId).lean();
     // Send notification to seller
-    const subjectInfoToSeller = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const product = bill.products[0];
+    const subjectInfoToSeller = NotificationSubjectInfoDTO.ofProduct(product.id, product.name, product.avatar);
     const receiverIdToSeller = store.userId;
     const linkToSeller = NOTIFICATION_LINK[BILL_STATUS.REFUND] + bill.storeId;
     const billStatusToSeller = BILL_STATUS_NOTIFICATION.REFUND_SELLER;
@@ -577,7 +581,7 @@ export class BillService {
     this.notificationGateway.sendNotification(receiverIdToSeller, notificationToSeller);
 
     // Send notification to user
-    const subjectInfoToUser = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const subjectInfoToUser = NotificationSubjectInfoDTO.ofProduct(product.id, product.name, product.avatar);
     const receiverIdToUser = bill.userId;
     const linkToUser = NOTIFICATION_LINK[NotificationType.BILL];
     const billStatusToUser = BILL_STATUS_NOTIFICATION.REFUND_USER;
@@ -610,7 +614,8 @@ export class BillService {
     await bill.save();
 
     // Send notification
-    const subjectInfo = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const product = bill.products[0];
+    const subjectInfo = NotificationSubjectInfoDTO.ofProduct(product.id, product.name, product.avatar);
     const receiverId = bill.userId;
     const link = NOTIFICATION_LINK[NotificationType.BILL];
     const billStatus = BILL_STATUS_NOTIFICATION.CONFIRMED_REFUND;
@@ -636,7 +641,8 @@ export class BillService {
 
     const store = await this.storeModel.findById(bill.storeId).lean();
     // Send notification
-    const subjectInfo = NotificationSubjectInfoDTO.ofProduct(bill.products[0]);
+    const product = bill.products[0];
+    const subjectInfo = NotificationSubjectInfoDTO.ofProduct(product.id, product.name, product.avatar);
     const receiverId = store.userId;
     const link = NOTIFICATION_LINK[BILL_STATUS.DELIVERED] + bill.storeId;
     const billStatus = BILL_STATUS_NOTIFICATION.CONFIRM_DELIVERED_BY_USER;

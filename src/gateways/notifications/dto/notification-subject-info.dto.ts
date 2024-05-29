@@ -1,4 +1,3 @@
-import { Product } from 'domains/product/schema/product.schema';
 import { Store } from 'domains/store/schema/store.schema';
 import { User } from 'domains/user/schema/user.schema';
 
@@ -23,11 +22,11 @@ export class NotificationSubjectInfoDTO {
     };
   }
 
-  static ofProduct(product: Partial<Product>): NotificationSubjectInfoDTO {
+  static ofProduct(id: string, name: string, avatar: string): NotificationSubjectInfoDTO {
     return {
-      subjectId: product.id.toString(),
-      subjectAvatar: product.avatar[0],
-      subjectName: product.name,
+      subjectId: id,
+      subjectAvatar: avatar,
+      subjectName: name,
     };
   }
 }
