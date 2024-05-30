@@ -19,7 +19,7 @@ export class BillGetAllByStatusSellerREQ extends PaginationREQ {
       { $addFields: { storeAvatar: { $first: '$store.avatar' } } },
       { $addFields: { storeName: { $first: '$store.name' } } },
       { $project: { storeObjId: 0, store: 0, paymentId: 0, isPaid: 0, shipperIds: 0 } },
-      { $sort: { createdAt: -1 } },
+      { $sort: { updatedAt: -1 } },
       { $skip: skip },
       { $limit: limit },
     ];
