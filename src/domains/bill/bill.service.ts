@@ -137,8 +137,7 @@ export class BillService {
         storeIds: { $in: storeIds },
         isActive: true,
       });
-      if (!promotion) throw new BadRequestException('Khuyến mãi không hợp lệ!');
-      if (promotion.quantity === 0) throw new BadRequestException('Khuyến mãi đã hết!');
+      if (!promotion || !promotion?.isActive) throw new BadRequestException('Khuyến mãi không hợp lệ!');
       await this.userBillTrackingService.checkUserNotAllowUseVoucher(userId);
       promotionValue = Math.floor((totalPrice * promotion.value) / 100);
       if (promotionValue > promotion.maxDiscountValue) promotionValue = promotion.maxDiscountValue;
@@ -217,11 +216,7 @@ export class BillService {
       const { numOfCoins, promotionId } = JSON.parse(data);
       await this.userModel.findByIdAndUpdate(userId, { $inc: { wallet: -numOfCoins } });
       if (!promotionId) return;
-      await this.promotionModel.findByIdAndUpdate(promotionId, {
-        $inc: { quantity: -1 },
-        $pull: { userSaves: userId },
-        $push: { userUses: userId },
-      });
+      await this.promotionModel.findByIdAndUpdate(promotionId, { $pull: { userSaves: userId }, $push: { userUses: userId } });
     }
     // Send notification
     const subjectProduct = bills[0].products[0];

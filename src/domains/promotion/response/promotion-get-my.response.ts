@@ -21,7 +21,7 @@ export class PromotionGetMyRESP {
       maxDiscountValue: promotion.maxDiscountValue,
       startTime: promotion.startTime,
       endTime: promotion.endTime,
-      usagePercent: Math.floor(promotion.userUses.length / promotion.quantity),
+      usagePercent: promotion.userUses.length / promotion.quantity,
       isActive: promotion.isActive,
     };
   }

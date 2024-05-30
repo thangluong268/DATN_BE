@@ -103,7 +103,12 @@ export class CronjobsService {
 
   @Cron('*/1 * * * * *')
   async usedUpPromotion() {
-    await this.promotionModel.updateMany({ quantity: { $lte: 0 }, isActive: true }, { $set: { isActive: false } });
+    const promotions = await this.promotionModel.find({ isActive: true }).lean();
+    for (const promotion of promotions) {
+      if (promotion.userUses.length === promotion.quantity) {
+        await this.promotionModel.findByIdAndUpdate(promotion._id, { isActive: false });
+      }
+    }
   }
 
   @Cron('*/1 * * * * *')
