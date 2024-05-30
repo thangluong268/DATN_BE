@@ -79,7 +79,7 @@ export class NotificationService {
   }
 
   async getOne(receiverId: string, subjectId: string, type: NotificationType) {
-    return await this.notificationModel.findOne({ receiverId, subjectId, type });
+    return await this.notificationModel.findOne({ receiverId, subjectId, type }).sort({ createdAt: -1 }).lean();
   }
 
   async countNewNotifications(userId: string) {

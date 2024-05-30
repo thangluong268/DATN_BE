@@ -263,20 +263,25 @@ export class UserService {
     this.logger.log(`Follow Store: ${userId} - ${storeId}`);
     const store = await this.storeModel.findById(storeId).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
-    if (store.userId.toString() === userId) throw new BadRequestException('Bạn không thể theo dõi cửa hàng của chính mình!');
+    if (store.userId.toString() === userId.toString())
+      throw new BadRequestException('Bạn không thể theo dõi cửa hàng của chính mình!');
     const user = await this.userModel.findById(userId).lean();
     const index = user.followStores.findIndex((id) => id.toString() === storeId.toString());
-    index == -1 ? user.followStores.push(storeId) : user.followStores.splice(index, 1);
+    index === -1 ? user.followStores.push(storeId) : user.followStores.splice(index, 1);
     await this.userModel.findByIdAndUpdate(userId, { followStores: user.followStores });
 
-    // Send notification
-    const subjectInfo = NotificationSubjectInfoDTO.ofUser(user);
-    const receiverId = store.userId;
-    const link = NOTIFICATION_LINK[NotificationType.FOLLOW];
-    const notification = await this.notificationService.create(receiverId, subjectInfo, NotificationType.FOLLOW, link);
-    this.notificationGateway.sendNotification(receiverId, notification);
-
-    return BaseResponse.withMessage({}, index == -1 ? 'Follow cửa hàng thành công!' : 'Hủy follow cửa hàng thành công!');
+    const notification = await this.notificationService.getOne(store.userId, userId, NotificationType.FOLLOW);
+    const oneDayAgo = dayjs().subtract(1, 'day');
+    const isBefore = notification && dayjs(notification['createdAt']).isBefore(oneDayAgo);
+    if (index === -1 && (!notification || isBefore)) {
+      // Send notification
+      const subjectInfo = NotificationSubjectInfoDTO.ofUser(user);
+      const receiverId = store.userId;
+      const link = NOTIFICATION_LINK[NotificationType.FOLLOW];
+      const newNotification = await this.notificationService.create(receiverId, subjectInfo, NotificationType.FOLLOW, link);
+      this.notificationGateway.sendNotification(receiverId, newNotification);
+    }
+    return BaseResponse.withMessage({}, index === -1 ? 'Follow cửa hàng thành công!' : 'Hủy follow cửa hàng thành công!');
   }
 
   async acceptOrUnFriend(receiverId: string, senderId: string) {

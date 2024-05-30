@@ -114,7 +114,7 @@ export class UserController {
   @Put('user-follow-store')
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   followStore(@Req() req, @Query('storeId') storeId: string) {
-    return this.userService.followStore(req.user._id, storeId);
+    return this.userService.followStore(req.user._id.toString(), storeId);
   }
 
   @Roles(ROLE_NAME.USER)
