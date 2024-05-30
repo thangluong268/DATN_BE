@@ -314,25 +314,9 @@ export class ProductService {
 
   async getProductsLoveByUser(userId: string, query: ProductsGetLoveREQ) {
     this.logger.log(`Get Products Love By User: ${userId}`);
-    const conditionFindProduct = ProductsGetLoveREQ.toQueryConditionFindProduct(query);
-    const { skip, limit } = QueryPagingHelper.queryPaging(query);
-    const productIds = (await this.productModel.find(conditionFindProduct).select('_id').lean()).map((product) => product._id);
-    const conditionFindEvaluation = ProductsGetLoveREQ.toQueryConditionFindEvaluation(userId, productIds);
-    const total = await this.evaluationModel.countDocuments(conditionFindEvaluation);
-    const productIdsOfEvaluations = (
-      await this.evaluationModel
-        .find(conditionFindEvaluation)
-        .sort({ updatedAt: -1 })
-        .limit(limit)
-        .skip(skip)
-        .select('productId')
-        .lean()
-    ).map((evaluation) => evaluation.productId);
-    const products = await Promise.all(
-      productIdsOfEvaluations.map(async (productId) => {
-        return await this.productModel.findById(productId, {}, { lean: true });
-      }),
-    );
+    const total = await this.evaluationModel.aggregate(ProductsGetLoveREQ.toCount(userId, query));
+    const productsUserLove = await this.evaluationModel.aggregate(ProductsGetLoveREQ.toFind(userId, query) as any);
+    const products = productsUserLove.map((item) => item.product[0]);
     const data = await Promise.all(
       products.map(async (product) => {
         const quantitySold = await this.billService.countProductDelivered(product._id, PRODUCT_TYPE.SELL, BILL_STATUS.DELIVERED);
@@ -343,7 +327,7 @@ export class ProductService {
         return { ...product, categoryName: category.name, storeName: store.name, quantitySold, quantityGive, revenue };
       }),
     );
-    return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách sản phẩm yêu thích thành công!');
+    return PaginationResponse.ofWithTotalAndMessage(data, total[0]?.total || 0, 'Lấy danh sách sản phẩm yêu thích thành công!');
   }
 
   async getProductsWithDetailByManager() {

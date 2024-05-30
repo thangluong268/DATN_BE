@@ -182,10 +182,9 @@ export class BillService {
 
   async handleBillSuccess(paymentId: string) {
     this.logger.log(`Handle Bill Success: ${paymentId}`);
-    let userId = null;
     const bills = await this.billModel.find({ paymentId }).lean();
+    const userId = bills[0].userId;
     for (const bill of bills) {
-      userId = bill.userId;
       // Remove product in cart
       const productIds = bill.products.map((product) => new ObjectId(product.id));
       await this.cartModel.updateMany(

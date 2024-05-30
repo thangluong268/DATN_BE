@@ -114,9 +114,9 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     ]);
     const senderSocket = this.userSocketMap.get(userId);
     const receiverSocket = this.userSocketMap.get(body.receiverId);
-    senderSocket.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
-    senderSocket.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewSender);
-    senderSocket.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnReadSender);
+    senderSocket?.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
+    senderSocket?.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewSender);
+    senderSocket?.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnReadSender);
     receiverSocket?.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
     receiverSocket?.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, conversationReceiver);
     receiverSocket?.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewReceiver);

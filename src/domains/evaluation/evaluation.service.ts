@@ -8,13 +8,13 @@ import { NotificationGateway } from 'gateways/notifications/notification.gateway
 import { NotificationService } from 'gateways/notifications/notification.service';
 import { Model } from 'mongoose';
 import { NOTIFICATION_LINK } from 'shared/constants/notification.constant';
+import { BILL_STATUS } from 'shared/enums/bill.enum';
 import { NotificationType } from 'shared/enums/notification.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { Product } from '../product/schema/product.schema';
 import { EmojiDTO } from './dto/evaluation.dto';
 import { EvaluationGetByUserRESP } from './response/evaluation-get-by-user.response';
 import { Evaluation } from './schema/evaluation.schema';
-import { BILL_STATUS } from 'shared/enums/bill.enum';
 
 @Injectable()
 export class EvaluationService {
@@ -70,7 +70,9 @@ export class EvaluationService {
   async updateEmoji(userId: string, name: string, evaluation: Evaluation) {
     const index = evaluation.emojis.findIndex((emoji) => emoji.userId.toString() === userId.toString());
     const newEmoji = { userId, name } as EmojiDTO;
-    if (index == -1) {
+    console.log(index);
+    console.log(newEmoji);
+    if (index === -1) {
       evaluation.emojis.push(newEmoji);
     } else {
       if (evaluation.emojis[index].name === name) {
