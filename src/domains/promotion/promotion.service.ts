@@ -43,7 +43,8 @@ export class PromotionService {
     this.logger.log(`Create promotion by userId: ${userId}, body: ${JSON.stringify(body)}`);
     promotionCreateValidate(body);
     const voucherCode = await this.generateVoucherCode();
-    return await this.promotionModel.create({ ...body, voucherCode });
+    await this.promotionModel.create({ ...body, voucherCode });
+    return BaseResponse.withMessage({}, 'Tạo khuyến mãi thành công!');
   }
 
   async getPromotionsByStoreId(user: any, storeId: string) {
