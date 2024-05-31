@@ -99,7 +99,7 @@ export class ShipperService {
     this.logger.log(`Active account shipper`);
     const { email } = body;
     const checkEmailShipperExist = await this.userModel.findOne({ email, role: ROLE_NAME.SHIPPER }).lean();
-    if (checkEmailShipperExist) throw new ConflictException('Email đã tồn tại');
+    if (checkEmailShipperExist) throw new ConflictException('Username đã tồn tại');
     const shipper = await this.userModel.findById(id).lean();
     const password = generatePassword();
     console.log(password);
