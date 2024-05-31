@@ -1,4 +1,5 @@
 import { IsOptional, IsString } from 'class-validator';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { PaginationREQ } from 'shared/generics/pagination.request';
 
 export class UserBannedGetREQ extends PaginationREQ {
@@ -8,7 +9,7 @@ export class UserBannedGetREQ extends PaginationREQ {
 
   static toCondition(query: UserBannedGetREQ) {
     const { search } = query;
-    const condition = { status: false };
+    const condition = { status: false, role: { $nin: [ROLE_NAME.SHIPPER] }};
     if (search) {
       query['$or'] = [
         { fullName: { $regex: search, $options: 'i' } },

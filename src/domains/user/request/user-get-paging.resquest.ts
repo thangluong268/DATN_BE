@@ -8,7 +8,7 @@ export class UserGetPagingREQ extends PaginationREQ {
   search: string;
 
   static toQueryCondition(search: string) {
-    const query = { role: { $nin: [ROLE_NAME.ADMIN, ROLE_NAME.MANAGER] } };
+    const query = { role: { $nin: [ROLE_NAME.ADMIN, ROLE_NAME.MANAGER, ROLE_NAME.SHIPPER] } };
     if (search) {
       query['$or'] = [
         { fullName: { $regex: search, $options: 'i' } },
