@@ -12,7 +12,7 @@ RUN npm install
 
 # Copy the source code into the container
 COPY src ./src
-COPY .env.prod ./
+COPY .env ./
 COPY nest-cli.json ./
 COPY tsconfig*.json ./
 
@@ -27,7 +27,7 @@ FROM node:lts-bookworm-slim
 WORKDIR /app
 
 # Copy the production dependencies from the build stage
-COPY --from=build /app/.env.prod ./
+COPY --from=build /app/.env ./
 COPY --from=build /app/package*.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
