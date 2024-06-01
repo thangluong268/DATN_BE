@@ -22,6 +22,6 @@ import { Product, ProductSchema } from 'domains/product/schema/product.schema';
   ],
   controllers: [FeedbackController],
   providers: [FeedbackService],
-  exports: [FeedbackService],
+  exports: [FeedbackService, MongooseModule],
 })
 export class FeedbackModule {}

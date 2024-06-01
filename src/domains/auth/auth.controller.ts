@@ -1,15 +1,15 @@
-import { Body, Controller, Delete, Get, HttpStatus, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { SOCIAL_APP } from 'shared/constants/user.constant';
 import { ROLE_NAME } from '../../shared/enums/role-name.enum';
 import { AuthService } from './auth.service';
 import { Roles } from './decorators/auth-role.decorator';
 import { AuthJwtATGuard } from './guards/auth-jwt-at.guard';
 import { AuthJwtRTGuard } from './guards/auth-jwt-rt.guard';
 import { AuthRoleGuard } from './guards/auth-role.guard';
-import { FacebookOAuthGuard } from './guards/facebook-oauth.guard';
-import { GoogleOAuthGuard } from './guards/google-oauth.guard';
 import { AuthSetRoleUserREQ } from './request/auth-set-role-user.request';
 import { ForgetPassREQ } from './request/forget-password.request';
+import { LoginSocialREQ } from './request/login-social.request';
 import { AuthSignUpREQ } from './request/sign-up.request';
 
 @Controller('auth')
@@ -23,31 +23,32 @@ export class AuthController {
     return this.authService.refreshToken(userId, refreshToken);
   }
 
-  @Get('login/google')
-  @UseGuards(GoogleOAuthGuard)
-  async googleLogin(): Promise<any> {
-    return HttpStatus.OK;
+  @Post('login/google')
+  // @UseGuards(GoogleOAuthGuard)
+  async googleLogin(@Body() body: LoginSocialREQ) {
+    return this.authService.loginWithSocial(body.idToken, SOCIAL_APP.GOOGLE);
   }
 
-  // Call back google
-  @Get('login/oauth2/google')
-  @UseGuards(GoogleOAuthGuard)
-  googleLoginRedirect(@Req() req) {
-    return this.authService.loginWithSocial(req);
-  }
+  // // Call back google
+  // @Get('login/oauth2/google')
+  // @UseGuards(GoogleOAuthGuard)
+  // async googleLoginRedirect(@Req() req, @Res() res: Response) {
+  //   const data = await this.authService.loginWithSocial(req);
+  //   res.redirect('http://localhost:3000/login?data=' + data);
+  // }
 
-  @Get('login/facebook')
-  @UseGuards(FacebookOAuthGuard)
-  async facebookLogin(): Promise<any> {
-    return HttpStatus.OK;
-  }
+  // @Get('login/facebook')
+  // @UseGuards(FacebookOAuthGuard)
+  // async facebookLogin(): Promise<any> {
+  //   return HttpStatus.OK;
+  // }
 
-  // Call back facebook
-  @Get('login/facebook/redirect')
-  @UseGuards(FacebookOAuthGuard)
-  async facebookLoginRedirect(@Req() req) {
-    return this.authService.loginWithSocial(req);
-  }
+  // // Call back facebook
+  // @Get('login/facebook/redirect')
+  // @UseGuards(FacebookOAuthGuard)
+  // async facebookLoginRedirect(@Req() req) {
+  //   return this.authService.loginWithSocial(req);
+  // }
 
   @UseGuards(AuthGuard('local'))
   @Post('login')

@@ -1,10 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { TAX_RATE } from 'app.config';
+import { TAX_RATE, URL_TRAIN } from 'app.config';
+import axios from 'axios';
 import * as dayjs from 'dayjs';
 import { Bill } from 'domains/bill/schema/bill.schema';
 import { Cart } from 'domains/cart/schema/cart.schema';
+import { Feedback } from 'domains/feedback/schema/feedback.schema';
 import { Finance } from 'domains/finance/schema/finance.schema';
 import { Product } from 'domains/product/schema/product.schema';
 import { Promotion } from 'domains/promotion/schema/promotion.schema';
@@ -19,6 +21,7 @@ import { BILL_STATUS } from 'shared/enums/bill.enum';
 import { PolicyType } from 'shared/enums/policy.enum';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { RedisService } from './redis/redis.service';
+import { RESULT_FROM_TRAIN_FEEDBACK } from 'shared/constants/common.constant';
 
 @Injectable()
 export class CronjobsService {
@@ -53,6 +56,9 @@ export class CronjobsService {
 
     @InjectModel(Cart.name)
     private readonly cartModel: Model<Cart>,
+
+    @InjectModel(Feedback.name)
+    private readonly feedbackModel: Model<Feedback>,
 
     private readonly redisService: RedisService,
   ) {}
@@ -264,5 +270,38 @@ export class CronjobsService {
     if (shippers.length === 0) return;
     const shipperIds = shippers.map((shipper) => shipper._id);
     await this.userModel.deleteMany({ _id: { $in: shipperIds } });
+  }
+
+  /**
+   * Scan feedback
+   */
+  @Cron(CronExpression.EVERY_MINUTE)
+  async scanFeedback() {
+    const feedbacks = await this.feedbackModel.find({ isScan: false }).lean();
+    if (feedbacks.length === 0) return;
+    for (const feedback of feedbacks) {
+      try {
+        const res = await axios({
+          url: `${URL_TRAIN}/train-model-feedback`,
+          method: 'post',
+          data: { newFeedback: feedback.content },
+        });
+        const result = res.data;
+        if (result === RESULT_FROM_TRAIN_FEEDBACK.NEGATIVE) {
+          /**
+  subjectId: string;
+  content: string;
+  type: PolicyType;
+           */
+          this.reportModel.create({
+            subjectId: feedback.userId,
+            content: feedback.content,
+            type: PolicyType.USER,
+          });
+        }
+      } catch (e) {
+        console.log(e.message);
+      }
+    }
   }
 }

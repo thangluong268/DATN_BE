@@ -8,6 +8,7 @@ export const TAX_RATE = Number(process.env.TAX_RATE);
 export const TAX_SHIPPING_RATE = Number(process.env.TAX_SHIPPING_RATE);
 
 export const {
+  URL_TRAIN,
   DATABASE_URL,
   PORT,
   ORIGIN,

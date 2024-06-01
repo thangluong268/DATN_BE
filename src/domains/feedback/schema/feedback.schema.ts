@@ -20,6 +20,9 @@ export class Feedback extends Document {
 
   @Prop({ type: [String], default: [] })
   consensus: string[];
+
+  @Prop({ type: Boolean, default: false })
+  isScan: boolean;
 }
 
 export const FeedbackSchema = SchemaFactory.createForClass(Feedback);

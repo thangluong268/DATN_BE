@@ -1,10 +1,21 @@
-import { ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
+import { OAuth2Client } from 'google-auth-library';
 import { Model } from 'mongoose';
+import { SOCIAL_APP } from 'shared/constants/user.constant';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import {
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
   JWT_ACCESS_TOKEN_EXPIRES,
   JWT_ACCESS_TOKEN_SECRET,
   JWT_REFRESH_TOKEN_EXPIRES,
@@ -22,6 +33,8 @@ import { AuthSignUpRESP } from './response/sign-up.response';
 import { TokenRESP } from './response/token.response';
 import { JwtPayload } from './strategies/auth-jwt-at.strategy';
 
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET);
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -34,15 +47,30 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async loginWithSocial(req) {
-    this.logger.log(`loginWithSocial: ${req.user.fullName}`);
-    if (!req.user) {
-      return `No user from ${req.user.socialApp}`;
+  async loginWithSocial(idToken: string, socialApp: SOCIAL_APP) {
+    this.logger.log(`Login With Social from ${socialApp}`);
+    let payload = null;
+    try {
+      payload = (
+        await googleClient.verifyIdToken({
+          idToken,
+          audience: GOOGLE_CLIENT_ID,
+        })
+      ).getPayload();
+    } catch (error) {
+      throw new UnauthorizedException('Đăng nhập thất bại!');
     }
-    const { email, socialId, socialApp } = req.user;
-    const user = await this.userService.findOneBySocial(email, socialId, socialApp);
+    const dataToCreate = {
+      socialId: payload.sub,
+      email: payload.email,
+      fullName: payload.name,
+      avatar: payload.picture,
+      socialApp,
+    };
+
+    const user = await this.userService.findOneBySocial(payload.email, payload.sub, socialApp);
     if (!user) {
-      const newUser = await this.userService.createUserSocial(req.user);
+      const newUser = await this.userService.createUserSocial(dataToCreate);
       return await this.login(newUser);
     }
     return await this.login(user);
