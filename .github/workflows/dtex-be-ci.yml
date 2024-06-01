@@ -31,8 +31,8 @@ jobs:
 
     - name: Set up env file
       run: |
-        touch .env.prod
-        echo "${{ secrets.ENV_FILE_PROD }}" > .env.prod
+        touch .env
+        echo "${{ secrets.ENV_FILE_PROD }}" > .env
     
     - name: Build Docker
       run: docker build -t "${{ secrets.DOCKER_HUB_USERNAME }}"/dtex-be .

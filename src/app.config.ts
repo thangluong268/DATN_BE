@@ -1,5 +1,5 @@
 import { config } from 'dotenv';
-config({ path: process.env.NODE_ENV === 'development' ? `.env.dev` : `.env.prod` });
+config({ path: `.env` });
 
 export const CREDENTIALS = process.env.CREDENTIALS === 'true';
 export const NODE_ENV = process.env.NODE_ENV;
