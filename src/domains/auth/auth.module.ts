@@ -27,12 +27,11 @@ import { LocalStrategy } from './strategies/local.strategy';
 })
 export class AuthModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(CheckLoginMiddleware)
-      .forRoutes(
-        { path: 'store-reputation', method: RequestMethod.GET },
-        { path: 'evaluation', method: RequestMethod.GET },
-        { path: 'promotions/:storeId', method: RequestMethod.GET },
-      );
+    consumer.apply(CheckLoginMiddleware).forRoutes(
+      // { path: 'store-reputation', method: RequestMethod.GET },
+      // { path: 'evaluation', method: RequestMethod.GET },
+      // { path: 'promotions/:storeId', method: RequestMethod.GET },
+      { path: '*', method: RequestMethod.ALL },
+    );
   }
 }

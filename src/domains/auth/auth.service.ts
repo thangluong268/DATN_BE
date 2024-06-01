@@ -60,16 +60,16 @@ export class AuthService {
     } catch (error) {
       throw new UnauthorizedException('Đăng nhập thất bại!');
     }
-    const dataToCreate = {
-      socialId: payload.sub,
-      email: payload.email,
-      fullName: payload.name,
-      avatar: payload.picture,
-      socialApp,
-    };
 
     const user = await this.userService.findOneBySocial(payload.email, payload.sub, socialApp);
     if (!user) {
+      const dataToCreate = {
+        socialId: payload.sub,
+        email: payload.email,
+        fullName: payload.name,
+        avatar: payload.picture,
+        socialApp,
+      };
       const newUser = await this.userService.createUserSocial(dataToCreate);
       return await this.login(newUser);
     }
@@ -78,7 +78,7 @@ export class AuthService {
 
   async login(user: User) {
     this.logger.log(`login: ${user.email}`);
-    const payload = { userId: user._id };
+    const payload = { userId: user._id.toString() };
     const tokens = await this.getTokens(payload);
     await this.userTokenService.upsert(user._id, tokens.refreshToken);
     return BaseResponse.withMessage(AuthLoginRESP.of(user, tokens), 'Đăng nhập thành công!');

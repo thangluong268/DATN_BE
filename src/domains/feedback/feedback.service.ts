@@ -47,7 +47,7 @@ export class FeedbackService {
     // TO DO: check limit = 3, plus wallet in first time feedback
     const numOfFeedback = await this.feedbackModel.countDocuments({ userId, productId });
     if (numOfFeedback > 3) throw new BadRequestException('Bạn chỉ được feedback 3 lần trên một sản phẩm');
-    if (numOfFeedback === 0) await this.userService.updateWallet(userId, 5000, 'plus');
+    if (numOfFeedback === 0) await this.userModel.findByIdAndUpdate(userId, { $inc: { wallet: 100 } });
     const newFeedback = await this.feedbackModel.create({ ...feedback, userId, productId });
 
     const user = await this.userModel.findById(userId).lean();

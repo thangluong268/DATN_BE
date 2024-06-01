@@ -24,7 +24,6 @@ export class AuthController {
   }
 
   @Post('login/google')
-  // @UseGuards(GoogleOAuthGuard)
   async googleLogin(@Body() body: LoginSocialREQ) {
     return this.authService.loginWithSocial(body.idToken, SOCIAL_APP.GOOGLE);
   }

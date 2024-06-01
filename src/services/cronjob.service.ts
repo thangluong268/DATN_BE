@@ -17,11 +17,11 @@ import { UserBillTracking } from 'domains/user-bill-tracking/schema/user-bill-tr
 import { User } from 'domains/user/schema/user.schema';
 import { ObjectId } from 'mongodb';
 import { Model } from 'mongoose';
+import { CONTENT_REPORT_FEEDBACK, RESULT_FROM_TRAIN_FEEDBACK } from 'shared/constants/common.constant';
 import { BILL_STATUS } from 'shared/enums/bill.enum';
 import { PolicyType } from 'shared/enums/policy.enum';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { RedisService } from './redis/redis.service';
-import { RESULT_FROM_TRAIN_FEEDBACK } from 'shared/constants/common.constant';
 
 @Injectable()
 export class CronjobsService {
@@ -279,6 +279,8 @@ export class CronjobsService {
   async scanFeedback() {
     const feedbacks = await this.feedbackModel.find({ isScan: false }).lean();
     if (feedbacks.length === 0) return;
+    const admin = await this.userModel.findOne({ role: ROLE_NAME.ADMIN }).lean();
+    const adminId = admin._id.toString();
     for (const feedback of feedbacks) {
       try {
         const res = await axios({
@@ -288,16 +290,21 @@ export class CronjobsService {
         });
         const result = res.data;
         if (result === RESULT_FROM_TRAIN_FEEDBACK.NEGATIVE) {
-          /**
-  subjectId: string;
-  content: string;
-  type: PolicyType;
-           */
+          const isFirstFeedback =
+            (await this.feedbackModel.countDocuments({ userId: feedback.userId, productId: feedback.productId })) === 1;
           this.reportModel.create({
+            userId: adminId,
             subjectId: feedback.userId,
-            content: feedback.content,
+            content: CONTENT_REPORT_FEEDBACK,
             type: PolicyType.USER,
+            status: true,
           });
+          isFirstFeedback
+            ? await this.userModel.findByIdAndUpdate(feedback.userId, { $inc: { warningCount: 1, wallet: -100 } })
+            : await this.userModel.findByIdAndUpdate(feedback.userId, { $inc: { warningCount: 1 } });
+          await this.feedbackModel.findByIdAndDelete(feedback._id);
+        } else {
+          await this.feedbackModel.findByIdAndUpdate(feedback._id, { isScan: true });
         }
       } catch (e) {
         console.log(e.message);

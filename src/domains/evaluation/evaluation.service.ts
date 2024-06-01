@@ -70,8 +70,6 @@ export class EvaluationService {
   async updateEmoji(userId: string, name: string, evaluation: Evaluation) {
     const index = evaluation.emojis.findIndex((emoji) => emoji.userId.toString() === userId.toString());
     const newEmoji = { userId, name } as EmojiDTO;
-    console.log(index);
-    console.log(newEmoji);
     if (index === -1) {
       evaluation.emojis.push(newEmoji);
     } else {
