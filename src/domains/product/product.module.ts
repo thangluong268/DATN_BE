@@ -12,6 +12,7 @@ import { ProductController } from './product.controller';
 import { ProductService } from './product.service';
 import { Product, ProductSchema } from './schema/product.schema';
 import { ProductScraping } from './scraping/product.scraping';
+import { Report, ReportSchema } from 'domains/report/schema/report.schema';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ProductScraping } from './scraping/product.scraping';
       { name: Feedback.name, schema: FeedbackSchema },
       { name: Store.name, schema: StoreSchema },
       { name: Bill.name, schema: BillSchema },
+      { name: Report.name, schema: ReportSchema },
     ]),
     CategoryModule,
     BillModule,

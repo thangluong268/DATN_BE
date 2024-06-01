@@ -34,10 +34,11 @@ export async function createExcelFile<T>(sheetName: string, headers: ExcelSheetV
     width: headers[key].width,
   }));
   // sheet.getRow(1).outlineLevel = 1;
+  sheet.getRow(1).height = 40;
   sheet.getRow(1).eachCell((cell) => {
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '0099FF' }, bgColor: { argb: '0099FF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'D2E0FB' }, bgColor: { argb: 'D2E0FB' } };
     cell.font = { bold: true };
-    cell.alignment = { horizontal: 'center' };
+    cell.alignment = { wrapText: true, vertical: 'middle', horizontal: 'center' };
   });
   dataRows.forEach((dataRow) => {
     const row = sheet.addRow(dataRow);

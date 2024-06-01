@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthRoleGuard } from 'domains/auth/guards/auth-role.guard';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { PaginationREQ } from 'shared/generics/pagination.request';
@@ -15,6 +15,9 @@ import { ProductGetRandomREQ } from './request/product-get-random.request';
 import { ProductsGetREQ } from './request/product-get.request';
 import { ProductUpdateREQ } from './request/product-update.request';
 import { ProductScraping } from './scraping/product.scraping';
+import { parseExcelResponse } from 'shared/helpers/excel.helper';
+import * as dayjs from 'dayjs';
+import { Response } from 'express';
 
 @Controller()
 export class ProductController {
@@ -22,6 +25,27 @@ export class ProductController {
     private readonly productService: ProductService,
     private readonly productScraping: ProductScraping,
   ) {}
+
+  @Roles(ROLE_NAME.MANAGER)
+  @Get('products/excel')
+  async downloadExcelProducts(@Res() response: Response) {
+    const book = await this.productService.downloadExcelProducts();
+    await parseExcelResponse(response, book, `DTEX_Products_${dayjs().format('YYYY-MM-DD_HH:mm:ss')}`);
+  }
+
+  @Roles(ROLE_NAME.MANAGER)
+  @Get('products/excel/being-reported')
+  async downloadExcelProductsBeingReported(@Res() response: Response) {
+    const book = await this.productService.downloadExcelProductsBeingReported();
+    await parseExcelResponse(response, book, `DTEX_Products_Being_Reported_${dayjs().format('YYYY-MM-DD_HH:mm:ss')}`);
+  }
+
+  @Roles(ROLE_NAME.MANAGER)
+  @Get('products/excel/approved')
+  async downloadExcelProductsApproved(@Res() response: Response) {
+    const book = await this.productService.downloadExcelProductsApproved();
+    await parseExcelResponse(response, book, `DTEX_Products_Approved_${dayjs().format('YYYY-MM-DD_HH:mm:ss')}`);
+  }
 
   @Get('product')
   getProducts(@Query() query: ProductsGetREQ) {

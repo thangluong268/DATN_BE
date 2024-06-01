@@ -1,9 +1,12 @@
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import * as dayjs from 'dayjs';
 import { BillService } from 'domains/bill/bill.service';
 import { Bill } from 'domains/bill/schema/bill.schema';
 import { Evaluation } from 'domains/evaluation/schema/evaluation.schema';
 import { Feedback } from 'domains/feedback/schema/feedback.schema';
+import { ReportGetREQ } from 'domains/report/request/report-get.request';
+import { Report } from 'domains/report/schema/report.schema';
 import { Store } from 'domains/store/schema/store.schema';
 import { User } from 'domains/user/schema/user.schema';
 import { NotificationSubjectInfoDTO } from 'gateways/notifications/dto/notification-subject-info.dto';
@@ -14,13 +17,17 @@ import { Model } from 'mongoose';
 import { NOTIFICATION_LINK } from 'shared/constants/notification.constant';
 import { BILL_STATUS, PRODUCT_TYPE } from 'shared/enums/bill.enum';
 import { NotificationType } from 'shared/enums/notification.enum';
+import { PolicyType } from 'shared/enums/policy.enum';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { PaginationREQ } from 'shared/generics/pagination.request';
 import { PaginationResponse } from 'shared/generics/pagination.response';
+import { createExcelFile } from 'shared/helpers/excel.helper';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 import { CategoryService } from '../category/category.service';
+import { ProductsBeingReportedDownloadExcelDTO } from './dto/product-being-reported-download-excel.dto';
+import { ProductsDownloadExcelDTO } from './dto/product-download-excel.dto';
 import { ProductCreateREQ } from './request/product-create.request';
 import { ProductGetFilterREQ } from './request/product-get-filter.request';
 import { ProductGetInStoreREQ } from './request/product-get-in-store.request';
@@ -54,6 +61,9 @@ export class ProductService {
 
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
+
+    @InjectModel(Report.name)
+    private readonly reportModel: Model<Report>,
 
     private readonly categoryService: CategoryService,
 
@@ -495,5 +505,60 @@ export class ProductService {
     this.logger.log(`Get Products Select By StoreId: ${storeId}`);
     const products = await this.productModel.find({ storeId, status: true }).select('_id name').lean();
     return BaseResponse.withMessage(products, 'Lấy danh sách sản phẩm thành công!');
+  }
+
+  /**
+   * Download excel
+   */
+
+  async downloadExcelProducts() {
+    this.logger.log(`Download Excel Products`);
+
+    const products = await this.productModel.aggregate([
+      { $addFields: { storeIdObj: { $toObjectId: '$storeId' } } },
+      { $addFields: { categoryIdObj: { $toObjectId: '$categoryId' } } },
+      { $lookup: { from: 'stores', localField: 'storeIdObj', foreignField: '_id', as: 'store' } },
+      { $lookup: { from: 'categories', localField: 'categoryIdObj', foreignField: '_id', as: 'category' } },
+      { $addFields: { storeName: { $first: '$store.name' } } },
+      { $addFields: { categoryName: { $first: '$category.name' } } },
+      { $project: { store: 0, categoryIdObj: 0, storeIdObj: 0, category: 0 } },
+      { $sort: { createdAt: -1 } },
+    ]);
+    const productsFullInfo = await Promise.all(
+      products.map(async (product) => {
+        const quantitySold = await this.billService.countProductDelivered(product._id, PRODUCT_TYPE.SELL, BILL_STATUS.DELIVERED);
+        const quantityGive = await this.billService.countProductDelivered(product._id, PRODUCT_TYPE.GIVE, BILL_STATUS.DELIVERED);
+        const revenue = quantitySold * product.newPrice;
+        return { ...product, quantitySold, quantityGive, revenue };
+      }),
+    );
+
+    const headers = ProductsDownloadExcelDTO.getSheetValue();
+    const dataRows = productsFullInfo.map(ProductsDownloadExcelDTO.fromEntity);
+    return createExcelFile<ProductsDownloadExcelDTO>(`Products - ${dayjs().format('YYYY-MM-DD')}`, headers, dataRows);
+  }
+
+  async downloadExcelProductsBeingReported() {
+    this.logger.log(`Download Excel Products Being Reported`);
+    const data = await this.reportModel.aggregate(ReportGetREQ.toExcel(PolicyType.PRODUCT, false) as any);
+    const headers = ProductsBeingReportedDownloadExcelDTO.getSheetValue();
+    const dataRows = data.map(ProductsBeingReportedDownloadExcelDTO.fromEntity);
+    return createExcelFile<ProductsBeingReportedDownloadExcelDTO>(
+      `Products - Being Reported - ${dayjs().format('YYYY-MM-DD')}`,
+      headers,
+      dataRows,
+    );
+  }
+
+  async downloadExcelProductsApproved() {
+    this.logger.log(`Download Excel Products Approved`);
+    const data = await this.reportModel.aggregate(ReportGetREQ.toExcel(PolicyType.PRODUCT, true) as any);
+    const headers = ProductsBeingReportedDownloadExcelDTO.getSheetValue();
+    const dataRows = data.map(ProductsBeingReportedDownloadExcelDTO.fromEntity);
+    return createExcelFile<ProductsBeingReportedDownloadExcelDTO>(
+      `Products - Being Reported - ${dayjs().format('YYYY-MM-DD')}`,
+      headers,
+      dataRows,
+    );
   }
 }

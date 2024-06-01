@@ -66,6 +66,31 @@ export class ReportGetREQ extends PaginationREQ {
     return pipeline;
   }
 
+  static toExcel(type: PolicyType, status: boolean) {
+    const subjectName = type === PolicyType.PRODUCT ? 'productName' : 'storeName';
+    const collectionFrom = type === PolicyType.PRODUCT ? 'products' : 'stores';
+    const pipeline = [
+      { $match: { type, status } },
+      { $addFields: { userObjId: { $toObjectId: '$userId' } } },
+      { $lookup: { from: 'users', localField: 'userObjId', foreignField: '_id', as: 'user' } },
+      { $addFields: { subjectObjId: { $toObjectId: '$subjectId' } } },
+      { $lookup: { from: collectionFrom, localField: 'subjectObjId', foreignField: '_id', as: 'subject' } },
+      { $unwind: '$user' },
+      { $unwind: '$subject' },
+      { $sort: { updatedAt: -1 } },
+      {
+        $project: {
+          _id: '$_id',
+          userName: '$user.fullName',
+          [subjectName]: '$subject.name',
+          content: '$content',
+          createdAt: '$createdAt',
+        },
+      },
+    ];
+    return pipeline;
+  }
+
   static toExport(type: PolicyType) {
     const collectionFrom = type === PolicyType.PRODUCT ? 'products' : type === PolicyType.STORE ? 'stores' : 'users';
     const pipeline = [
