@@ -7,11 +7,3 @@ export class EmojiDTO {
   @IsNotEmpty()
   name: string;
 }
-
-export class HadEvaluationDTO {
-  @IsNotEmpty()
-  userId: string;
-
-  @IsNotEmpty()
-  isHad: boolean;
-}

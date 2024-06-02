@@ -6,28 +6,28 @@ import { Document, FlattenMaps, Types, UpdateWriteOpResult } from 'mongoose';
   timestamps: true,
 })
 export class Store extends Document {
-  @Prop({ required: true })
+  @Prop({ type: String, required: true })
   userId: string;
 
-  @Prop()
+  @Prop({ type: String })
   avatar: string;
 
-  @Prop()
+  @Prop({ type: String })
   name: string;
 
-  @Prop()
+  @Prop({ type: String })
   address: string;
 
   @Prop({ types: [String] })
   phoneNumber: string[];
 
-  @Prop()
+  @Prop({ type: String })
   description: string;
 
-  @Prop({ default: 0 })
+  @Prop({ type: Boolean, default: 0 })
   warningCount: number;
 
-  @Prop({ default: true })
+  @Prop({ type: Boolean, default: true })
   status: boolean;
 
   static toDocModel(

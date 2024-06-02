@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
+import axios from 'axios';
 import * as bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
 import { Model } from 'mongoose';
@@ -46,6 +47,18 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
   ) {}
+
+  async testLogin(code: string) {
+    try {
+      const data = await axios({
+        url: `https://graph.facebook.com/v20.0/oauth/access_token?client_id=461396363141280&redirect_uri=https://www.facebook.com/connect/login_success.html&client_secret=e689dca37be6f76cf3126b979be6ff71&code=${code}`,
+        method: 'get',
+      });
+      console.log(data.data);
+    } catch (e) {
+      console.log(e.message);
+    }
+  }
 
   async loginWithSocial(idToken: string, socialApp: SOCIAL_APP) {
     this.logger.log(`Login With Social from ${socialApp}`);

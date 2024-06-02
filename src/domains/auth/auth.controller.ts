@@ -17,6 +17,11 @@ import { AuthSignUpREQ } from './request/sign-up.request';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Post('login/test')
+  async testLogin(@Body() body: LoginSocialREQ) {
+    return this.authService.testLogin(body.idToken);
+  }
+
   @UseGuards(AuthJwtRTGuard)
   @Get('refreshToken')
   refreshToken(@Req() req) {

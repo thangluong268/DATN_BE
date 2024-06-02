@@ -9,31 +9,31 @@ export class Product extends Document {
   @Prop({ type: [String] })
   avatar: string[];
 
-  @Prop()
+  @Prop({ type: Number })
   quantity: number;
 
-  @Prop()
+  @Prop({ type: String })
   name: string;
 
-  @Prop()
+  @Prop({ type: Number })
   oldPrice: number;
 
-  @Prop()
+  @Prop({ type: Number })
   newPrice: number;
 
-  @Prop()
+  @Prop({ type: String })
   description: string;
 
-  @Prop()
+  @Prop({ type: String })
   categoryId: string;
 
   @Prop({ type: [String], default: [] })
   keywords: string[];
 
-  @Prop()
+  @Prop({ type: String })
   storeId: string;
 
-  @Prop({ default: true })
+  @Prop({ type: Boolean, default: true })
   status: boolean;
 }
 
