@@ -31,6 +31,8 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
       socialApp: SOCIAL_APP.FACEBOOK,
     };
 
+    console.log(user);
+
     done(null, user);
   }
 }
