@@ -172,6 +172,9 @@ export class CronjobsService {
   @Cron('*/1 * * * * *')
   async handleBanUser() {
     await this.userModel.updateMany({ warningCount: { $gte: 3 } }, { $set: { status: false } });
+    /**
+     * TO DO: Send email to user
+     */
   }
 
   @Cron('*/1 * * * * *')
