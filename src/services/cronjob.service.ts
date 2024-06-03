@@ -15,12 +15,18 @@ import { Store } from 'domains/store/schema/store.schema';
 import { Tax } from 'domains/tax/schema/tax.schema';
 import { UserBillTracking } from 'domains/user-bill-tracking/schema/user-bill-tracking.schema';
 import { User } from 'domains/user/schema/user.schema';
+import { NotificationSubjectInfoDTO } from 'gateways/notifications/dto/notification-subject-info.dto';
+import { NotificationGateway } from 'gateways/notifications/notification.gateway';
+import { NotificationService } from 'gateways/notifications/notification.service';
 import { ObjectId } from 'mongodb';
 import { Model } from 'mongoose';
 import { CONTENT_REPORT_FEEDBACK, RESULT_FROM_TRAIN_FEEDBACK } from 'shared/constants/common.constant';
+import { NOTIFICATION_LINK } from 'shared/constants/notification.constant';
 import { BILL_STATUS } from 'shared/enums/bill.enum';
+import { NotificationType } from 'shared/enums/notification.enum';
 import { PolicyType } from 'shared/enums/policy.enum';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
+import { MailService } from './mail/mail.service';
 import { RedisService } from './redis/redis.service';
 
 @Injectable()
@@ -61,6 +67,11 @@ export class CronjobsService {
     private readonly feedbackModel: Model<Feedback>,
 
     private readonly redisService: RedisService,
+
+    private readonly notificationService: NotificationService,
+    private readonly notificationGateway: NotificationGateway,
+
+    private readonly mailService: MailService,
   ) {}
 
   @Cron('0 * * * * *')
@@ -303,6 +314,19 @@ export class CronjobsService {
             ? await this.userModel.findByIdAndUpdate(feedback.userId, { $inc: { warningCount: 1, wallet: -100 } })
             : await this.userModel.findByIdAndUpdate(feedback.userId, { $inc: { warningCount: 1 } });
           await this.feedbackModel.findByIdAndDelete(feedback._id);
+
+          const product = await this.productModel.findById(feedback.productId).lean();
+          // Send notification
+          const subjectInfo = NotificationSubjectInfoDTO.ofProduct(product.id, product.name, product.avatar[0]);
+          const receiverId = feedback.userId;
+          const link = NOTIFICATION_LINK[NotificationType.FEEDBACK] + product._id.toString();
+          const notification = await this.notificationService.create(
+            receiverId,
+            subjectInfo,
+            NotificationType.REPORT_FEEDBACK,
+            link,
+          );
+          this.notificationGateway.sendNotification(receiverId, notification);
         } else {
           await this.feedbackModel.findByIdAndUpdate(feedback._id, { isScan: true });
         }

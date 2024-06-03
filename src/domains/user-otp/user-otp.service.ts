@@ -21,7 +21,7 @@ export class UserOTPService {
   async sendOTP(body: SendOTPREQ) {
     this.logger.log(`Send OTP: ${body.email}`);
     const email = body.email;
-    const user = await this.userService.findOneByEmailSystem(email);
+    const user = await this.userService.findOneByEmail(email);
     if (user) {
       throw new ConflictException('Email đã tồn tại!');
     }
@@ -44,10 +44,12 @@ export class UserOTPService {
   async sendOTPForget(body: SendOTPREQ) {
     this.logger.log(`Send OTP Forget: ${body.email}`);
     const email = body.email;
-    const user = await this.userService.findOneByEmailSystem(email);
+    const user = await this.userService.findOneByEmail(email);
     if (!user) {
       throw new NotFoundException('Email không tồn tại!');
     }
+    console.log(user);
+    if (user.socialApp) throw new BadRequestException(`Tài khoản thuộc quyền quản lý của ${user.socialApp}!`);
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     this.mailService.sendOTP(email, otp);
     await this.upsert(email, otp);

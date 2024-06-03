@@ -9,4 +9,5 @@ export enum NotificationType {
   BILL = 'BILL',
   EVALUATION = 'EVALUATION',
   FEEDBACK = 'FEEDBACK',
+  REPORT_FEEDBACK = 'REPORT_FEEDBACK',
 }

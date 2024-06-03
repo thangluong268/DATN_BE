@@ -74,7 +74,7 @@ export class AuthService {
       throw new UnauthorizedException('Đăng nhập thất bại!');
     }
 
-    const user = await this.userService.findOneBySocial(payload.email, payload.sub, socialApp);
+    const user = await this.userService.findOneByEmail(payload.email);
     if (!user) {
       const dataToCreate = {
         socialId: payload.sub,
@@ -99,7 +99,7 @@ export class AuthService {
 
   async signup(body: AuthSignUpREQ) {
     this.logger.log(`signup: ${body.email}`);
-    const user = await this.userService.findOneByEmailSystem(body.email);
+    const user = await this.userService.findOneByEmail(body.email);
     if (user) throw new ConflictException('Email đã tồn tại!');
     const newUser = await this.userService.createUserSystem(body);
     const payload = { userId: newUser._id };

@@ -11,6 +11,7 @@ export const NOTIFICATION_CONTENT = {
   [NotificationType.NEW_POST]: 'vừa đăng một sản phẩm mới:',
   [NotificationType.EVALUATION]: 'đã bày tỏ cảm xúc về sản phẩm của bạn.',
   [NotificationType.FEEDBACK]: 'đã gửi phản hồi về sản phẩm của bạn.',
+  [NotificationType.REPORT_FEEDBACK]: `Nội dung đánh giá của bạn đã vi phạm chính sách của chúng tôi.`,
   [BILL_STATUS.NEW]: 'Bạn đã đặt hàng thành công. Đơn hàng đang chờ xác nhận.',
   [BILL_STATUS.CONFIRMED]: 'Đơn hàng của bạn đã được xác nhận.',
   [BILL_STATUS.DELIVERING]: 'Đơn hàng của bạn đang được giao.',

@@ -18,6 +18,7 @@ import { NotificationModule } from 'gateways/notifications/notification.module';
 import { PaymentModule } from 'payment/paymen.module';
 import { CloudinaryModule } from 'services/cloudinary/cloudinary.module';
 import { CronjobsService } from 'services/cronjob.service';
+import { MailModule } from 'services/mail/mail.module';
 import { RedisModule } from 'services/redis/redis.module';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './domains/auth/auth.module';
@@ -62,6 +63,7 @@ import { SeederService } from './services/seeder.service';
     NotificationModule,
     ShipperModule,
     FeedbackShipperModule,
+    MailModule,
     // ElasticSearchModule,
   ],
   providers: [SeederService, CronjobsService],

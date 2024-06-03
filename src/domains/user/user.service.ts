@@ -64,7 +64,7 @@ export class UserService {
     this.logger.log(`Create User System: ${body.email}`);
     const hashedPassword = await bcrypt.hash(body.password, SALT_ROUNDS);
     body.password = hashedPassword;
-    const user = await this.findOneByEmailSystem(body.email);
+    const user = await this.findOneByEmail(body.email);
     if (user) {
       throw new ConflictException('Email đã tồn tại!');
     }
@@ -78,7 +78,7 @@ export class UserService {
     this.logger.log(`Create User Without Role: ${body.email}`);
     const hashedPassword = await bcrypt.hash(body.password, SALT_ROUNDS);
     body.password = hashedPassword;
-    const user = await this.findOneByEmailSystem(body.email);
+    const user = await this.findOneByEmail(body.email);
     if (user) {
       throw new ConflictException('Email đã tồn tại!');
     }
@@ -103,12 +103,8 @@ export class UserService {
     return await this.storeModel.findOne({ userId }).lean();
   }
 
-  async findOneByEmailSystem(email: string) {
-    const user = await this.userModel.findOne(
-      { email, socialId: null, socialApp: null },
-      { socialApp: 0, socialId: 0 },
-      { lean: true },
-    );
+  async findOneByEmail(email: string) {
+    const user = await this.userModel.findOne({ email }).lean();
     user?.address?.sort((a, b) => (b.default ? 1 : -1) - (a.default ? 1 : -1));
     return user;
   }
