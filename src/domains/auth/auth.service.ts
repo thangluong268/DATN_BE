@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -60,7 +61,7 @@ export class AuthService {
     }
   }
 
-  async loginWithSocial(idToken: string, socialApp: SOCIAL_APP) {
+  async loginGoogle(idToken: string, socialApp: SOCIAL_APP) {
     this.logger.log(`Login With Social from ${socialApp}`);
     let payload = null;
     try {
@@ -85,8 +86,11 @@ export class AuthService {
       };
       const newUser = await this.userService.createUserSocial(dataToCreate);
       return await this.login(newUser);
+    } else {
+      if (user.socialApp !== SOCIAL_APP.GOOGLE)
+        throw new BadRequestException('Tài khoản đã được sử dụng.\nVui lòng đăng nhập bằng email khác!');
+      return await this.login(user);
     }
-    return await this.login(user);
   }
 
   async login(user: User) {

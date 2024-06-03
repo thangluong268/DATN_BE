@@ -45,10 +45,7 @@ export class UserOTPService {
     this.logger.log(`Send OTP Forget: ${body.email}`);
     const email = body.email;
     const user = await this.userService.findOneByEmail(email);
-    if (!user) {
-      throw new NotFoundException('Email không tồn tại!');
-    }
-    console.log(user);
+    if (!user) throw new NotFoundException('Email không tồn tại!');
     if (user.socialApp) throw new BadRequestException(`Tài khoản thuộc quyền quản lý của ${user.socialApp}!`);
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     this.mailService.sendOTP(email, otp);
