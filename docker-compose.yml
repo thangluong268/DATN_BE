@@ -1,14 +1,50 @@
 version: '3.7'
+
 services:
+  nginx:
+    container_name: nginx-dtex-be
+    image: nginx:1.14.2-alpine
+    restart: always
+    links:
+      - "dtex-be:dtex-be"
+    depends_on:
+      - "dtex-be"
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./public_html:/public_html
+      - ./conf.d:/etc/nginx/conf.d/
+      - ./certbot/conf/:/etc/nginx/ssl/
+      - ./certbot/data:/usr/share/nginx/html/letsencrypt
+
   dtex-be:
     container_name: dtex-be
     image: thang268/dtex-be:latest
     restart: always
     ports:
       - "5000:5000"
-    networks:
-      - dtex-be
+    expose:
+      - "5000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
-networks:
-  dtex-be:
-    driver: bridge
+  certbot:
+    image: "infinityofspace/certbot_dns_duckdns:latest"
+    container_name: "certbot-be"
+    volumes:
+      - ./certbot/conf/:/etc/letsencrypt
+      - ./certbot/logs/:/var/log/letsencrypt
+      - ./certbot/data:/usr/share/nginx/html/letsencrypt
+    command: certonly
+      --non-interactive
+      --agree-tos
+      --email luongthangg268@gmail.com
+      --preferred-challenges dns
+      --authenticator dns-duckdns
+      --dns-duckdns-token 9bf4842e-2f56-4cd5-8574-6dc1782d32cb
+      --dns-duckdns-propagation-seconds 30
+      -d dtex-api.duckdns.org
+  
+
+      

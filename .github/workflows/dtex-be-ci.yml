@@ -50,9 +50,8 @@ jobs:
     - name: Pull Docker
       run: docker pull "${{ secrets.DOCKER_HUB_USERNAME }}"/dtex-be:latest
 
-    - name: Down and Up Docker
+    - name: Docker Compose Up
       run: |
-        docker-compose down
         docker-compose up -d
 
     - name: Clean Docker
