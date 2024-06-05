@@ -55,12 +55,6 @@ jobs:
     - name: cd to setup ssl
       run: |
         cd ~/workspace/set_up_ssl/set_up_ssl/
-        pwd
-        ls -al
-        cat docker-compose.yml
-    
-    - name: Down and Up Docker Compose
-      run: |
         docker-compose down
         docker-compose up -d
 
