@@ -105,6 +105,7 @@ export class NotificationGateway implements OnGatewayInit, OnGatewayConnection, 
     const token = client.handshake.auth.authorization;
     if (!token) return;
     const payload = this.jwtHelper.decode(token);
+    if (!payload) return;
     this.userSocketMap.set(payload.userId, client);
   }
 
