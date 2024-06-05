@@ -56,6 +56,7 @@ jobs:
       run: |
         cd ~/workspace/set_up_ssl/set_up_ssl
         pwd
+        ls -al
     
     - name: Down and Up Docker Compose
       run: |
