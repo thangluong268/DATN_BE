@@ -12,7 +12,6 @@ import { PolicyUpdateREQ } from './request/policy-update.request';
 export class PolicyController {
   constructor(private readonly policyService: PolicyService) {}
 
-  @UseGuards(AuthJwtATGuard, AuthRoleGuard)
   @Get()
   findAllByObject(@Query() query: PolicyFindAllByObjectREQ) {
     return this.policyService.findAllByObject(query);
