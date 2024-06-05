@@ -44,15 +44,10 @@ jobs:
     runs-on: self-hosted
     needs: build
     steps:
-    - name: cd to workspace
-      run: |
-        cd ~/workspace/actions-runner-be/_work/DATN_BE/DATN_BE
-        pwd
-
     - name: Pull Docker
       run: docker pull "${{ secrets.DOCKER_HUB_USERNAME }}"/dtex-be:latest
 
-    - name: cd to setup ssl
+    - name: Deploy With Set Up SSL
       run: |
         cd ~/workspace/set_up_ssl/set_up_ssl/
         docker-compose down
