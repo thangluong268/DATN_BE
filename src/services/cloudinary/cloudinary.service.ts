@@ -33,24 +33,22 @@ export class CloudinaryService {
   }
 
   async scanImageFiles(files: File[]) {
-    await Promise.all(
-      files.map(async (file) => {
-        const form = new FormData();
-        form.append('file_image', file.buffer, {
-          filename: file.originalname,
-          contentType: file.mimetype,
-          knownLength: file.size,
-        });
-        form.append('API_KEY', PICPURIFY_API_KEY);
-        form.append('task', 'porn_moderation,suggestive_nudity_moderation,gore_moderation,weapon_moderation,drug_moderation');
-        const res = await axios({ url: picpurifyUrl, method: 'post', data: form });
-        const data = res.data;
-        if (data.status === 'success' && data.final_decision === 'KO' && data.reject_criteria.length > 0) {
-          const reasons = data.reject_criteria.map((criteria) => PICPURIFY_CONTENT[criteria]).join(', ');
-          throw new BadRequestException(`Hình ảnh vi phạm chính sách!\nLý do:\n${reasons}`);
-        }
-      }),
-    );
+    for (const file of files) {
+      const form = new FormData();
+      form.append('file_image', file.buffer, {
+        filename: file.originalname,
+        contentType: file.mimetype,
+        knownLength: file.size,
+      });
+      form.append('API_KEY', PICPURIFY_API_KEY);
+      form.append('task', 'porn_moderation,suggestive_nudity_moderation,gore_moderation,weapon_moderation,drug_moderation');
+      const res = await axios({ url: picpurifyUrl, method: 'post', data: form });
+      const data = res.data;
+      if (data.status === 'success' && data.final_decision === 'KO' && data.reject_criteria.length > 0) {
+        const reasons = data.reject_criteria.map((criteria) => PICPURIFY_CONTENT[criteria]).join(', ');
+        throw new BadRequestException(`Hình ảnh vi phạm chính sách!\nLý do: ${reasons}`);
+      }
+    }
     return BaseResponse.withMessage({}, 'Hình ảnh hợp lệ');
   }
 
