@@ -44,24 +44,30 @@ export class CloudinaryService {
   }
 
   async scanImageFiles(files: File[]) {
-    for (const file of files) {
-      const tempFilePath = path.join('uploads', `${Date.now()}-${file.originalname}`);
-      fs.writeFileSync(tempFilePath, file.buffer);
-      const form = new FormData();
-      const stats = fs.statSync(tempFilePath);
-      const fileStream = fs.createReadStream(tempFilePath);
-      form.append('file_image', fileStream, { knownLength: stats.size });
-      form.append('API_KEY', PICPURIFY_API_KEY);
-      form.append('task', 'porn_moderation,suggestive_nudity_moderation,gore_moderation,weapon_moderation,drug_moderation');
-      const res = await axios({ url: picpurifyUrl, method: 'post', data: form });
-      const data = res.data;
-      fs.unlinkSync(tempFilePath);
-      if (data.status === 'success' && data.final_decision === 'KO' && data.reject_criteria.length > 0) {
-        const reasons = data.reject_criteria.map((criteria) => PICPURIFY_CONTENT[criteria]).join(', ');
-        throw new BadRequestException(`Hình ảnh vi phạm chính sách!\nLý do: ${reasons}`);
-      }
-    }
-    return BaseResponse.withMessage({}, 'Hình ảnh hợp lệ');
+    const rejectCriterias = await Promise.all(
+      files.map(async (file) => {
+        const tempFilePath = path.join('uploads', `${Date.now()}-${file.originalname}`);
+        fs.writeFileSync(tempFilePath, file.buffer);
+        const form = new FormData();
+        const stats = fs.statSync(tempFilePath);
+        const fileStream = fs.createReadStream(tempFilePath);
+        form.append('file_image', fileStream, { knownLength: stats.size });
+        form.append('API_KEY', PICPURIFY_API_KEY);
+        form.append('task', 'porn_moderation,suggestive_nudity_moderation,gore_moderation,weapon_moderation,drug_moderation');
+        const res = await axios({ url: picpurifyUrl, method: 'post', data: form });
+        const data = res.data;
+        fs.unlinkSync(tempFilePath);
+        if (data.status === 'success' && data.final_decision === 'KO' && data.reject_criteria.length > 0) {
+          return data.reject_criteria.map((criteria) => criteria);
+        }
+      }),
+    );
+    if (rejectCriterias.length === 0) return BaseResponse.withMessage({}, 'Hình ảnh hợp lệ');
+    const reasons = Array.from(new Set(rejectCriterias.flat()))
+      .map((criteria) => PICPURIFY_CONTENT[criteria])
+      .join(', ')
+      .trimEnd();
+    throw new BadRequestException(`Hình ảnh vi phạm chính sách!\nLý do: ${reasons}`);
   }
 
   uploadFile(file: File) {
