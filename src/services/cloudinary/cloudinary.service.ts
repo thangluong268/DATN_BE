@@ -5,6 +5,7 @@ import axios from 'axios';
 import { UploadApiErrorResponse, UploadApiResponse, v2 as cloudinary } from 'cloudinary';
 import { PICPURIFY_CONTENT } from 'shared/constants/picpurify.constant';
 import { BaseResponse } from 'shared/generics/base.response';
+import { isBlank } from 'shared/validators/query.validator';
 const FormData = require('form-data');
 const streamifier = require('streamifier');
 const picpurifyUrl = 'https://www.picpurify.com/analyse/1.1';
@@ -62,8 +63,11 @@ export class CloudinaryService {
         }
       }),
     );
-    if (rejectCriterias.length === 0) return BaseResponse.withMessage({}, 'Hình ảnh hợp lệ');
-    const reasons = Array.from(new Set(rejectCriterias.flat()))
+    const leanRejectCriterias = rejectCriterias.filter((criteria) => !isBlank(criteria));
+    console.log(leanRejectCriterias);
+    if (leanRejectCriterias.length === 0) return BaseResponse.withMessage({}, 'Hình ảnh hợp lệ');
+    console.log(leanRejectCriterias);
+    const reasons = Array.from(new Set(leanRejectCriterias.flat()))
       .map((criteria) => PICPURIFY_CONTENT[criteria])
       .join(', ')
       .trimEnd();
