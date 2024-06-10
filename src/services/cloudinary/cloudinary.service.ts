@@ -64,9 +64,7 @@ export class CloudinaryService {
       }),
     );
     const leanRejectCriterias = rejectCriterias.filter((criteria) => !isBlank(criteria));
-    console.log(leanRejectCriterias);
     if (leanRejectCriterias.length === 0) return BaseResponse.withMessage({}, 'Hình ảnh hợp lệ');
-    console.log(leanRejectCriterias);
     const reasons = Array.from(new Set(leanRejectCriterias.flat()))
       .map((criteria) => PICPURIFY_CONTENT[criteria])
       .join(', ')
