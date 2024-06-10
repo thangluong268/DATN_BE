@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService, File } from '../cloudinary/cloudinary.service';
 
@@ -10,6 +10,11 @@ export class CloudinaryController {
   @UseInterceptors(FileInterceptor('file'))
   uploadImage(@UploadedFile() file: File) {
     return this.cloudinaryService.uploadFile(file);
+  }
+
+  @Post('scan')
+  scanImages(@Body() body: { urls: string[] }) {
+    return this.cloudinaryService.scanImages(body.urls);
   }
 
   @Post('video')
