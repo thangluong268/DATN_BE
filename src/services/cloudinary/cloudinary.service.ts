@@ -1,18 +1,15 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { v2 as cloudinary } from 'cloudinary';
+import { PICPURIFY_API_KEY } from 'app.config';
+import axios from 'axios';
+import { UploadApiErrorResponse, UploadApiResponse, v2 as cloudinary } from 'cloudinary';
+import { PICPURIFY_CONTENT } from 'shared/constants/picpurify.constant';
+import { BaseResponse } from 'shared/generics/base.response';
 const FormData = require('form-data');
 const streamifier = require('streamifier');
 const picpurifyUrl = 'https://www.picpurify.com/analyse/1.1';
 
-import { PICPURIFY_API_KEY } from 'app.config';
-import axios from 'axios';
-import { UploadApiErrorResponse, UploadApiResponse } from 'cloudinary';
-import { PICPURIFY_CONTENT } from 'shared/constants/picpurify.constant';
-import { BaseResponse } from 'shared/generics/base.response';
-
 export type File = Express.Multer.File;
-
 export type CloudinaryResponse = UploadApiResponse | UploadApiErrorResponse;
 
 @Injectable()
@@ -24,8 +21,6 @@ export class CloudinaryService {
         form.append('url_image', url);
         form.append('API_KEY', PICPURIFY_API_KEY);
         form.append('task', 'porn_moderation,suggestive_nudity_moderation,gore_moderation,weapon_moderation,drug_moderation');
-        // form.append('origin_id', 'xxxxxxxxx');
-        // form.append('reference_id', 'yyyyyyyy');
         const res = await axios({ url: picpurifyUrl, method: 'post', data: form });
         const data = res.data;
         if (data.status === 'success' && data.final_decision === 'KO' && data.reject_criteria.length > 0) {
@@ -37,15 +32,17 @@ export class CloudinaryService {
     return BaseResponse.withMessage({}, 'Hình ảnh hợp lệ');
   }
 
-  async scanImageFiles(files: Array<File>) {
+  async scanImageFiles(files: File[]) {
     await Promise.all(
       files.map(async (file) => {
         const form = new FormData();
-        form.append('file_image', file, { knownLength: file.size });
+        form.append('file_image', file.buffer, {
+          filename: file.originalname,
+          contentType: file.mimetype,
+          knownLength: file.size,
+        });
         form.append('API_KEY', PICPURIFY_API_KEY);
         form.append('task', 'porn_moderation,suggestive_nudity_moderation,gore_moderation,weapon_moderation,drug_moderation');
-        // form.append('origin_id', 'xxxxxxxxx');
-        // form.append('reference_id', 'yyyyyyyy');
         const res = await axios({ url: picpurifyUrl, method: 'post', data: form });
         const data = res.data;
         if (data.status === 'success' && data.final_decision === 'KO' && data.reject_criteria.length > 0) {

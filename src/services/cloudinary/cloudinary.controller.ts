@@ -14,7 +14,7 @@ export class CloudinaryController {
 
   @Post('scan')
   @UseInterceptors(FilesInterceptor('files'))
-  scanImages(@UploadedFiles() files: Array<File>) {
+  scanImages(@UploadedFiles() files: File[]) {
     return this.cloudinaryService.scanImageFiles(files);
   }
 
