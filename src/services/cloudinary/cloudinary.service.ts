@@ -8,6 +8,17 @@ import { BaseResponse } from 'shared/generics/base.response';
 const FormData = require('form-data');
 const streamifier = require('streamifier');
 const picpurifyUrl = 'https://www.picpurify.com/analyse/1.1';
+const path = require('path');
+const fs = require('fs');
+
+const multer = require('multer');
+const storage = multer.diskStorage({
+  destination: 'uploads/', // Thư mục tạm thời
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  },
+});
+multer({ storage: storage });
 
 export type File = Express.Multer.File;
 export type CloudinaryResponse = UploadApiResponse | UploadApiErrorResponse;
@@ -34,16 +45,17 @@ export class CloudinaryService {
 
   async scanImageFiles(files: File[]) {
     for (const file of files) {
+      const tempFilePath = path.join('uploads', `${Date.now()}-${file.originalname}`);
+      fs.writeFileSync(tempFilePath, file.buffer);
       const form = new FormData();
-      form.append('file_image', file.buffer, {
-        filename: file.originalname,
-        contentType: file.mimetype,
-        knownLength: file.size,
-      });
+      const stats = fs.statSync(tempFilePath);
+      const fileStream = fs.createReadStream(tempFilePath);
+      form.append('file_image', fileStream, { knownLength: stats.size });
       form.append('API_KEY', PICPURIFY_API_KEY);
       form.append('task', 'porn_moderation,suggestive_nudity_moderation,gore_moderation,weapon_moderation,drug_moderation');
       const res = await axios({ url: picpurifyUrl, method: 'post', data: form });
       const data = res.data;
+      fs.unlinkSync(tempFilePath);
       if (data.status === 'success' && data.final_decision === 'KO' && data.reject_criteria.length > 0) {
         const reasons = data.reject_criteria.map((criteria) => PICPURIFY_CONTENT[criteria]).join(', ');
         throw new BadRequestException(`Hình ảnh vi phạm chính sách!\nLý do: ${reasons}`);
