@@ -54,4 +54,5 @@ export const {
   HOST,
   ELASTICSEARCH_NODE,
   ELASTICSEARCH_PRODUCTS_INDEX,
+  PICPURIFY_API_KEY,
 } = process.env;
