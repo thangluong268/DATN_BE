@@ -17,11 +17,31 @@ export type CloudinaryResponse = UploadApiResponse | UploadApiErrorResponse;
 
 @Injectable()
 export class CloudinaryService {
-  async scanImages(urls: string[]) {
+  async scanImageUrls(urls: string[]) {
     await Promise.all(
       urls.map(async (url) => {
         const form = new FormData();
         form.append('url_image', url);
+        form.append('API_KEY', PICPURIFY_API_KEY);
+        form.append('task', 'porn_moderation,suggestive_nudity_moderation,gore_moderation,weapon_moderation,drug_moderation');
+        // form.append('origin_id', 'xxxxxxxxx');
+        // form.append('reference_id', 'yyyyyyyy');
+        const res = await axios({ url: picpurifyUrl, method: 'post', data: form });
+        const data = res.data;
+        if (data.status === 'success' && data.final_decision === 'KO' && data.reject_criteria.length > 0) {
+          const reasons = data.reject_criteria.map((criteria) => PICPURIFY_CONTENT[criteria]).join(', ');
+          throw new BadRequestException(`Hình ảnh vi phạm chính sách!\nLý do:\n${reasons}`);
+        }
+      }),
+    );
+    return BaseResponse.withMessage({}, 'Hình ảnh hợp lệ');
+  }
+
+  async scanImageFiles(files: Array<File>) {
+    await Promise.all(
+      files.map(async (file) => {
+        const form = new FormData();
+        form.append('file_image', file, { knownLength: file.size });
         form.append('API_KEY', PICPURIFY_API_KEY);
         form.append('task', 'porn_moderation,suggestive_nudity_moderation,gore_moderation,weapon_moderation,drug_moderation');
         // form.append('origin_id', 'xxxxxxxxx');
