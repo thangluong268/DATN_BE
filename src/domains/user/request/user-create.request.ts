@@ -15,7 +15,7 @@ export class UserCreateREQ {
   password: string;
 
   static setDefault(user: User) {
-    user.avatar = 'https://res.cloudinary.com/dl3b2j3td/image/upload/v1702564956/TLCN/ov6t50kl5npfmwfopzrk.png';
+    user.avatar = 'https://res.cloudinary.com/dl3b2j3td/image/upload/v1718101515/DATN2024/xzkxyj3ovzbfxsgkuitv.png';
     user.socialId = null;
     user.socialApp = null;
   }

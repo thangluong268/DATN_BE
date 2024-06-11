@@ -77,7 +77,7 @@ export class ProductService {
     this.logger.log(`Create Product: ${userId}`);
     const store = await this.storeModel.findOne({ userId: userId.toString() }).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
-    const newProduct = await this.productModel.create({ ...body, storeId: store._id });
+    const newProduct = await this.productModel.create({ ...body, storeId: store._id, storeName: store.name });
     await this.evaluationModel.create({ productId: newProduct._id.toString() });
     // await this.esService.indexProduct(toDocModel(newProduct));
 

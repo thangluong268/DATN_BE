@@ -1,15 +1,26 @@
-import { Controller, Get, Param, Post, UploadedFile, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query, UploadedFile, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService, File } from '../cloudinary/cloudinary.service';
+import { CloudinaryDestroyType, CloudinaryFolder } from 'shared/enums/cloudinary.enum';
 
 @Controller('upload')
 export class CloudinaryController {
   constructor(private readonly cloudinaryService: CloudinaryService) {}
 
+  @Get()
+  GetAll() {
+    return this.cloudinaryService.getPublicIdsInFolder(CloudinaryFolder.DATN2024);
+  }
+
   @Post()
   @UseInterceptors(FileInterceptor('file'))
   uploadImage(@UploadedFile() file: File) {
     return this.cloudinaryService.uploadFile(file);
+  }
+
+  @Post('destroy-image')
+  destroyImage(@Query('publicId') publicId: string) {
+    return this.cloudinaryService.destroyFile(publicId, CloudinaryDestroyType.IMAGE);
   }
 
   @Post('scan')

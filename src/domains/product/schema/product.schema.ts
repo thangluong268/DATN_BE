@@ -33,6 +33,9 @@ export class Product extends Document {
   @Prop({ type: String })
   storeId: string;
 
+  @Prop({ type: String })
+  storeName: string;
+
   @Prop({ type: Boolean, default: true })
   status: boolean;
 }

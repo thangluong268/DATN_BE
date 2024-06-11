@@ -23,11 +23,14 @@ import { Model } from 'mongoose';
 import { CONTENT_REPORT_FEEDBACK, RESULT_FROM_TRAIN_FEEDBACK } from 'shared/constants/common.constant';
 import { NOTIFICATION_LINK } from 'shared/constants/notification.constant';
 import { BILL_STATUS } from 'shared/enums/bill.enum';
+import { CloudinaryDestroyType, CloudinaryFolder } from 'shared/enums/cloudinary.enum';
 import { NotificationType } from 'shared/enums/notification.enum';
 import { PolicyType } from 'shared/enums/policy.enum';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
+import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { MailService } from './mail/mail.service';
 import { RedisService } from './redis/redis.service';
+import { CLOUDINARY_PUBLIC_IDs_FIXED } from 'shared/constants/cloudinary.constant';
 
 @Injectable()
 export class CronjobsService {
@@ -72,6 +75,8 @@ export class CronjobsService {
     private readonly notificationGateway: NotificationGateway,
 
     private readonly mailService: MailService,
+
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   @Cron('0 * * * * *')
@@ -336,6 +341,29 @@ export class CronjobsService {
       } catch (e) {
         console.log(e.message);
       }
+    }
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async cleanCloudinary() {
+    const condition = { avatar: { $exists: true, $regex: '^(http://res.cloudinary.com|https://res.cloudinary.com)' } };
+    const products = await this.productModel.find(condition).select('avatar').lean();
+    const stores = await this.storeModel.find(condition).select('avatar').lean();
+    const users = await this.userModel.find(condition).select('avatar').lean();
+
+    const avatarsProduct = products.flatMap((product) => product.avatar);
+    const avatarsStore = stores.flatMap((store) => store.avatar);
+    const avatarsUser = users.flatMap((user) => user.avatar);
+    const avatarUrls = [...avatarsProduct, ...avatarsStore, ...avatarsUser];
+
+    const publicIdsExtract = this.cloudinaryService.extractPublicIdFromURLs(avatarUrls, CloudinaryFolder.DATN2024);
+    const publicIdsServer = [...publicIdsExtract, ...CLOUDINARY_PUBLIC_IDs_FIXED];
+    const publicIdsCloudinary = await this.cloudinaryService.getPublicIdsInFolder(CloudinaryFolder.DATN2024);
+    const publicIds = publicIdsCloudinary.filter((publicId) => !publicIdsServer.includes(publicId));
+
+    if (publicIds.length === 0) return;
+    for (const publicId of publicIds) {
+      this.cloudinaryService.destroyFile(publicId, CloudinaryDestroyType.IMAGE);
     }
   }
 }

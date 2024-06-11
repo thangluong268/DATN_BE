@@ -4,6 +4,7 @@ import { PICPURIFY_API_KEY } from 'app.config';
 import axios from 'axios';
 import { UploadApiErrorResponse, UploadApiResponse, v2 as cloudinary } from 'cloudinary';
 import { PICPURIFY_CONTENT } from 'shared/constants/picpurify.constant';
+import { CloudinaryDestroyType, CloudinaryFolder } from 'shared/enums/cloudinary.enum';
 import { BaseResponse } from 'shared/generics/base.response';
 import { isBlank } from 'shared/validators/query.validator';
 const FormData = require('form-data');
@@ -74,7 +75,7 @@ export class CloudinaryService {
 
   uploadFile(file: File) {
     const res = new Promise<CloudinaryResponse>((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream({ folder: 'DATN2024' }, (error, result) => {
+      const uploadStream = cloudinary.uploader.upload_stream({ folder: CloudinaryFolder.DATN2024 }, (error, result) => {
         if (error) return reject(error);
         resolve(result);
       });
@@ -123,5 +124,25 @@ export class CloudinaryService {
       flags: 'streaming_attachment',
     });
     return videoUrl;
+  }
+
+  destroyFile(publicId: string, resourceType: CloudinaryDestroyType) {
+    cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+  }
+
+  async getPublicIdsInFolder(prefix: CloudinaryFolder) {
+    const data = await cloudinary.api.resources({ type: 'upload', prefix, max_results: 500 });
+    const publicIds = data.resources.map((resource) => resource.public_id);
+    return publicIds;
+  }
+
+  extractPublicIdFromURLs(urls: string[], prefix: CloudinaryFolder) {
+    const publicIds = urls.map((url) => {
+      const id = url.split('/').pop().split('.')[0];
+      const publicId = `${prefix}/${id}`;
+      return publicId;
+    });
+    const uniquePublicIds = Array.from(new Set(publicIds));
+    return uniquePublicIds;
   }
 }
