@@ -42,7 +42,7 @@ export class CloudinaryController {
     FilesInterceptor('files', null, {
       fileFilter: (req: any, file: File, cb: any) => {
         if (file.mimetype.match(/\/(jpg|jpeg|png|mp4)$/)) {
-          // Allow storage of file
+          // Allow storage of file.
           cb(null, true);
         } else {
           cb(new BadRequestException(`Unsupported file type ${extname(file.originalname)}`));
