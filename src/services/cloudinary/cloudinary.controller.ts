@@ -45,7 +45,6 @@ export class CloudinaryController {
           // Allow storage of file
           cb(null, true);
         } else {
-          // Reject file
           cb(new BadRequestException(`Unsupported file type ${extname(file.originalname)}`));
         }
       },
