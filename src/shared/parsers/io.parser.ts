@@ -1,4 +1,4 @@
-import { isArray, isBoolean, isEmpty, isNil, isNumber, omitBy } from 'lodash';
+import { isArray, isBoolean, isEmpty, isNull, isNumber, isUndefined, omitBy } from 'lodash';
 
 export const orUndefined = (value?: any) => value || undefined;
 export const orNull = (value?: any) => value || null;
@@ -9,11 +9,11 @@ function isBlank(value: any) {
 }
 
 export function leanObject(myObject: any) {
-  if (typeof myObject !== 'object' || isArray(myObject)) return myObject;
+  if (isNull(myObject) || typeof myObject !== 'object' || isArray(myObject)) return myObject;
   const returnObject = {};
   for (const key2 of Object.keys(myObject)) {
     const afterClean = leanObject(myObject[key2]);
-    returnObject[key2] = isBlank(afterClean) ? null : afterClean;
+    returnObject[key2] = !isNull(afterClean) && isBlank(afterClean) ? undefined : afterClean;
   }
-  return omitBy(returnObject, isNil);
+  return omitBy(returnObject, isUndefined);
 }

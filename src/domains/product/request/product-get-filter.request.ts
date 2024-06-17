@@ -1,9 +1,12 @@
-import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { PaginationREQ } from 'shared/generics/pagination.request';
+import { leanObject } from 'shared/parsers/io.parser';
 
 export class ProductGetFilterREQ extends PaginationREQ {
-  @IsNotEmpty()
+  @IsString()
+  categoryId: string;
+
+  @IsOptional()
   @IsString()
   search: string;
 
@@ -20,39 +23,32 @@ export class ProductGetFilterREQ extends PaginationREQ {
   quantityMax?: number;
 
   @IsOptional()
-  @Transform(({ value }) => (value ? new Date(value) : null))
   createdAtMin?: Date;
 
   @IsOptional()
-  @Transform(({ value }) => (value ? new Date(value) : null))
   createdAtMax?: Date;
 
   static toQueryCondition(query: ProductGetFilterREQ) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { search, page, limit, ...filterQuery } = query;
-    let condition: any = { status: true };
-    if (search) {
-      condition.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        // { description: { $regex: search, $options: 'i' } },
-        { keywords: { $regex: search, $options: 'i' } },
-        // { storeName: { $regex: search, $options: 'i' } },
-        { categoryId: { $regex: search, $options: 'i' } },
-      ];
-    }
-    if (filterQuery) {
-      const filter = {};
-      if (filterQuery.priceMin && filterQuery.priceMax) {
-        filter['newPrice'] = { $gte: Number(filterQuery.priceMin), $lte: Number(filterQuery.priceMax) };
-      }
-      if (filterQuery.quantityMin && filterQuery.quantityMax) {
-        filter['quantity'] = { $gte: Number(filterQuery.quantityMin), $lte: Number(filterQuery.quantityMax) };
-      }
-      if (filterQuery.createdAtMin && filterQuery.createdAtMax) {
-        filter['createdAt'] = { $gte: new Date(filterQuery.createdAtMin), $lte: new Date(filterQuery.createdAtMax) };
-      }
-      condition = { ...condition, ...filter };
-    }
-    return condition;
+    const condition: any = { status: true, categoryId: query.categoryId };
+    condition.$or = query.search
+      ? [
+          { name: { $regex: query.search, $options: 'i' } },
+          { keywords: { $regex: query.search, $options: 'i' } },
+          { storeName: { $regex: query.search, $options: 'i' } },
+        ]
+      : undefined;
+    condition.newPrice = {
+      $gte: query.priceMin ? Number(query.priceMin) : undefined,
+      $lte: query.priceMax ? Number(query.priceMax) : undefined,
+    };
+    condition.quantity = {
+      $gte: query.quantityMin ? Number(query.quantityMin) : undefined,
+      $lte: query.quantityMax ? Number(query.quantityMax) : undefined,
+    };
+    condition.createdAt = {
+      $gte: query.createdAtMin ? new Date(query.createdAtMin) : undefined,
+      $lte: query.createdAtMax ? new Date(query.createdAtMax) : undefined,
+    };
+    return leanObject(condition);
   }
 }

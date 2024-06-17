@@ -59,8 +59,8 @@ export class CloudinaryController {
     }
     // Save each file to the upload directory
     await Promise.all(
-      files.map((file) => {
-        const filePath = `${uploadPath}${uid}-${file.originalname}`;
+      files.map((file, index) => {
+        const filePath = `${uploadPath}${uid}-${file.originalname}-${index}`;
         writeFileSync(filePath, file.buffer);
       }),
     );

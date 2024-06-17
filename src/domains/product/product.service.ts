@@ -303,13 +303,13 @@ export class ProductService {
 
   async getProductsFilter(query: ProductGetFilterREQ) {
     this.logger.log(`Get Products Filter: ${JSON.stringify(query)}`);
-    const category = await this.categoryService.findOne(query.search);
+    const category = await this.categoryService.findOne(query.categoryId);
     const condition = ProductGetFilterREQ.toQueryCondition(query);
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.productModel.countDocuments(condition);
     const products = await this.productModel
       .find(condition, {}, { lean: true })
-      .sort({ price: 1, quantity: 1, createdAt: -1 })
+      .sort({ newPrice: 1, quantity: 1, createdAt: -1 })
       .skip(skip)
       .limit(limit);
     return BaseResponse.withMessage(

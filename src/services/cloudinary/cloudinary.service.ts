@@ -47,8 +47,8 @@ export class CloudinaryService {
 
   async scanImageFiles(files: File[], uid: string) {
     const rejectCriterias = await Promise.all(
-      files.map(async (file) => {
-        const tempFilePath = path.join('uploads', `${uid}-${file.originalname}`);
+      files.map(async (file, index) => {
+        const tempFilePath = path.join('uploads', `${uid}-${file.originalname}-${index}`);
         fs.writeFileSync(tempFilePath, file.buffer);
         const form = new FormData();
         const stats = fs.statSync(tempFilePath);
