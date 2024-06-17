@@ -28,7 +28,7 @@ export class AuthController {
     return this.authService.loginGoogle(body.idToken, SOCIAL_APP.GOOGLE);
   }
 
-  // @Get('login/facebook')
+  // @Get('login/facebook') //
   // async facebookLogin(@Body() body: LoginFacebookREQ) {
   //   return this.authService.loginFacebook(body.accessToken, SOCIAL_APP.FACEBOOK);
   // }
