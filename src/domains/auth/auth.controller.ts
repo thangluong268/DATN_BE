@@ -11,7 +11,6 @@ import { AuthSetRoleUserREQ } from './request/auth-set-role-user.request';
 import { ForgetPassREQ } from './request/forget-password.request';
 import { LoginGoogleREQ } from './request/login-google.request';
 import { AuthSignUpREQ } from './request/sign-up.request';
-import { LoginFacebookREQ } from './request/login-facebook.request';
 
 @Controller('auth')
 export class AuthController {

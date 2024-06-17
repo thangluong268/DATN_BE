@@ -7,10 +7,6 @@ export class ProductGetFilterREQ extends PaginationREQ {
   categoryId: string;
 
   @IsOptional()
-  @IsString()
-  search: string;
-
-  @IsOptional()
   priceMin?: number;
 
   @IsOptional()
@@ -30,13 +26,6 @@ export class ProductGetFilterREQ extends PaginationREQ {
 
   static toQueryCondition(query: ProductGetFilterREQ) {
     const condition: any = { status: true, categoryId: query.categoryId };
-    condition.$or = query.search
-      ? [
-          { name: { $regex: query.search, $options: 'i' } },
-          { keywords: { $regex: query.search, $options: 'i' } },
-          { storeName: { $regex: query.search, $options: 'i' } },
-        ]
-      : undefined;
     condition.newPrice = {
       $gte: query.priceMin ? Number(query.priceMin) : undefined,
       $lte: query.priceMax ? Number(query.priceMax) : undefined,
