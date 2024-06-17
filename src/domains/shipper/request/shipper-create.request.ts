@@ -31,8 +31,6 @@ export class ShipperCreateREQ {
       gender: body.gender,
       status: false,
       role: ROLE_NAME.SHIPPER,
-      socialId: null,
-      socialApp: null,
     };
   }
 }

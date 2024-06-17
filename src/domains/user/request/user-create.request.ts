@@ -1,4 +1,5 @@
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { AVATAR_USER_DEFAULT } from 'shared/constants/common.constant';
 import { PasswordValidator } from 'shared/validators/password.validator';
 import { User } from '../schema/user.schema';
 
@@ -15,8 +16,6 @@ export class UserCreateREQ {
   password: string;
 
   static setDefault(user: User) {
-    user.avatar = 'https://res.cloudinary.com/dl3b2j3td/image/upload/v1718101515/DATN2024/xzkxyj3ovzbfxsgkuitv.png';
-    user.socialId = null;
-    user.socialApp = null;
+    user.avatar = AVATAR_USER_DEFAULT;
   }
 }

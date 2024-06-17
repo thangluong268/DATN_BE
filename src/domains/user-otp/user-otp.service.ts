@@ -1,4 +1,11 @@
-import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { MailService } from 'services/mail/mail.service';
@@ -25,7 +32,7 @@ export class UserOTPService {
     if (user) {
       throw new ConflictException('Email đã tồn tại!');
     }
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = this.getOTP();
     this.mailService.sendOTP(email, otp);
     await this.upsert(email, otp);
     return BaseResponse.withMessage({}, 'Gửi mã OTP thành công');
@@ -46,8 +53,8 @@ export class UserOTPService {
     const email = body.email;
     const user = await this.userService.findOneByEmail(email);
     if (!user) throw new NotFoundException('Email không tồn tại!');
-    if (user.socialApp) throw new BadRequestException(`Tài khoản thuộc quyền quản lý của ${user.socialApp}!`);
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    if (!user.password) throw new ForbiddenException(`Tài khoản thuộc quyền quản lý của nền tảng khác!`);
+    const otp = this.getOTP();
     this.mailService.sendOTP(email, otp);
     await this.upsert(email, otp);
     return BaseResponse.withMessage({}, 'Gửi mã OTP thành công');
@@ -60,5 +67,10 @@ export class UserOTPService {
     } else {
       return await this.userOTPModel.create({ email, otp });
     }
+  }
+
+  private getOTP() {
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    return otp;
   }
 }

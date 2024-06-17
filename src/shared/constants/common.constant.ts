@@ -9,3 +9,8 @@ export const RESULT_FROM_TRAIN_FEEDBACK = {
   NEGATIVE: 'NEGATIVE',
 };
 export const CONTENT_REPORT_FEEDBACK = `Nội dung đánh giá vi phạm: Chính sách về phản hồi và đánh giá`;
+export const AVATAR_USER_DEFAULT =
+  'https://res.cloudinary.com/dl3b2j3td/image/upload/v1718101515/DATN2024/xzkxyj3ovzbfxsgkuitv.png';
+
+export const URL_GET_PROFILE_FACEBOOK = (accessToken: string) =>
+  `https://graph.facebook.com/v20.0/me?fields=id,email,name,picture&access_token=${accessToken}`;

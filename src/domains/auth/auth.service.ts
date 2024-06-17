@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -13,8 +12,11 @@ import axios from 'axios';
 import * as bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
 import { Model } from 'mongoose';
+import { URL_GET_PROFILE_FACEBOOK } from 'shared/constants/common.constant';
 import { SOCIAL_APP } from 'shared/constants/user.constant';
+import { AxiosType } from 'shared/enums/common.enum';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
+import { isArrayIncludeObject } from 'shared/helpers/lodash.helper';
 import {
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
@@ -25,7 +27,7 @@ import {
 } from '../../app.config';
 import { BaseResponse } from '../../shared/generics/base.response';
 import { UserTokenService } from '../user-token/user-token.service';
-import { User } from '../user/schema/user.schema';
+import { SocialProvider, User } from '../user/schema/user.schema';
 import { UserService } from '../user/user.service';
 import { AuthSetRoleUserREQ } from './request/auth-set-role-user.request';
 import { ForgetPassREQ } from './request/forget-password.request';
@@ -34,6 +36,7 @@ import { AuthLoginRESP } from './response/login.response';
 import { AuthSignUpRESP } from './response/sign-up.response';
 import { TokenRESP } from './response/token.response';
 import { JwtPayload } from './strategies/auth-jwt-at.strategy';
+import { PayloadSocial } from './types/payload-social.type';
 
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET);
 
@@ -62,21 +65,51 @@ export class AuthService {
     } catch (error) {
       throw new UnauthorizedException('Đăng nhập thất bại!');
     }
+    const payloadSocial = {
+      socialId: payload.sub,
+      fullName: payload.name,
+      email: payload.email,
+      avatar: payload.picture,
+    } as PayloadSocial;
+    const data = await this.loginSocialFlow(payloadSocial, socialApp);
+    return data;
+  }
 
-    const user = await this.userService.findOneByEmail(payload.email);
+  async loginFacebook(accessToken: string, socialApp: SOCIAL_APP) {
+    this.logger.log(`Login With Social from ${socialApp}`);
+    let payload = null;
+    try {
+      const res = await axios({
+        url: URL_GET_PROFILE_FACEBOOK(accessToken),
+        method: AxiosType.GET,
+      });
+      payload = res.data;
+    } catch (error) {
+      throw new UnauthorizedException('Đăng nhập thất bại!');
+    }
+    const payloadSocial = {
+      socialId: payload.id,
+      fullName: payload.name,
+      email: payload.email,
+      avatar: payload.picture.data.url,
+    } as PayloadSocial;
+    const data = await this.loginSocialFlow(payloadSocial, socialApp);
+    return data;
+  }
+
+  async loginSocialFlow(payload: PayloadSocial, socialApp: SOCIAL_APP) {
+    const { socialId, fullName, email, avatar } = payload;
+    const socialProvider = { socialId, socialApp } as SocialProvider;
+    const user = await this.userService.findOneByEmail(email);
     if (!user) {
-      const dataToCreate = {
-        socialId: payload.sub,
-        email: payload.email,
-        fullName: payload.name,
-        avatar: payload.picture,
-        socialApp,
-      };
+      const dataToCreate = { socialProviders: [socialProvider], email, fullName, avatar };
       const newUser = await this.userService.createUserSocial(dataToCreate);
       return await this.login(newUser);
     } else {
-      if (user.socialApp !== SOCIAL_APP.GOOGLE)
-        throw new BadRequestException('Tài khoản đã được sử dụng.\nVui lòng đăng nhập bằng tài khoản khác!');
+      const isInclude = isArrayIncludeObject(user.socialProviders, socialProvider);
+      if (!isInclude) {
+        await this.userModel.findByIdAndUpdate(user._id, { $push: { socialProviders: socialProvider } });
+      }
       return await this.login(user);
     }
   }

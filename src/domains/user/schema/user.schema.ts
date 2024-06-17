@@ -18,6 +18,11 @@ export class AddressProfile {
   default: boolean = false;
 }
 
+export type SocialProvider = {
+  socialId: string;
+  socialApp: SOCIAL_APP;
+};
+
 @Schema({
   versionKey: false,
   timestamps: true,
@@ -65,11 +70,8 @@ export class User extends Document {
   @Prop({ type: Boolean, default: true })
   status: boolean;
 
-  @Prop({ type: String })
-  socialId: string;
-
-  @Prop({ type: String, enum: SOCIAL_APP })
-  socialApp: SOCIAL_APP;
+  @Prop({ type: [Object], default: [] })
+  socialProviders: SocialProvider[];
 
   @Prop({ type: String })
   emailShipper: string;

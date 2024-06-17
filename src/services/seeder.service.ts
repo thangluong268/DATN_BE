@@ -51,8 +51,6 @@ export class SeederService {
       birthday: new Date(),
       password: hashedPassword,
       role: [ROLE_NAME.ADMIN],
-      socialId: null,
-      socialApp: null,
     });
   }
 

@@ -18,7 +18,6 @@ import { NotificationService } from 'gateways/notifications/notification.service
 import { NotificationUpdateREQ } from 'gateways/notifications/request/notification-update.request';
 import { Model } from 'mongoose';
 import { NOTIFICATION_LINK } from 'shared/constants/notification.constant';
-import { SOCIAL_APP } from 'shared/constants/user.constant';
 import { BILL_STATUS } from 'shared/enums/bill.enum';
 import { NotificationType } from 'shared/enums/notification.enum';
 import { PolicyType } from 'shared/enums/policy.enum';
@@ -79,9 +78,7 @@ export class UserService {
     const hashedPassword = await bcrypt.hash(body.password, SALT_ROUNDS);
     body.password = hashedPassword;
     const user = await this.findOneByEmail(body.email);
-    if (user) {
-      throw new ConflictException('Email đã tồn tại!');
-    }
+    if (user) throw new ConflictException('Email đã tồn tại!');
     const newUser = await this.userModel.create(body);
     UserCreateREQ.setDefault(newUser);
     await newUser.save();
@@ -94,7 +91,7 @@ export class UserService {
   }
 
   async findById(id: string) {
-    const user = await this.userModel.findById(id, { socialApp: 0, socialId: 0 }, { lean: true });
+    const user = await this.userModel.findById(id, { socialProviders: 0 }, { lean: true });
     user?.address?.sort((a, b) => (b.default ? 1 : -1) - (a.default ? 1 : -1));
     return user;
   }
@@ -105,12 +102,6 @@ export class UserService {
 
   async findOneByEmail(email: string) {
     const user = await this.userModel.findOne({ email }).lean();
-    user?.address?.sort((a, b) => (b.default ? 1 : -1) - (a.default ? 1 : -1));
-    return user;
-  }
-
-  async findOneBySocial(email: string, socialId: string, socialApp: SOCIAL_APP) {
-    const user = await this.userModel.findOne({ email, socialId, socialApp }, { socialApp: 0, socialId: 0 }, { lean: true });
     user?.address?.sort((a, b) => (b.default ? 1 : -1) - (a.default ? 1 : -1));
     return user;
   }
@@ -222,7 +213,7 @@ export class UserService {
   async getUsersNoPaging(limit: number = 50) {
     this.logger.log(`Get Users No Paging: ${limit}`);
     const users = await this.userModel
-      .find({ role: { $nin: [ROLE_NAME.ADMIN, ROLE_NAME.MANAGER] } }, { socialApp: 0, socialId: 0 }, { lean: true })
+      .find({ role: { $nin: [ROLE_NAME.ADMIN, ROLE_NAME.MANAGER] } }, { socialProviders: 0 }, { lean: true })
       .limit(Number(limit));
     const data = await Promise.all(
       users.map(async (item) => {
@@ -244,7 +235,7 @@ export class UserService {
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.userModel.countDocuments(condition);
     const users = await this.userModel
-      .find(condition, { socialApp: 0, socialId: 0 }, { lean: true })
+      .find(condition, { socialProviders: 0 }, { lean: true })
       .sort({ createdAt: -1 })
       .limit(Number(limit))
       .skip(skip);
@@ -369,7 +360,7 @@ export class UserService {
         },
         { $addFields: { latestReport: { $first: '$reports' } } },
         { $sort: { 'latestReport.createdAt': -1 } },
-        { $project: { socialApp: 0, socialId: 0, reports: 0, latestReport: 0 } },
+        { $project: { socialProviders: 0, reports: 0, latestReport: 0 } },
         { $skip: skip },
         { $limit: limit },
       ]),
@@ -383,11 +374,7 @@ export class UserService {
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const condition = UserBannedGetREQ.toCondition(query);
     const [data, total] = await Promise.all([
-      this.userModel
-        .find(condition, { socialApp: 0, socialId: 0 }, { lean: true })
-        .sort({ updatedAt: -1 })
-        .skip(skip)
-        .limit(limit),
+      this.userModel.find(condition, { socialProviders: 0 }, { lean: true }).sort({ updatedAt: -1 }).skip(skip).limit(limit),
       this.userModel.countDocuments(condition),
     ]);
     return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách người dùng bị vô hiệu hóa thành công!');

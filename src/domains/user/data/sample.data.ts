@@ -24,8 +24,6 @@ export const USER_DATA = [
     gender: 'Nam',
     birthday: '1990-01-01',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar2.jpg',
@@ -50,8 +48,6 @@ export const USER_DATA = [
     gender: 'Nữ',
     birthday: '1991-02-02',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar3.jpg',
@@ -76,8 +72,6 @@ export const USER_DATA = [
     gender: 'Nam',
     birthday: '1992-03-03',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar4.jpg',
@@ -102,8 +96,6 @@ export const USER_DATA = [
     gender: 'Nữ',
     birthday: '1993-04-04',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar5.jpg',
@@ -128,8 +120,6 @@ export const USER_DATA = [
     gender: 'Nam',
     birthday: '1994-05-05',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar6.jpg',
@@ -154,8 +144,6 @@ export const USER_DATA = [
     gender: 'Nữ',
     birthday: '1995-06-06',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar7.jpg',
@@ -180,8 +168,6 @@ export const USER_DATA = [
     gender: 'Nam',
     birthday: '1996-07-07',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar8.jpg',
@@ -206,8 +192,6 @@ export const USER_DATA = [
     gender: 'Nữ',
     birthday: '1997-08-08',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar9.jpg',
@@ -232,8 +216,6 @@ export const USER_DATA = [
     gender: 'Nam',
     birthday: '1998-09-09',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar10.jpg',
@@ -258,8 +240,6 @@ export const USER_DATA = [
     gender: 'Nữ',
     birthday: '1999-10-10',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar11.jpg',
@@ -284,8 +264,6 @@ export const USER_DATA = [
     gender: 'Nam',
     birthday: '2000-11-11',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar12.jpg',
@@ -310,8 +288,6 @@ export const USER_DATA = [
     gender: 'Nữ',
     birthday: '2001-12-12',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar13.jpg',
@@ -336,8 +312,6 @@ export const USER_DATA = [
     gender: 'Nam',
     birthday: '2002-01-01',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar14.jpg',
@@ -362,8 +336,6 @@ export const USER_DATA = [
     gender: 'Nữ',
     birthday: '2003-02-02',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar15.jpg',
@@ -388,8 +360,6 @@ export const USER_DATA = [
     gender: 'Nam',
     birthday: '2004-03-03',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar16.jpg',
@@ -414,8 +384,6 @@ export const USER_DATA = [
     gender: 'Nữ',
     birthday: '2005-04-04',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar17.jpg',
@@ -440,8 +408,6 @@ export const USER_DATA = [
     gender: 'Nam',
     birthday: '2006-05-05',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar18.jpg',
@@ -466,8 +432,6 @@ export const USER_DATA = [
     gender: 'Nữ',
     birthday: '2007-06-06',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar19.jpg',
@@ -492,8 +456,6 @@ export const USER_DATA = [
     gender: 'Nam',
     birthday: '2008-07-07',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar20.jpg',
@@ -518,8 +480,6 @@ export const USER_DATA = [
     gender: 'Nữ',
     birthday: '2009-08-08',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar21.jpg',
@@ -544,8 +504,6 @@ export const USER_DATA = [
     gender: 'Nữ',
     birthday: '2010-09-09',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar22.jpg',
@@ -570,8 +528,6 @@ export const USER_DATA = [
     gender: 'Nam',
     birthday: '2011-10-10',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar23.jpg',
@@ -596,8 +552,6 @@ export const USER_DATA = [
     gender: 'Nữ',
     birthday: '2012-11-11',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar24.jpg',
@@ -622,8 +576,6 @@ export const USER_DATA = [
     gender: 'Nam',
     birthday: '2013-12-12',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar25.jpg',
@@ -648,8 +600,6 @@ export const USER_DATA = [
     gender: 'Nữ',
     birthday: '2014-01-01',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar26.jpg',
@@ -674,8 +624,6 @@ export const USER_DATA = [
     gender: 'Nam',
     birthday: '2015-02-02',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar27.jpg',
@@ -700,8 +648,6 @@ export const USER_DATA = [
     gender: 'Nữ',
     birthday: '2016-03-03',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar28.jpg',
@@ -726,8 +672,6 @@ export const USER_DATA = [
     gender: 'Nam',
     birthday: '2017-04-04',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar29.jpg',
@@ -752,8 +696,6 @@ export const USER_DATA = [
     gender: 'Nữ',
     birthday: '2018-05-05',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar30.jpg',
@@ -778,8 +720,6 @@ export const USER_DATA = [
     gender: 'Nam',
     birthday: '2019-06-06',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar31.jpg',
@@ -804,8 +744,6 @@ export const USER_DATA = [
     gender: 'Nữ',
     birthday: '2020-07-07',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar32.jpg',
@@ -830,8 +768,6 @@ export const USER_DATA = [
     gender: 'Nam',
     birthday: '2021-08-08',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar33.jpg',
@@ -856,8 +792,6 @@ export const USER_DATA = [
     gender: 'Nữ',
     birthday: '2022-09-09',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar34.jpg',
@@ -882,8 +816,6 @@ export const USER_DATA = [
     gender: 'Nam',
     birthday: '2023-10-10',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar35.jpg',
@@ -908,8 +840,6 @@ export const USER_DATA = [
     gender: 'Nữ',
     birthday: '2024-11-11',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
   {
     avatar: 'https://example.com/avatar36.jpg',
@@ -934,7 +864,5 @@ export const USER_DATA = [
     gender: 'Nam',
     birthday: '2025-12-12',
     role: [ROLE_NAME.USER],
-    socialId: null,
-    socialApp: null,
   },
 ];

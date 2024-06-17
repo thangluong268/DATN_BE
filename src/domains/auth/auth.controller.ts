@@ -9,6 +9,7 @@ import { AuthJwtRTGuard } from './guards/auth-jwt-rt.guard';
 import { AuthRoleGuard } from './guards/auth-role.guard';
 import { AuthSetRoleUserREQ } from './request/auth-set-role-user.request';
 import { ForgetPassREQ } from './request/forget-password.request';
+import { LoginFacebookREQ } from './request/login-facebook.request';
 import { LoginGoogleREQ } from './request/login-google.request';
 import { AuthSignUpREQ } from './request/sign-up.request';
 
@@ -28,10 +29,10 @@ export class AuthController {
     return this.authService.loginGoogle(body.idToken, SOCIAL_APP.GOOGLE);
   }
 
-  // @Get('login/facebook') //
-  // async facebookLogin(@Body() body: LoginFacebookREQ) {
-  //   return this.authService.loginFacebook(body.accessToken, SOCIAL_APP.FACEBOOK);
-  // }
+  @Post('login/facebook')
+  async facebookLogin(@Body() body: LoginFacebookREQ) {
+    return this.authService.loginFacebook(body.accessToken, SOCIAL_APP.FACEBOOK);
+  }
 
   @UseGuards(AuthGuard('local'))
   @Post('login')

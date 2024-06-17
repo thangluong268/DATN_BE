@@ -1,5 +1,6 @@
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 import { User } from 'domains/user/schema/user.schema';
+import { AVATAR_USER_DEFAULT } from 'shared/constants/common.constant';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { PasswordValidator } from 'shared/validators/password.validator';
 
@@ -16,9 +17,7 @@ export class AuthSignUpREQ {
   password: string;
 
   static setDefault(user: User) {
-    user.avatar = 'https://res.cloudinary.com/dl3b2j3td/image/upload/v1702564956/TLCN/ov6t50kl5npfmwfopzrk.png';
+    user.avatar = AVATAR_USER_DEFAULT;
     user.role = [ROLE_NAME.USER];
-    user.socialId = null;
-    user.socialApp = null;
   }
 }

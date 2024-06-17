@@ -20,6 +20,7 @@ import { NotificationGateway } from 'gateways/notifications/notification.gateway
 import { NotificationService } from 'gateways/notifications/notification.service';
 import { ObjectId } from 'mongodb';
 import { Model } from 'mongoose';
+import { CLOUDINARY_PUBLIC_IDs_FIXED } from 'shared/constants/cloudinary.constant';
 import { CONTENT_REPORT_FEEDBACK, RESULT_FROM_TRAIN_FEEDBACK } from 'shared/constants/common.constant';
 import { NOTIFICATION_LINK } from 'shared/constants/notification.constant';
 import { BILL_STATUS } from 'shared/enums/bill.enum';
@@ -30,7 +31,6 @@ import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { MailService } from './mail/mail.service';
 import { RedisService } from './redis/redis.service';
-import { CLOUDINARY_PUBLIC_IDs_FIXED } from 'shared/constants/cloudinary.constant';
 
 @Injectable()
 export class CronjobsService {
