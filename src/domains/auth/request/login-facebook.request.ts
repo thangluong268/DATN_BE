@@ -1,6 +1,6 @@
 import { IsString } from 'class-validator';
 
-export class LoginSocialREQ {
+export class LoginFacebookREQ {
   @IsString()
-  idToken: string;
+  accessToken: string;
 }

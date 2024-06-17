@@ -7,20 +7,15 @@ import { Roles } from './decorators/auth-role.decorator';
 import { AuthJwtATGuard } from './guards/auth-jwt-at.guard';
 import { AuthJwtRTGuard } from './guards/auth-jwt-rt.guard';
 import { AuthRoleGuard } from './guards/auth-role.guard';
-import { FacebookOAuthGuard } from './guards/facebook-oauth.guard';
 import { AuthSetRoleUserREQ } from './request/auth-set-role-user.request';
 import { ForgetPassREQ } from './request/forget-password.request';
-import { LoginSocialREQ } from './request/login-social.request';
+import { LoginGoogleREQ } from './request/login-google.request';
 import { AuthSignUpREQ } from './request/sign-up.request';
+import { LoginFacebookREQ } from './request/login-facebook.request';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
-  @Post('login/test')
-  async testLogin(@Body() body: LoginSocialREQ) {
-    return this.authService.testLogin(body.idToken);
-  }
 
   @UseGuards(AuthJwtRTGuard)
   @Get('refreshToken')
@@ -30,29 +25,14 @@ export class AuthController {
   }
 
   @Post('login/google')
-  async googleLogin(@Body() body: LoginSocialREQ) {
+  async googleLogin(@Body() body: LoginGoogleREQ) {
     return this.authService.loginGoogle(body.idToken, SOCIAL_APP.GOOGLE);
   }
 
-  // // Call back google
-  // @Get('login/oauth2/google')
-  // @UseGuards(GoogleOAuthGuard)
-  // async googleLoginRedirect(@Req() req, @Res() res: Response) {
-  //   const data = await this.authService.loginWithSocial(req);
-  //   res.redirect('http://localhost:3000/login?data=' + data);
+  // @Get('login/facebook')
+  // async facebookLogin(@Body() body: LoginFacebookREQ) {
+  //   return this.authService.loginFacebook(body.accessToken, SOCIAL_APP.FACEBOOK);
   // }
-
-  @Get('login/facebook')
-  @UseGuards(FacebookOAuthGuard)
-  async facebookLogin(): Promise<any> {}
-
-  // Call back facebook
-  @Get('login/facebook/redirect')
-  @UseGuards(FacebookOAuthGuard)
-  async facebookLoginRedirect(@Req() req) {
-    console.log(req);
-    // return this.authService.loginWithSocial(req);
-  }
 
   @UseGuards(AuthGuard('local'))
   @Post('login')

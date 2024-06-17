@@ -1,7 +1,21 @@
-import { Controller, Get, Param, Post, Query, UploadedFile, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UploadedFile,
+  UploadedFiles,
+  UseInterceptors,
+} from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { CloudinaryService, File } from '../cloudinary/cloudinary.service';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { memoryStorage } from 'multer';
+import { extname } from 'path';
 import { CloudinaryDestroyType, CloudinaryFolder } from 'shared/enums/cloudinary.enum';
+import { v4 as uuid } from 'uuid';
+import { CloudinaryService, File } from '../cloudinary/cloudinary.service';
 
 @Controller('upload')
 export class CloudinaryController {
@@ -24,9 +38,35 @@ export class CloudinaryController {
   }
 
   @Post('scan')
-  @UseInterceptors(FilesInterceptor('files'))
-  scanImages(@UploadedFiles() files: File[]) {
-    return this.cloudinaryService.scanImageFiles(files);
+  @UseInterceptors(
+    FilesInterceptor('files', null, {
+      fileFilter: (req: any, file: File, cb: any) => {
+        if (file.mimetype.match(/\/(jpg|jpeg|png|mp4)$/)) {
+          // Allow storage of file
+          cb(null, true);
+        } else {
+          // Reject file
+          cb(new BadRequestException(`Unsupported file type ${extname(file.originalname)}`));
+        }
+      },
+      storage: memoryStorage(),
+    }),
+  )
+  async scanImages(@UploadedFiles() files: File[]) {
+    const uid = uuid();
+    const uploadPath = 'uploads/';
+    if (!existsSync(uploadPath)) {
+      mkdirSync(uploadPath, { recursive: true });
+    }
+    // Save each file to the upload directory
+    await Promise.all(
+      files.map((file) => {
+        const filePath = `${uploadPath}${uid}-${file.originalname}`;
+        writeFileSync(filePath, file.buffer);
+      }),
+    );
+
+    return this.cloudinaryService.scanImageFiles(files, uid);
   }
 
   @Post('video')

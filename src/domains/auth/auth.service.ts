@@ -49,18 +49,6 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async testLogin(code: string) {
-    try {
-      const data = await axios({
-        url: `https://graph.facebook.com/v20.0/oauth/access_token?client_id=461396363141280&redirect_uri=https://www.facebook.com/connect/login_success.html&client_secret=e689dca37be6f76cf3126b979be6ff71&code=${code}`,
-        method: 'get',
-      });
-      console.log(data.data);
-    } catch (e) {
-      console.log(e.message);
-    }
-  }
-
   async loginGoogle(idToken: string, socialApp: SOCIAL_APP) {
     this.logger.log(`Login With Social from ${socialApp}`);
     let payload = null;
@@ -88,7 +76,7 @@ export class AuthService {
       return await this.login(newUser);
     } else {
       if (user.socialApp !== SOCIAL_APP.GOOGLE)
-        throw new BadRequestException('Tài khoản đã được sử dụng.\nVui lòng đăng nhập bằng email khác!');
+        throw new BadRequestException('Tài khoản đã được sử dụng.\nVui lòng đăng nhập bằng tài khoản khác!');
       return await this.login(user);
     }
   }
