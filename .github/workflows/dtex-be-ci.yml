@@ -50,8 +50,8 @@ jobs:
     - name: Deploy With Set Up SSL
       run: |
         cd ~/workspace/set_up_ssl/set_up_ssl/
-        docker-compose down
-        docker-compose up -d
+        docker compose down
+        docker compose up -d
 
     - name: Clean Docker
       run: docker system prune -fa

@@ -31,6 +31,8 @@ import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { MailService } from './mail/mail.service';
 import { RedisService } from './redis/redis.service';
+import { CLASSIFY_FEEDBACK_API } from 'shared/apis/classify-feedbacl.api';
+import { AxiosType } from 'shared/enums/common.enum';
 
 @Injectable()
 export class CronjobsService {
@@ -303,9 +305,9 @@ export class CronjobsService {
     for (const feedback of feedbacks) {
       try {
         const res = await axios({
-          url: `${URL_TRAIN}/train-model-feedback`,
-          method: 'post',
-          data: { newFeedback: feedback.content },
+          url: CLASSIFY_FEEDBACK_API,
+          method: AxiosType.POST,
+          data: { text: feedback.content },
         });
         const result = res.data;
         if (result === RESULT_FROM_TRAIN_FEEDBACK.NEGATIVE) {

@@ -12,7 +12,7 @@ import axios from 'axios';
 import * as bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
 import { Model } from 'mongoose';
-import { URL_GET_PROFILE_FACEBOOK } from 'shared/constants/common.constant';
+import { FACEBOOK_GET_PROFILE_API } from 'shared/apis/facebook-get-profile.api';
 import { SOCIAL_APP } from 'shared/constants/user.constant';
 import { AxiosType } from 'shared/enums/common.enum';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
@@ -80,7 +80,7 @@ export class AuthService {
     let payload = null;
     try {
       const res = await axios({
-        url: URL_GET_PROFILE_FACEBOOK(accessToken),
+        url: FACEBOOK_GET_PROFILE_API(accessToken),
         method: AxiosType.GET,
       });
       payload = res.data;
