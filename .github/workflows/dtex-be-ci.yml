@@ -44,10 +44,10 @@ jobs:
     runs-on: self-hosted
     needs: build
     steps:
-    - name: Stop & Remove Image
+    - name: Stop & Remove Container
       run: |
-        docker image stop "${{ secrets.DOCKER_HUB_USERNAME }}"/dtex-be || true
-        docker image rm "${{ secrets.DOCKER_HUB_USERNAME }}"/dtex-be || true
+        docker stop dtex-be || true
+        docker rm dtex-be || true
 
     - name: Pull Docker
       run: docker pull "${{ secrets.DOCKER_HUB_USERNAME }}"/dtex-be:latest
