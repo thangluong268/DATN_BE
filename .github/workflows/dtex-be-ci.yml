@@ -44,13 +44,17 @@ jobs:
     runs-on: self-hosted
     needs: build
     steps:
+    - name: Stop & Remove Image
+      run: |
+        docker image stop "${{ secrets.DOCKER_HUB_USERNAME }}"/dtex-be || true
+        docker image rm "${{ secrets.DOCKER_HUB_USERNAME }}"/dtex-be || true
+
     - name: Pull Docker
       run: docker pull "${{ secrets.DOCKER_HUB_USERNAME }}"/dtex-be:latest
 
     - name: Deploy With Set Up SSL
       run: |
         cd ~/workspace/set_up_ssl/set_up_ssl/
-        docker compose down
         docker compose up -d
 
     - name: Clean Docker
