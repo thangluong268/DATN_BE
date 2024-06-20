@@ -86,7 +86,16 @@ export class ConversationService {
       { $addFields: { messageId: { $toObjectId: '$lastMessageId' } } },
       { $lookup: { from: 'messages', localField: 'messageId', foreignField: '_id', as: 'messages' } },
       { $addFields: { isRead: { $first: '$messages.isRead' } } },
-      { $addFields: { isMine: { $eq: [{ $first: '$messages.senderId' }, userId] } } },
+      {
+        $addFields: {
+          isMine: {
+            $and: [
+              { $eq: [{ $first: '$messages.senderId' }, userId] },
+              { $eq: [{ $first: '$messages.senderRole' }, senderRole] },
+            ],
+          },
+        },
+      },
       {
         $addFields: {
           receiver: {
@@ -134,7 +143,16 @@ export class ConversationService {
       { $addFields: { messageId: { $toObjectId: '$lastMessageId' } } },
       { $lookup: { from: 'messages', localField: 'messageId', foreignField: '_id', as: 'messages' } },
       { $addFields: { isRead: { $first: '$messages.isRead' } } },
-      { $addFields: { isMine: { $eq: [{ $first: '$messages.senderId' }, userId] } } },
+      {
+        $addFields: {
+          isMine: {
+            $and: [
+              { $eq: [{ $first: '$messages.senderId' }, userId] },
+              { $eq: [{ $first: '$messages.senderRole' }, senderRole] },
+            ],
+          },
+        },
+      },
       {
         $addFields: {
           receiver: {
@@ -143,7 +161,14 @@ export class ConversationService {
                 $filter: {
                   input: '$participants',
                   as: 'participant',
-                  cond: { $ne: ['$$participant.userId', userId] },
+                  cond: {
+                    $or: [
+                      { $ne: ['$$participant.userId', userId] },
+                      {
+                        $and: [{ $eq: ['$$participant.userId', userId] }, { $ne: ['$$participant.role', senderRole] }],
+                      },
+                    ],
+                  },
                 },
               },
               0,
@@ -175,7 +200,22 @@ export class ConversationService {
       { $lookup: { from: 'messages', localField: 'messageId', foreignField: '_id', as: 'messages' } },
       { $addFields: { isRead: { $first: '$messages.isRead' } } },
       { $addFields: { lastSenderId: { $first: '$messages.senderId' } } },
-      { $match: { isRead: false, lastSenderId: { $ne: userId } } },
+      { $addFields: { lastSenderRole: { $first: '$messages.senderRole' } } },
+      {
+        $match: {
+          $and: [
+            { isRead: false },
+            {
+              $or: [
+                { lastSenderId: { $ne: userId } },
+                {
+                  $and: [{ lastSenderId: { $eq: userId } }, { lastSenderRole: { $ne: senderRole } }],
+                },
+              ],
+            },
+          ],
+        },
+      },
       { $group: { _id: null, count: { $sum: 1 } } },
       { $project: { _id: 0, count: 1 } },
     ]);

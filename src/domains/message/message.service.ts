@@ -36,11 +36,11 @@ export class MessageService {
   }
 
   async findByConversation(userId: string, body: ConversationRoomREQ, conversationId: string, query: PaginationREQ) {
-    const { receiverId, receiverRole } = body;
+    const { receiverId, receiverRole, senderRole } = body;
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const data = await this.messageModel.aggregate([
       { $match: { conversationId: conversationId.toString() } },
-      { $addFields: { isMine: { $eq: ['$senderId', userId] } } },
+      { $addFields: { isMine: { $and: [{ $eq: ['$senderId', userId] }, { $eq: ['$senderRole', senderRole] }] } } },
       { $sort: { createdAt: -1 } },
       { $skip: skip },
       { $limit: limit },
@@ -52,14 +52,21 @@ export class MessageService {
         ? await this.storeModel.findOne({ userId: receiverId }).lean()
         : await this.userService.findById(receiverId);
     const receiverName = receiverRole === ROLE_NAME.SELLER ? receiver['name'] : receiver['fullName'];
-    await this.messageModel.updateMany({ conversationId, senderId: { $ne: userId }, isRead: false }, { isRead: true });
+    await this.messageModel.updateMany(
+      {
+        conversationId,
+        isRead: false,
+        $or: [{ senderId: { $ne: userId } }, { $and: [{ senderId: userId }, { senderRole: { $ne: senderRole } }] }],
+      },
+      { $set: { isRead: true } },
+    );
     return { data: data.reverse(), conversationId, receiverId, receiverName, receiverAvatar: receiver.avatar };
   }
 
-  async findByConversationOne(userId: string, conversationId: string) {
+  async findByConversationOne(userId: string, senderRole: ROLE_NAME, conversationId: string) {
     const data = await this.messageModel.aggregate([
       { $match: { conversationId: conversationId.toString() } },
-      { $addFields: { isMine: { $eq: ['$senderId', userId] } } },
+      { $addFields: { isMine: { $and: [{ $eq: ['$senderId', userId] }, { $eq: ['$senderRole', senderRole] }] } } },
       { $sort: { createdAt: -1 } },
       { $limit: 1 },
       { $project: { _id: 0, id: '$_id', text: 1, isRead: 1, isMine: 1, createdAt: 1 } },

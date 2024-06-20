@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { ROLE_NAME } from 'shared/enums/role-name.enum';
 
 @Schema({
   versionKey: false,
@@ -11,6 +12,9 @@ export class Message extends Document {
 
   @Prop({ type: String, required: true })
   senderId: string;
+
+  @Prop({ type: String })
+  senderRole: ROLE_NAME;
 
   @Prop({ type: String, required: true })
   text: string;

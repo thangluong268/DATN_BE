@@ -84,8 +84,8 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
       await Promise.all([
         this.conversationService.findPreviewsOne(userId, body.senderRole),
         this.conversationService.countUnRead(userId, body.senderRole),
-        this.messageService.findByConversationOne(userId, conversation._id),
-        this.messageService.findByConversationOne(body.receiverId, conversation._id),
+        this.messageService.findByConversationOne(userId, body.senderRole, conversation._id),
+        this.messageService.findByConversationOne(body.receiverId, body.receiverRole, conversation._id),
         this.conversationService.findPreviewsOne(body.receiverId, body.receiverRole),
         this.conversationService.countUnRead(body.receiverId, body.receiverRole),
       ]);
@@ -112,8 +112,8 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
       await Promise.all([
         this.conversationService.findPreviewsOne(userId, body.senderRole),
         this.conversationService.countUnRead(userId, body.senderRole),
-        this.messageService.findByConversationOne(userId, conversation._id),
-        this.messageService.findByConversationOne(body.receiverId, conversation._id),
+        this.messageService.findByConversationOne(userId, body.senderRole, conversation._id),
+        this.messageService.findByConversationOne(body.receiverId, body.receiverRole, conversation._id),
         this.conversationService.findPreviewsOne(body.receiverId, body.receiverRole),
         this.conversationService.countUnRead(body.receiverId, body.receiverRole),
       ]);
