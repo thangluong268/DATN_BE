@@ -148,7 +148,6 @@ export class ConversationService {
       { $sort: { updatedAt: -1 } },
       { $limit: 1 },
     ]);
-    console.log(data);
     const res = await Promise.all(
       data.map(async (conversation) => {
         const receiver =
@@ -158,7 +157,6 @@ export class ConversationService {
         return ConversationPreviewGetRES.of(conversation, senderRole, receiver, conversation.receiverId);
       }),
     );
-    console.log(res);
     return { role: senderRole, data: res[0] };
   }
 

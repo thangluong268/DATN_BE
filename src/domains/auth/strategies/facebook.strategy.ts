@@ -30,9 +30,6 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
       birthday: new Date(_json.birthday),
       socialApp: SOCIAL_APP.FACEBOOK,
     };
-
-    console.log(user);
-
     done(null, user);
   }
 }
