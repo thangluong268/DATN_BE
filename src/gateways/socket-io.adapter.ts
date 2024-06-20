@@ -11,12 +11,14 @@ export class SocketIoAdapter extends IoAdapter {
   createIOServer(port: number, options?: ServerOptions) {
     const cors = {
       origin: '*',
+      credentials: true,
     };
     this.logger.log('Configuring SocketIO server with custom CORS options');
 
     const optionsWithCORS: ServerOptions = {
       ...options,
       cors,
+      transports: ['websocket', 'polling'],
     };
 
     return super.createIOServer(port, optionsWithCORS);
