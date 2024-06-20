@@ -12,13 +12,13 @@ jobs:
     runs-on: self-hosted
     strategy:
       matrix:
-        node-version: [20.x]
+        node-version: [18.x]
     steps:
     - name: Checkout code from repo to ubuntu
       uses: actions/checkout@v3
 
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
