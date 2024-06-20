@@ -26,11 +26,12 @@ export class MessageService {
     private readonly userService: UserService,
   ) {}
 
-  async create(conversationId: string, userId: string, text: string) {
+  async create(conversationId: string, userId: string, senderRole: ROLE_NAME, text: string) {
     const newMessage = await this.messageModel.create({
       conversationId,
       text,
       senderId: userId,
+      senderRole,
     });
     return toDocModel(newMessage);
   }

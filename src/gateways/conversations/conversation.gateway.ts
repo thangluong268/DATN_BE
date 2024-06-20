@@ -75,19 +75,20 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
   @SubscribeMessage(WS_EVENT.CONVERSATION.SEND_MESSAGE)
   async sendMessage(@ConnectedSocket() client: AuthSocket, @MessageBody() body: MessageCreateREQ) {
     this.logger.log(`User ${client.userId} sent message: ${body.text}`);
+    const { senderRole, receiverId, receiverRole } = body;
     const userId = client.userId;
     await this.conversationService.createIfIsFirstConversation(userId, body);
     const conversation = await this.conversationService.findOneByParticipants(userId, body);
-    const newMessage = await this.messageService.create(conversation._id, userId, body.text);
+    const newMessage = await this.messageService.create(conversation._id, userId, senderRole, body.text);
     await this.conversationService.updateLastMessage(conversation._id, newMessage._id, newMessage.text);
     const [previewSender, countUnReadSender, conversationSender, conversationReceiver, previewReceiver, countUnReadReceiver] =
       await Promise.all([
-        this.conversationService.findPreviewsOne(userId, body.senderRole),
-        this.conversationService.countUnRead(userId, body.senderRole),
-        this.messageService.findByConversationOne(userId, body.senderRole, conversation._id),
-        this.messageService.findByConversationOne(body.receiverId, body.receiverRole, conversation._id),
-        this.conversationService.findPreviewsOne(body.receiverId, body.receiverRole),
-        this.conversationService.countUnRead(body.receiverId, body.receiverRole),
+        this.conversationService.findPreviewsOne(userId, senderRole),
+        this.conversationService.countUnRead(userId, senderRole),
+        this.messageService.findByConversationOne(userId, senderRole, conversation._id),
+        this.messageService.findByConversationOne(receiverId, receiverRole, conversation._id),
+        this.conversationService.findPreviewsOne(receiverId, receiverRole),
+        this.conversationService.countUnRead(receiverId, receiverRole),
       ]);
 
     const senderSocket = this.userSocketMap.get(userId);
@@ -104,18 +105,19 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
 
   async sendMessageServer(userId: string, body: MessageCreateREQ) {
     this.logger.log(`User ${userId} sent message: ${body.receiverId}`);
+    const { senderRole, receiverId, receiverRole } = body;
     await this.conversationService.createIfIsFirstConversation(userId, body);
     const conversation = await this.conversationService.findOneByParticipants(userId, body);
-    const newMessage = await this.messageService.create(conversation._id, userId, body.text);
+    const newMessage = await this.messageService.create(conversation._id, userId, senderRole, body.text);
     await this.conversationService.updateLastMessage(conversation._id, newMessage._id, newMessage.text);
     const [previewSender, countUnReadSender, conversationSender, conversationReceiver, previewReceiver, countUnReadReceiver] =
       await Promise.all([
-        this.conversationService.findPreviewsOne(userId, body.senderRole),
-        this.conversationService.countUnRead(userId, body.senderRole),
-        this.messageService.findByConversationOne(userId, body.senderRole, conversation._id),
-        this.messageService.findByConversationOne(body.receiverId, body.receiverRole, conversation._id),
-        this.conversationService.findPreviewsOne(body.receiverId, body.receiverRole),
-        this.conversationService.countUnRead(body.receiverId, body.receiverRole),
+        this.conversationService.findPreviewsOne(userId, senderRole),
+        this.conversationService.countUnRead(userId, senderRole),
+        this.messageService.findByConversationOne(userId, senderRole, conversation._id),
+        this.messageService.findByConversationOne(receiverId, receiverRole, conversation._id),
+        this.conversationService.findPreviewsOne(receiverId, receiverRole),
+        this.conversationService.countUnRead(receiverId, receiverRole),
       ]);
     const senderSocket = this.userSocketMap.get(userId);
     const receiverSocket = this.userSocketMap.get(body.receiverId);
