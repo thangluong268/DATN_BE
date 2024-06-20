@@ -13,7 +13,7 @@ export class Message extends Document {
   @Prop({ type: String, required: true })
   senderId: string;
 
-  @Prop({ type: String })
+  @Prop({ type: String, required: true })
   senderRole: ROLE_NAME;
 
   @Prop({ type: String, required: true })
