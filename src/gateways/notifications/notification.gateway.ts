@@ -28,6 +28,7 @@ import { NotificationGetRESP } from './response/notification-get.response';
 
 @WebSocketGateway({
   namespace: 'notification',
+  // maybe
 })
 @UseFilters(new AllExceptionsSocketFilter())
 @UseGuards(WsGuard)
