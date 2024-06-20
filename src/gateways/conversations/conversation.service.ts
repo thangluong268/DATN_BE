@@ -95,7 +95,14 @@ export class ConversationService {
                 $filter: {
                   input: '$participants',
                   as: 'participant',
-                  cond: { $ne: ['$$participant.userId', userId] },
+                  cond: {
+                    $or: [
+                      { $ne: ['$$participant.userId', userId] },
+                      {
+                        $and: [{ $eq: ['$$participant.userId', userId] }, { $ne: ['$$participant.role', senderRole] }],
+                      },
+                    ],
+                  },
                 },
               },
               0,
