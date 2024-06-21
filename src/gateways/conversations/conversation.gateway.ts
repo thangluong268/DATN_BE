@@ -98,7 +98,7 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     senderSocket?.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewSender);
     senderSocket?.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnReadSender);
     receiverSocket?.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
-    receiverSocket?.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, conversationReceiver);
+    senderSocket !== receiverSocket && receiverSocket?.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, conversationReceiver);
     receiverSocket?.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewReceiver);
     receiverSocket?.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnReadReceiver);
   }
@@ -126,7 +126,7 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
     senderSocket?.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewSender);
     senderSocket?.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnReadSender);
     receiverSocket?.emit(WS_EVENT.CONVERSATION.SEND_MESSAGE, { text: body.text });
-    receiverSocket?.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, conversationReceiver);
+    senderSocket !== receiverSocket && receiverSocket?.emit(WS_EVENT.CONVERSATION.GET_CONVERSATION_ONE, conversationReceiver);
     receiverSocket?.emit(WS_EVENT.CONVERSATION.GET_PREVIEW_CONVERSATIONS_ONE, previewReceiver);
     receiverSocket?.emit(WS_EVENT.CONVERSATION.COUNT_UNREAD, countUnReadReceiver);
   }
