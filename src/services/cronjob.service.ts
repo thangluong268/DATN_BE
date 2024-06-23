@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { TAX_RATE, URL_TRAIN } from 'app.config';
+import { TAX_RATE } from 'app.config';
 import axios from 'axios';
 import * as dayjs from 'dayjs';
 import { Bill } from 'domains/bill/schema/bill.schema';
@@ -20,19 +20,19 @@ import { NotificationGateway } from 'gateways/notifications/notification.gateway
 import { NotificationService } from 'gateways/notifications/notification.service';
 import { ObjectId } from 'mongodb';
 import { Model } from 'mongoose';
+import { CLASSIFY_FEEDBACK_API } from 'shared/apis/classify-feedbacl.api';
 import { CLOUDINARY_PUBLIC_IDs_FIXED } from 'shared/constants/cloudinary.constant';
 import { CONTENT_REPORT_FEEDBACK, RESULT_FROM_TRAIN_FEEDBACK } from 'shared/constants/common.constant';
 import { NOTIFICATION_LINK } from 'shared/constants/notification.constant';
 import { BILL_STATUS } from 'shared/enums/bill.enum';
 import { CloudinaryDestroyType, CloudinaryFolder } from 'shared/enums/cloudinary.enum';
+import { AxiosType } from 'shared/enums/common.enum';
 import { NotificationType } from 'shared/enums/notification.enum';
 import { PolicyType } from 'shared/enums/policy.enum';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { MailService } from './mail/mail.service';
 import { RedisService } from './redis/redis.service';
-import { CLASSIFY_FEEDBACK_API } from 'shared/apis/classify-feedbacl.api';
-import { AxiosType } from 'shared/enums/common.enum';
 
 @Injectable()
 export class CronjobsService {
