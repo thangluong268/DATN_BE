@@ -23,6 +23,7 @@ export class ProductsGetLoveREQ extends PaginationREQ {
                 { name: { $regex: query.search, $options: 'i' } },
                 { keywords: { $regex: query.search, $options: 'i' } },
                 { storeName: { $regex: query.search, $options: 'i' } },
+                { categoryName: { $regex: query.search, $options: 'i' } },
               ]
             : [{}],
         },

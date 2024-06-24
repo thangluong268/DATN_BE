@@ -15,6 +15,7 @@ export class ProductsGetREQ extends PaginationREQ {
             { name: { $regex: search, $options: 'i' } },
             { keywords: { $regex: search, $options: 'i' } },
             { storeName: { $regex: search, $options: 'i' } },
+            { categoryName: { $regex: search, $options: 'i' } },
           ],
         }
       : {};
