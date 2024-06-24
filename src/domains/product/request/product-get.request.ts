@@ -13,9 +13,8 @@ export class ProductsGetREQ extends PaginationREQ {
       ? {
           $or: [
             { name: { $regex: search, $options: 'i' } },
-            // { description: { $regex: search, $options: 'i' } },
             { keywords: { $regex: search, $options: 'i' } },
-            // { storeName: { $regex: search, $options: 'i' } },
+            { storeName: { $regex: search, $options: 'i' } },
           ],
         }
       : {};

@@ -19,7 +19,11 @@ export class ProductsGetLoveREQ extends PaginationREQ {
       {
         $match: {
           $or: query.search
-            ? [{ name: { $regex: query.search, $options: 'i' } }, { keywords: { $regex: query.search, $options: 'i' } }]
+            ? [
+                { name: { $regex: query.search, $options: 'i' } },
+                { keywords: { $regex: query.search, $options: 'i' } },
+                { storeName: { $regex: query.search, $options: 'i' } },
+              ]
             : [{}],
         },
       },
