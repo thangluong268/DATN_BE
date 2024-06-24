@@ -32,13 +32,9 @@ export class ProductGetRandomREQ {
           },
         },
       },
-      { $addFields: { storeObjId: { $toObjectId: '$storeId' } } },
-      { $lookup: { from: 'stores', localField: 'storeObjId', foreignField: '_id', as: 'store' } },
-      { $addFields: { storeName: { $first: '$store.name' } } },
-      { $addFields: { storeAvatar: { $first: '$store.avatar' } } },
       { $sort: { countEmoji: -1, countDelivered: -1 } },
       { $limit: limit },
-      { $project: { productId: 0, countEmoji: 0, countDelivered: 0, evaluation: 0, bills: 0, storeObjId: 0, store: 0 } },
+      { $project: { productId: 0, countEmoji: 0, countDelivered: 0, evaluation: 0, bills: 0 } },
     ];
   }
 }

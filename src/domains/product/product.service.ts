@@ -100,13 +100,7 @@ export class ProductService {
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.productModel.countDocuments(condition);
     const products = await this.productModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).skip(skip).limit(limit);
-    const data = await Promise.all(
-      products.map(async (product) => {
-        const store = await this.storeModel.findById(product.storeId).lean();
-        return { ...product, storeName: store.name, storeAvatar: store.avatar };
-      }),
-    );
-    return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy sản phẩm thành công!');
+    return PaginationResponse.ofWithTotalAndMessage(products, total, 'Lấy sản phẩm thành công!');
   }
 
   async getProducts(query: ProductsGetREQ) {
@@ -115,13 +109,7 @@ export class ProductService {
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.productModel.countDocuments(condition);
     const products = await this.productModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).skip(skip).limit(limit);
-    const data = await Promise.all(
-      products.map(async (product) => {
-        const store = await this.storeModel.findById(product.storeId).lean();
-        return { ...product, storeName: store.name, storeAvatar: store.avatar };
-      }),
-    );
-    return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy sản phẩm thành công!');
+    return PaginationResponse.ofWithTotalAndMessage(products, total, 'Lấy sản phẩm thành công!');
   }
 
   async getProductsBySeller(userId: string, query: ProductsGetREQ) {
@@ -134,21 +122,11 @@ export class ProductService {
     const products = await this.productModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).skip(skip).limit(limit);
     const productsFullInfo = await Promise.all(
       products.map(async (product) => {
-        const category = await this.categoryService.findOne(product.categoryId);
         const quantitySold = await this.billService.countProductDelivered(product._id, PRODUCT_TYPE.SELL, BILL_STATUS.DELIVERED);
         const quantityGive = await this.billService.countProductDelivered(product._id, PRODUCT_TYPE.GIVE, BILL_STATUS.DELIVERED);
         const revenue = quantitySold * product.newPrice;
         const isPurchased = await this.billService.checkProductPurchased(product._id);
-        return {
-          ...product,
-          categoryName: category.name,
-          storeName: store.name,
-          storeAvatar: store.avatar,
-          quantitySold,
-          quantityGive,
-          revenue,
-          isPurchased,
-        };
+        return { ...product, quantitySold, quantityGive, revenue, isPurchased };
       }),
     );
     return { message: 'Lấy sản phẩm thành công!', metadata: { products: productsFullInfo, total } };
@@ -162,20 +140,10 @@ export class ProductService {
     const products = await this.productModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).skip(skip).limit(limit);
     const productsFullInfo = await Promise.all(
       products.map(async (product) => {
-        const category = await this.categoryService.findOne(product.categoryId);
-        const store = await this.storeModel.findById(product.storeId).lean();
         const quantitySold = await this.billService.countProductDelivered(product._id, PRODUCT_TYPE.SELL, BILL_STATUS.DELIVERED);
         const quantityGive = await this.billService.countProductDelivered(product._id, PRODUCT_TYPE.GIVE, BILL_STATUS.DELIVERED);
         const revenue = quantitySold * product.newPrice;
-        return {
-          ...product,
-          categoryName: category.name,
-          storeName: store.name,
-          storeAvatar: store.avatar,
-          quantitySold,
-          quantityGive,
-          revenue,
-        };
+        return { ...product, quantitySold, quantityGive, revenue };
       }),
     );
     return PaginationResponse.ofWithTotalAndMessage(productsFullInfo, total, 'Lấy danh sách sản phẩm thành công!');
@@ -189,57 +157,23 @@ export class ProductService {
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.productModel.countDocuments(condition);
     const products = await this.productModel.find(condition, {}, { lean: true }).sort({ createdAt: -1 }).skip(skip).limit(limit);
-    const productsFullInfo = await Promise.all(
-      products.map(async (product) => {
-        const category = await this.categoryService.findOne(product.categoryId);
-        return {
-          ...product,
-          categoryName: category.name,
-          storeName: store.name,
-          storeAvatar: store.avatar,
-        };
-      }),
-    );
-    return PaginationResponse.ofWithTotalAndMessage(productsFullInfo, total, 'Lấy danh sách sản phẩm của cửa hàng thành công!');
+    return PaginationResponse.ofWithTotalAndMessage(products, total, 'Lấy danh sách sản phẩm của cửa hàng thành công!');
   }
 
   async getProductsOtherInStore(query: ProductGetOtherInStoreREQ) {
     this.logger.log(`Get Products Other In Store: ${JSON.stringify(query)}`);
     const { storeId, productId } = query;
-    const data = await this.productModel.aggregate([
-      { $match: { storeId, status: true, _id: { $ne: new ObjectId(productId) } } },
-      { $addFields: { storeIdObj: { $toObjectId: '$storeId' } } },
-      { $lookup: { from: 'stores', localField: 'storeIdObj', foreignField: '_id', as: 'store' } },
-      { $addFields: { storeName: { $first: '$store.name' } } },
-      { $addFields: { storeAvatar: { $first: '$store.avatar' } } },
-      { $sort: { createdAt: -1 } },
-      { $limit: 12 },
-      { $project: { store: 0, storeIdObj: 0 } },
-    ]);
+    const data = await this.productModel
+      .find({ storeId, status: true, _id: { $ne: new ObjectId(productId) } })
+      .sort({ createdAt: -1 })
+      .limit(12);
     return BaseResponse.withMessage(data, 'Lấy danh sách sản phẩm khác thành công!');
   }
 
   async getProductsLasted(limitQuery: number) {
     this.logger.log(`Get Products Lasted: ${limitQuery || 10}`);
     const limit = limitQuery || 10;
-    const products = await this.productModel.aggregate([
-      { $match: { status: true } },
-      { $sort: { createdAt: -1 } },
-      { $limit: limit },
-      { $addFields: { storeIdObj: { $toObjectId: '$storeId' } } },
-      {
-        $lookup: {
-          from: 'stores',
-          localField: 'storeIdObj',
-          foreignField: '_id',
-          as: 'store',
-        },
-      },
-      { $unwind: '$store' },
-      { $addFields: { storeName: '$store.name' } },
-      { $addFields: { storeAvatar: '$store.avatar' } },
-      { $project: { store: 0, storeIdObj: 0 } },
-    ]);
+    const products = await this.productModel.find({ status: true }).sort({ createdAt: -1 }).limit(limit);
     return BaseResponse.withMessage(products, 'Lấy danh sách sản phẩm mới nhất thành công!');
   }
 
@@ -303,7 +237,6 @@ export class ProductService {
 
   async getProductsFilter(query: ProductGetFilterREQ) {
     this.logger.log(`Get Products Filter: ${JSON.stringify(query)}`);
-    const category = await this.categoryService.findOne(query.categoryId);
     const condition = ProductGetFilterREQ.toQueryCondition(query);
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
     const total = await this.productModel.countDocuments(condition);
@@ -316,7 +249,7 @@ export class ProductService {
       {
         total,
         products,
-        categoryName: category.name,
+        categoryName: products[0]?.categoryName || '',
       },
       'Lấy danh sách sản phẩm theo điều kiện thành công!',
     );
@@ -332,9 +265,7 @@ export class ProductService {
         const quantitySold = await this.billService.countProductDelivered(product._id, PRODUCT_TYPE.SELL, BILL_STATUS.DELIVERED);
         const quantityGive = await this.billService.countProductDelivered(product._id, PRODUCT_TYPE.GIVE, BILL_STATUS.DELIVERED);
         const revenue = quantitySold * product.newPrice;
-        const category = await this.categoryService.findOne(product.categoryId);
-        const store = await this.storeModel.findById(product.storeId).lean();
-        return { ...product, categoryName: category.name, storeName: store.name, quantitySold, quantityGive, revenue };
+        return { ...product, quantitySold, quantityGive, revenue };
       }),
     );
     return PaginationResponse.ofWithTotalAndMessage(data, total[0]?.total || 0, 'Lấy danh sách sản phẩm yêu thích thành công!');
@@ -377,22 +308,11 @@ export class ProductService {
         }
         const totalStars = Object.keys(star).reduce((acc, key) => acc + star[key] * Number(key), 0);
         const averageStar = totalFeedback > 0 ? Number((totalStars / totalFeedback).toFixed(2)) : 0;
-        const store = await this.storeModel.findById(item.storeId).lean();
-        const category = await this.categoryService.findOne(product.categoryId);
         const quantitySold = await this.billService.countProductDelivered(item._id, PRODUCT_TYPE.SELL, BILL_STATUS.DELIVERED);
         const quantityGive = await this.billService.countProductDelivered(item._id, PRODUCT_TYPE.GIVE, BILL_STATUS.DELIVERED);
         const revenue = quantitySold * product.newPrice;
         const isPurchased = await this.billService.checkProductPurchased(item._id);
-        const productFullInfo = {
-          ...product,
-          categoryName: category.name,
-          storeName: store.name,
-          storeAvatar: store.avatar,
-          quantitySold,
-          quantityGive,
-          revenue,
-          isPurchased,
-        };
+        const productFullInfo = { ...product, quantitySold, quantityGive, revenue, isPurchased };
         return { product: productFullInfo, emojis, starPercent, averageStar, totalFeedback };
       }),
     );
@@ -405,13 +325,7 @@ export class ProductService {
     if (!product) throw new NotFoundException('Không tìm thấy sản phẩm này!');
     const type = product.newPrice === 0 ? PRODUCT_TYPE.GIVE : PRODUCT_TYPE.SELL;
     const quantityDelivered = await this.billService.countProductDelivered(id, type, BILL_STATUS.DELIVERED);
-    const category = await this.categoryService.findOne(product.categoryId);
-    const store = await this.storeModel.findById(product.storeId).lean();
-    const data = { ...product };
-    return BaseResponse.withMessage(
-      { data, quantityDelivered, categoryName: category.name, storeName: store.name, storeAvatar: store.avatar },
-      'Lấy thông tin sản phẩm thành công!',
-    );
+    return BaseResponse.withMessage({ data: product, quantityDelivered }, 'Lấy thông tin sản phẩm thành công!');
   }
 
   async getProductByManager(productId: string) {
@@ -450,10 +364,8 @@ export class ProductService {
     }
     const totalStars = Object.keys(star).reduce((acc, key) => acc + star[key] * Number(key), 0);
     const averageStar = totalFeedback > 0 ? Number((totalStars / totalFeedback).toFixed(2)) : 0;
-    const store = await this.storeModel.findById(product.storeId).lean();
-    const productInfo = { ...product, storeName: store.name, storeAvatar: store.avatar };
     return BaseResponse.withMessage(
-      { product: productInfo, quantityDelivered, emojis, starPercent, averageStar, totalFeedback },
+      { product, quantityDelivered, emojis, starPercent, averageStar, totalFeedback },
       'Lấy thông tin sản phẩm bởi Manager thành công!',
     );
   }
@@ -497,6 +409,7 @@ export class ProductService {
       if (product.storeId.toString() !== store._id.toString())
         throw new ForbiddenException('Bạn không có quyền xóa sản phẩm này!');
     }
+    await this.evaluationModel.findOneAndDelete({ productId: id });
     await this.productModel.findByIdAndDelete(id);
     return BaseResponse.withMessage({}, 'Xóa sản phẩm thành công!');
   }

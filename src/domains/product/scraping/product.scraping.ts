@@ -50,6 +50,7 @@ export class ProductScraping {
         keywords: ['do gia dung', 'noi that', 'cay canh', 'cay kieng', 'cay phong thuy', 'cay trong nha', 'cay trong van phong'],
         storeId: store._id.toString(),
         storeName: store.name,
+        storeAvatar: store.avatar,
       });
       await this.evaluationModel.create({ productId: newProduct._id.toString() });
     }
@@ -86,6 +87,7 @@ export class ProductScraping {
           categoryId,
           storeId: store._id.toString(),
           storeName: store.name,
+          storeAvatar: store.avatar,
         });
         await this.evaluationModel.create({ productId: newProduct._id.toString() });
       }
@@ -123,6 +125,7 @@ export class ProductScraping {
         keywords: ['me va be', 'do choi', 'tre em'],
         storeId: store._id.toString(),
         storeName: store.name,
+        storeAvatar: store.avatar,
       });
       await this.evaluationModel.create({ productId: newProduct._id.toString() });
     }
@@ -159,6 +162,7 @@ export class ProductScraping {
         keywords: ['xe', 'xe may', 'o to', 'xe dap', 'xe dap dien', 'xe may dien', 'xe cu', 'xe moi'],
         storeId: store._id.toString(),
         storeName: store.name,
+        storeAvatar: store.avatar,
       });
       await this.evaluationModel.create({ productId: newProduct._id.toString() });
     }
@@ -195,6 +199,7 @@ export class ProductScraping {
         keywords: ['dien lanh', 'tu lanh', 'may lanh', 'dieu hoa', 'quat', 'quat dieu hoa', 'quat may lanh'],
         storeId: store._id.toString(),
         storeName: store.name,
+        storeAvatar: store.avatar,
       });
       await this.evaluationModel.create({ productId: newProduct._id.toString() });
     }
@@ -231,6 +236,7 @@ export class ProductScraping {
         keywords: ['giai tri', 'the thao', 'so thich'],
         storeId: store._id.toString(),
         storeName: store.name,
+        storeAvatar: store.avatar,
       });
       await this.evaluationModel.create({ productId: newProduct._id.toString() });
     }
@@ -267,6 +273,7 @@ export class ProductScraping {
         keywords: ['thu cung', 'cho', 'meo'],
         storeId: store._id.toString(),
         storeName: store.name,
+        storeAvatar: store.avatar,
       });
       await this.evaluationModel.create({ productId: newProduct._id.toString() });
     }
@@ -302,6 +309,7 @@ export class ProductScraping {
         keywords: ['cho tang', 'tang', 'mien phi'],
         storeId: store._id.toString(),
         storeName: store.name,
+        storeAvatar: store.avatar,
       });
       await this.evaluationModel.create({ productId: newProduct._id.toString() });
     }
@@ -338,6 +346,7 @@ export class ProductScraping {
         keywords: ['thoi trang', 'do dung ca nhan', 'quan ao', 'giay dep', 'tui xach', 'phu kien'],
         storeId: store._id.toString(),
         storeName: store.name,
+        storeAvatar: store.avatar,
       });
       await this.evaluationModel.create({ productId: newProduct._id.toString() });
     }
@@ -374,6 +383,7 @@ export class ProductScraping {
         keywords: ['do dung van phong', 'may tinh', 'may in', 'may fax', 'may photocopy', 'may chieu', 'may quet', 'may scan'],
         storeId: store._id.toString(),
         storeName: store.name,
+        storeAvatar: store.avatar,
       });
       await this.evaluationModel.create({ productId: newProduct._id.toString() });
     }

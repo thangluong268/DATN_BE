@@ -27,6 +27,9 @@ export class Product extends Document {
   @Prop({ type: String })
   categoryId: string;
 
+  @Prop({ type: String })
+  categoryName: string;
+
   @Prop({ type: [String], default: [] })
   keywords: string[];
 
@@ -35,6 +38,9 @@ export class Product extends Document {
 
   @Prop({ type: String })
   storeName: string;
+
+  @Prop({ type: String })
+  storeAvatar: string;
 
   @Prop({ type: Boolean, default: true })
   status: boolean;

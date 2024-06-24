@@ -33,6 +33,7 @@ import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { MailService } from './mail/mail.service';
 import { RedisService } from './redis/redis.service';
+import { Category } from 'domains/category/schema/category.schema';
 
 @Injectable()
 export class CronjobsService {
@@ -79,6 +80,9 @@ export class CronjobsService {
     private readonly mailService: MailService,
 
     private readonly cloudinaryService: CloudinaryService,
+
+    @InjectModel(Category.name)
+    private readonly categoryModel: Model<Category>,
   ) {}
 
   @Cron('0 * * * * *')
