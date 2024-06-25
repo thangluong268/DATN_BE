@@ -2,17 +2,18 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BillModule } from 'domains/bill/bill.module';
 import { Bill, BillSchema } from 'domains/bill/schema/bill.schema';
+import { Cart, CartSchema } from 'domains/cart/schema/cart.schema';
 import { CategoryModule } from 'domains/category/category.module';
 import { Evaluation, EvaluationSchema } from 'domains/evaluation/schema/evaluation.schema';
 import { FeedbackModule } from 'domains/feedback/feedback.module';
 import { Feedback, FeedbackSchema } from 'domains/feedback/schema/feedback.schema';
+import { Report, ReportSchema } from 'domains/report/schema/report.schema';
 import { Store, StoreSchema } from 'domains/store/schema/store.schema';
 import { NotificationModule } from 'gateways/notifications/notification.module';
 import { ProductController } from './product.controller';
 import { ProductService } from './product.service';
 import { Product, ProductSchema } from './schema/product.schema';
 import { ProductScraping } from './scraping/product.scraping';
-import { Report, ReportSchema } from 'domains/report/schema/report.schema';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { Report, ReportSchema } from 'domains/report/schema/report.schema';
       { name: Store.name, schema: StoreSchema },
       { name: Bill.name, schema: BillSchema },
       { name: Report.name, schema: ReportSchema },
+      { name: Cart.name, schema: CartSchema },
     ]),
     CategoryModule,
     BillModule,

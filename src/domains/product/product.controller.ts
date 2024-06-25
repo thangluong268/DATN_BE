@@ -1,7 +1,10 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import * as dayjs from 'dayjs';
 import { AuthRoleGuard } from 'domains/auth/guards/auth-role.guard';
+import { Response } from 'express';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { PaginationREQ } from 'shared/generics/pagination.request';
+import { parseExcelResponse } from 'shared/helpers/excel.helper';
 import { Roles } from '../auth/decorators/auth-role.decorator';
 import { AuthJwtATGuard } from '../auth/guards/auth-jwt-at.guard';
 import { ProductService } from './product.service';
@@ -15,9 +18,6 @@ import { ProductGetRandomREQ } from './request/product-get-random.request';
 import { ProductsGetREQ } from './request/product-get.request';
 import { ProductUpdateREQ } from './request/product-update.request';
 import { ProductScraping } from './scraping/product.scraping';
-import { parseExcelResponse } from 'shared/helpers/excel.helper';
-import * as dayjs from 'dayjs';
-import { Response } from 'express';
 
 @Controller()
 export class ProductController {
@@ -156,6 +156,23 @@ export class ProductController {
   /**
    * This is part of craping data from another website
    */
+
+  @Post('product/scraping/all')
+  async scraping_DoGiaDung_All() {
+    return await Promise.all([
+      this.productScraping.scraping_DoGiaDung_NoiThat_CayCanh(),
+      this.productScraping.scraping_Do_Dien_Tu(),
+      this.productScraping.scraping_Do_Choi_Me_Be(),
+      this.productScraping.scraping_Xe_Co(),
+      this.productScraping.scraping_Dien_Lanh(),
+      this.productScraping.scraping_GiaiTri_TheThao_SoThich(),
+      this.productScraping.scraping_ThuCung(),
+      this.productScraping.scraping_Give(),
+      this.productScraping.scraping_Thoi_Trang_Do_Dung_Ca_Nhan(),
+      this.productScraping.scraping_Do_Dung_Van_Phong(),
+    ]);
+  }
+
   @Post('product/scraping/DoGiaDung_NoiThat_CayCanh')
   scraping_DoGiaDung_NoiThat_CayCanh() {
     return this.productScraping.scraping_DoGiaDung_NoiThat_CayCanh();

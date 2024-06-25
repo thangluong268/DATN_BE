@@ -139,7 +139,7 @@ export class CronjobsService {
     }
   }
 
-  @Cron('*/1 * * * * *')
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async resetStartTimePromotion() {
     await this.promotionModel.updateMany(
       { startTime: { $lt: new Date() }, isActive: false, userUses: { $size: 0 } },
@@ -206,7 +206,7 @@ export class CronjobsService {
     await this.storeModel.updateMany({ warningCount: { $lt: 3 } }, { $set: { status: true } });
   }
 
-  @Cron('*/1 * * * * *')
+  @Cron(CronExpression.EVERY_MINUTE)
   async processBill() {
     const now = dayjs();
     // const threeDaysAgo = now.subtract(3, 'day').toDate();
@@ -235,7 +235,7 @@ export class CronjobsService {
     );
   }
 
-  @Cron('*/1 * * * * *')
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handlePassBannedDayUserBillTracking() {
     const now = dayjs();
     const thirtyDaysAgo = now.subtract(30, 'day').toDate();

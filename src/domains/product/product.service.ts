@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import * as dayjs from 'dayjs';
 import { BillService } from 'domains/bill/bill.service';
 import { Bill } from 'domains/bill/schema/bill.schema';
+import { Cart } from 'domains/cart/schema/cart.schema';
 import { Evaluation } from 'domains/evaluation/schema/evaluation.schema';
 import { Feedback } from 'domains/feedback/schema/feedback.schema';
 import { ReportGetREQ } from 'domains/report/request/report-get.request';
@@ -25,7 +26,6 @@ import { PaginationResponse } from 'shared/generics/pagination.response';
 import { createExcelFile } from 'shared/helpers/excel.helper';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { toDocModel } from 'shared/helpers/to-doc-model.helper';
-import { CategoryService } from '../category/category.service';
 import { ProductsBeingReportedDownloadExcelDTO } from './dto/product-being-reported-download-excel.dto';
 import { ProductsDownloadExcelDTO } from './dto/product-download-excel.dto';
 import { ProductCreateREQ } from './request/product-create.request';
@@ -65,7 +65,8 @@ export class ProductService {
     @InjectModel(Report.name)
     private readonly reportModel: Model<Report>,
 
-    private readonly categoryService: CategoryService,
+    @InjectModel(Cart.name)
+    private readonly cartModel: Model<Cart>,
 
     private readonly notificationService: NotificationService,
     private readonly notificationGateway: NotificationGateway,
@@ -125,7 +126,7 @@ export class ProductService {
         const quantitySold = await this.billService.countProductDelivered(product._id, PRODUCT_TYPE.SELL, BILL_STATUS.DELIVERED);
         const quantityGive = await this.billService.countProductDelivered(product._id, PRODUCT_TYPE.GIVE, BILL_STATUS.DELIVERED);
         const revenue = quantitySold * product.newPrice;
-        const isPurchased = await this.billService.checkProductPurchased(product._id);
+        const isPurchased = quantitySold > 0 || quantityGive > 0 ? true : false;
         return { ...product, quantitySold, quantityGive, revenue, isPurchased };
       }),
     );
@@ -409,6 +410,10 @@ export class ProductService {
       if (product.storeId.toString() !== store._id.toString())
         throw new ForbiddenException('Bạn không có quyền xóa sản phẩm này!');
     }
+    await this.cartModel.updateMany(
+      { 'products.id': { $in: [new ObjectId(id)] } },
+      { $pull: { products: { id: { $in: [new ObjectId(id)] } } } },
+    );
     await this.evaluationModel.findOneAndDelete({ productId: id });
     await this.productModel.findByIdAndDelete(id);
     return BaseResponse.withMessage({}, 'Xóa sản phẩm thành công!');
