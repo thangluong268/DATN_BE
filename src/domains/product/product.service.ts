@@ -4,6 +4,7 @@ import * as dayjs from 'dayjs';
 import { BillService } from 'domains/bill/bill.service';
 import { Bill } from 'domains/bill/schema/bill.schema';
 import { Cart } from 'domains/cart/schema/cart.schema';
+import { Category } from 'domains/category/schema/category.schema';
 import { Evaluation } from 'domains/evaluation/schema/evaluation.schema';
 import { Feedback } from 'domains/feedback/schema/feedback.schema';
 import { ReportGetREQ } from 'domains/report/request/report-get.request';
@@ -68,6 +69,9 @@ export class ProductService {
     @InjectModel(Cart.name)
     private readonly cartModel: Model<Cart>,
 
+    @InjectModel(Category.name)
+    private readonly categoryModel: Model<Category>,
+
     private readonly notificationService: NotificationService,
     private readonly notificationGateway: NotificationGateway,
 
@@ -77,8 +81,14 @@ export class ProductService {
   async create(userId: string, body: ProductCreateREQ) {
     this.logger.log(`Create Product: ${userId}`);
     const store = await this.storeModel.findOne({ userId: userId.toString() }).lean();
-    if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
-    const newProduct = await this.productModel.create({ ...body, storeId: store._id, storeName: store.name });
+    const category = await this.categoryModel.findById(body.categoryId).lean();
+    const newProduct = await this.productModel.create({
+      ...body,
+      categoryName: category.name,
+      storeId: store._id,
+      storeName: store.name,
+      storeAvatar: store.avatar,
+    });
     await this.evaluationModel.create({ productId: newProduct._id.toString() });
     // await this.esService.indexProduct(toDocModel(newProduct));
 
