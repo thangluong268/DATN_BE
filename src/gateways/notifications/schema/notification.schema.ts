@@ -4,6 +4,7 @@ import { NotificationType } from 'shared/enums/notification.enum';
 
 @Schema({
   timestamps: true,
+  versionKey: false,
 })
 export class Notification extends Document {
   @Prop({ type: String })

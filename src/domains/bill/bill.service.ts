@@ -276,6 +276,7 @@ export class BillService {
     const store = await this.storeModel.findOne({ userId: userId.toString() }).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const data = await this.billModel.aggregate(BillGetCalculateRevenueByYearREQ.toQueryCondition(year, store._id));
+    console.log(data);
     // Tạo mảng chứa 12 tháng với doanh thu mặc định là 0
     const monthlyRevenue = getMonthRevenue();
     let totalRevenue = 0;
@@ -460,7 +461,7 @@ export class BillService {
   async calculateRevenueAllTimeByStoreId(storeId: string) {
     const result = await this.billModel.aggregate([
       { $match: { status: BILL_STATUS.DELIVERED, isSuccess: true, storeId: storeId.toString() } },
-      { $group: { _id: null, totalRevenue: { $sum: '$totalPricePayment' } } },
+      { $group: { _id: null, totalRevenue: { $sum: '$totalPriceInit' } } },
     ]);
     return result[0]?.totalRevenue || 0;
   }

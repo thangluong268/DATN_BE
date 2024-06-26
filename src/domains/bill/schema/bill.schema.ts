@@ -26,10 +26,10 @@ export class Bill extends Document {
   deliveryFee: number;
 
   @Prop({ type: Number })
-  totalPriceInit: number; // sum(newPrice * quantity)
+  totalPriceInit: number; // sum(newPrice * quantity) - taxFee
 
   @Prop({ type: Number })
-  totalPricePayment: number; // totalPriceInit - discountValue - taxFee
+  totalPricePayment: number; // totalPriceInit - discountValue - coin
 
   @Prop({ type: String })
   deliveryMethod: string;

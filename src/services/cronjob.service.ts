@@ -6,6 +6,7 @@ import axios from 'axios';
 import * as dayjs from 'dayjs';
 import { Bill } from 'domains/bill/schema/bill.schema';
 import { Cart } from 'domains/cart/schema/cart.schema';
+import { Category } from 'domains/category/schema/category.schema';
 import { Feedback } from 'domains/feedback/schema/feedback.schema';
 import { Finance } from 'domains/finance/schema/finance.schema';
 import { Product } from 'domains/product/schema/product.schema';
@@ -33,7 +34,6 @@ import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { MailService } from './mail/mail.service';
 import { RedisService } from './redis/redis.service';
-import { Category } from 'domains/category/schema/category.schema';
 
 @Injectable()
 export class CronjobsService {

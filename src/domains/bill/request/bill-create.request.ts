@@ -45,7 +45,7 @@ export class BillCreateREQ {
       products: cart.products,
       notes: cart.notes,
       deliveryFee: cart.deliveryFee,
-      totalPriceInit: cart.totalPrice - Math.ceil(cart.totalPrice * TAX_RATE),
+      totalPriceInit: cart.totalPrice === 0 ? cart.totalPrice - Math.ceil(cart.totalPrice * TAX_RATE) : 0,
       totalPricePayment: cart['totalPricePayment'],
       deliveryMethod: body.deliveryMethod,
       paymentMethod: body.paymentMethod,
