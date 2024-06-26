@@ -40,9 +40,6 @@ export class NotificationService {
     this.logger.log(`Create notification for user ${receiverId}`);
     const typeToGetContent = billStatus ? billStatus : type;
     const content = this.getContent(typeToGetContent);
-    console.log(type);
-    console.log(billStatus);
-    console.log(content);
     const newNotification = await this.notificationModel.create({
       receiverId,
       subjectId: subjectInfo.subjectId,

@@ -17,6 +17,7 @@ export const NOTIFICATION_CONTENT = {
   [BILL_STATUS.DELIVERING]: 'Đơn hàng của bạn đang được giao.',
   [BILL_STATUS.DELIVERED]: 'Đơn hàng của bạn đã được giao thành công.',
   [BILL_STATUS.CANCELLED]: 'Đơn hàng của bạn đã bị hủy.',
+  [BILL_STATUS_NOTIFICATION.NEW_SELLER]: 'Người dùng vừa đặt hàng sản phẩm của bạn.',
   [BILL_STATUS_NOTIFICATION.REFUND_USER]: 'Bạn đã hoàn đơn hàng của mình.\nĐơn hàng đang chờ xác nhận hoàn từ shop.',
   [BILL_STATUS_NOTIFICATION.REFUND_SELLER]: 'Người mua đã hoàn đơn hàng. Vui lòng xác nhận.',
   [BILL_STATUS_NOTIFICATION.CONFIRMED_REFUND]: 'Đơn hàng đã được xác nhận hoàn trả thành công.',
@@ -37,6 +38,7 @@ export const NOTIFICATION_LINK = {
   [NotificationType.BILL]: `/user/invoice`,
   [NotificationType.EVALUATION]: `/product/`, // + product id
   [NotificationType.FEEDBACK]: `/product/`, // + product id
+  [BILL_STATUS_NOTIFICATION.NEW_SELLER]: `/shop/seller/`, // + store id
   [BILL_STATUS.DELIVERING]: `/shop/seller/`, // + store id
   [BILL_STATUS.DELIVERED]: `/shop/seller/`, // + store id
   [BILL_STATUS.BACK]: `/shop/seller/`, // + store id

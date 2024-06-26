@@ -209,14 +209,30 @@ export class BillService {
         receiverId: bill.userId,
         receiverRole: ROLE_NAME.USER,
       });
+
+      // Send notification to seller
+      const product = bill.products[0];
+      const subjectInfoToSeller = NotificationSubjectInfoDTO.ofProduct(product.id, product.name, product.avatar);
+      const receiverIdToSeller = store.userId;
+      const linkToSeller = NOTIFICATION_LINK[BILL_STATUS_NOTIFICATION.NEW_SELLER] + bill.storeId;
+      const billStatusToSeller = BILL_STATUS_NOTIFICATION.NEW_SELLER;
+      const notificationToSeller = await this.notificationService.create(
+        receiverIdToSeller,
+        subjectInfoToSeller,
+        NotificationType.BILL,
+        linkToSeller,
+        billStatusToSeller,
+      );
+      this.notificationGateway.sendNotification(receiverIdToSeller, notificationToSeller);
     }
     const redisClient = this.redisService.getClient();
     const data = await redisClient.get(paymentId);
     if (data) {
       const { numOfCoins, promotionId } = JSON.parse(data);
       await this.userModel.findByIdAndUpdate(userId, { $inc: { wallet: -numOfCoins } });
-      if (!promotionId) return;
-      await this.promotionModel.findByIdAndUpdate(promotionId, { $pull: { userSaves: userId }, $push: { userUses: userId } });
+      if (promotionId) {
+        await this.promotionModel.findByIdAndUpdate(promotionId, { $pull: { userSaves: userId }, $push: { userUses: userId } });
+      }
     }
     // Send notification
     const subjectProduct = bills[0].products[0];
