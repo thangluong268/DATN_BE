@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import mongoose, { Document, ObjectId } from 'mongoose';
 import { BILL_STATUS } from 'shared/enums/bill.enum';
 
 @Schema({
@@ -7,8 +7,8 @@ import { BILL_STATUS } from 'shared/enums/bill.enum';
   timestamps: true,
 })
 export class UserBillTracking extends Document {
-  @Prop({ type: String, required: true })
-  billId: string;
+  @Prop({ type: mongoose.Schema.ObjectId, required: true })
+  billId: ObjectId;
 
   @Prop({ type: String, required: true })
   userId: string;
