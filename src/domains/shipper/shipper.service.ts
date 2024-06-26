@@ -114,6 +114,7 @@ export class ShipperService {
     const bill = await this.billModel.findById(billId).lean();
     if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng');
     const shippers = await this.selectShipper(bill._id);
+    if (shippers.length === 0) throw new NotFoundException('Hiện tại không có shipper nào khả dụng.');
     const shipperIds = shippers.map((shipper) => shipper._id.toString());
     await this.billModel.findByIdAndUpdate(billId, { isFindShipper: true, shipperIds });
     return BaseResponse.withMessage({}, 'Tìm shipper giao hàng thành công');
