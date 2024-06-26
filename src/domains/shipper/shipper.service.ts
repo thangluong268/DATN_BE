@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { SALT_ROUNDS, TAX_RATE, TAX_SHIPPING_RATE } from 'app.config';
+import { SALT_ROUNDS, TAX_SHIPPING_RATE } from 'app.config';
 import * as bcrypt from 'bcrypt';
 import * as dayjs from 'dayjs';
 import { Bill } from 'domains/bill/schema/bill.schema';
@@ -199,7 +199,7 @@ export class ShipperService {
       this.billModel.countDocuments(BillByStatusShipperGetREQ.toCondition(userId, query)),
     ]);
     const res = data.map((bill) => {
-      const totalPriceReceive = bill.deliveryFee - Math.ceil(bill.deliveryFee * TAX_RATE);
+      const totalPriceReceive = bill.deliveryFee - Math.ceil(bill.deliveryFee * TAX_SHIPPING_RATE);
       return { ...bill, totalPriceReceive };
     });
     return query.status === BILL_STATUS.CONFIRMED
