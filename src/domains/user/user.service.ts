@@ -119,12 +119,12 @@ export class UserService {
     }
     const updatedUser = await this.userModel.findByIdAndUpdate(id, { ...body }, { lean: true, new: true });
 
-    // Send notification
-    const subjectInfo = NotificationSubjectInfoDTO.ofUser(updatedUser);
-    const receiverId = updatedUser._id.toString();
-    const link = NOTIFICATION_LINK[NotificationType.UPDATE_INFO];
-    const notification = await this.notificationService.create(receiverId, subjectInfo, NotificationType.UPDATE_INFO, link);
-    this.notificationGateway.sendNotification(receiverId, notification);
+    // // Send notification
+    // const subjectInfo = NotificationSubjectInfoDTO.ofUser(updatedUser);
+    // const receiverId = updatedUser._id.toString();
+    // const link = NOTIFICATION_LINK[NotificationType.UPDATE_INFO];
+    // const notification = await this.notificationService.create(receiverId, subjectInfo, NotificationType.UPDATE_INFO, link);
+    // this.notificationGateway.sendNotification(receiverId, notification);
 
     return BaseResponse.withMessage(toDocModel(updatedUser), 'Cập nhật thông tin thành công!');
   }

@@ -438,8 +438,7 @@ export class BillService {
     const updatedBill = await this.billModel.findByIdAndUpdate({ _id: billId }, { status }, { new: true });
     switch (status) {
       case BILL_STATUS.CONFIRMED:
-        // Notification to User
-        // Send notification
+        // Send notification to user
         const product = bill.products[0];
         const subjectInfo = NotificationSubjectInfoDTO.ofProduct(product.id, product.name, product.avatar);
         const receiverId = bill.userId;

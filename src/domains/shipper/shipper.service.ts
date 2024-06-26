@@ -113,13 +113,13 @@ export class ShipperService {
     this.logger.log(`Find shipper to delivery`);
     const bill = await this.billModel.findById(billId).lean();
     if (!bill) throw new NotFoundException('Không tìm thấy đơn hàng');
-    const shippers = await this.selectShipper();
+    const shippers = await this.selectShipper(bill._id);
     const shipperIds = shippers.map((shipper) => shipper._id.toString());
     await this.billModel.findByIdAndUpdate(billId, { isFindShipper: true, shipperIds });
     return BaseResponse.withMessage({}, 'Tìm shipper giao hàng thành công');
   }
 
-  async selectShipper() {
+  async selectShipper(billId: ObjectId) {
     this.logger.log(`Select shipper to delivery`);
     const numOfShippersNeedToBeSelected = 5;
     /**
@@ -127,6 +127,7 @@ export class ShipperService {
      * 2. Lấy những shipper có số lượng đơn hàng giao thành công nhiều nhất
      * 3. Lấy số lượng shipper có số lượng từ chối đơn hàng ít nhất
      * 4. Lấy theo điều kiện 1, 2, 3
+     * 5. Trường hợp đơn đã bị tất cả shipper từ chối và seller tìm lại shipper -> không lấy những shipper đã từ chối đơn này
      */
     return await this.userModel.aggregate([
       { $match: { role: ROLE_NAME.SHIPPER, status: true } },
@@ -175,7 +176,8 @@ export class ShipperService {
       },
       { $lookup: { from: 'userbilltrackings', localField: 'shipperId', foreignField: 'shipperId', as: 'shipperTrackings' } },
       { $addFields: { refuseCount: { $first: '$shipperTrackings.numOfBehavior' } } },
-      { $match: { deliveringCount: { $lt: NUM_OF_ALLOW_DELIVERING_BILL } } },
+      { $addFields: { billIdShipperRefused: { $first: '$shipperTrackings.billId' } } },
+      { $match: { deliveringCount: { $lt: NUM_OF_ALLOW_DELIVERING_BILL }, billIdShipperRefused: { $ne: billId } } },
       { $sort: { avgStar: -1, deliveredCount: -1, refuseCount: 1 } },
       { $limit: numOfShippersNeedToBeSelected },
       { $project: { _id: 1, avgStar: 1, deliveredCount: 1, refuseCount: 1, deliveringCount: 1 } },
@@ -309,10 +311,29 @@ export class ShipperService {
       .findOne({ _id: new ObjectId(billId), status: BILL_STATUS.CONFIRMED, isFindShipper: true, shipperIds: userId })
       .lean();
     if (!bill) throw new NotFoundException('Đơn hàng không hợp lệ!');
-    await this.billModel.findByIdAndUpdate(billId, { $pull: { shipperIds: userId } });
+    if (bill.shipperIds.length === 1) {
+      await this.billModel.findByIdAndUpdate(billId, { $pull: { shipperIds: userId }, isFindShipper: false });
+      const store = await this.storeModel.findById(bill.storeId).lean();
+      const product = bill.products[0];
+      // Send notification to seller
+      const subjectInfoToSeller = NotificationSubjectInfoDTO.ofProduct(product.id, product.name, product.avatar);
+      const receiverIdToSeller = store.userId;
+      const linkToSeller = NOTIFICATION_LINK[BILL_STATUS.DELIVERING] + bill.storeId;
+      const billStatusToSeller = BILL_STATUS_NOTIFICATION.SHIPPER_REFUSE_ALL;
+      const notificationToSeller = await this.notificationService.create(
+        receiverIdToSeller,
+        subjectInfoToSeller,
+        NotificationType.BILL,
+        linkToSeller,
+        billStatusToSeller,
+      );
+      this.notificationGateway.sendNotification(receiverIdToSeller, notificationToSeller);
+    } else {
+      await this.billModel.findByIdAndUpdate(billId, { $pull: { shipperIds: userId } });
+    }
     await this.userBillTrackingModel.findOneAndUpdate(
       { shipperId: userId },
-      { $inc: { numOfRefund: 1 }, status: BILL_STATUS.CANCELLED },
+      { $inc: { numOfRefund: 1 }, status: BILL_STATUS.CANCELLED, billId: bill._id },
       { upsert: true, new: true },
     );
     return BaseResponse.withMessage({}, 'Từ chối đơn hàng thành công');

@@ -17,6 +17,7 @@ export const NOTIFICATION_CONTENT = {
   [BILL_STATUS.DELIVERING]: 'Đơn hàng của bạn đang được giao.',
   [BILL_STATUS.DELIVERED]: 'Đơn hàng của bạn đã được giao thành công.',
   [BILL_STATUS.CANCELLED]: 'Đơn hàng của bạn đã bị hủy.',
+  [BILL_STATUS_NOTIFICATION.SHIPPER_REFUSE_ALL]: 'Tất cả shipper đều từ chối đơn hàng. \nVui lòng tìm lại shipper.',
   [BILL_STATUS_NOTIFICATION.NEW_SELLER]: 'Người dùng vừa đặt hàng sản phẩm của bạn.',
   [BILL_STATUS_NOTIFICATION.REFUND_USER]: 'Bạn đã hoàn đơn hàng của mình.\nĐơn hàng đang chờ xác nhận hoàn từ shop.',
   [BILL_STATUS_NOTIFICATION.REFUND_SELLER]: 'Người mua đã hoàn đơn hàng. Vui lòng xác nhận.',
