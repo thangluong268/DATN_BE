@@ -488,7 +488,7 @@ export class BillService {
     if (bill.status !== BILL_STATUS.NEW) throw new BadRequestException('Không thể hủy đơn hàng này!');
     await this.userBillTrackingService.checkUserNotAllowDoBehavior(userId, BILL_STATUS.CANCELLED);
     await this.handleCancelBill(bill, body.reason);
-    await this.userBillTrackingService.handleUserBillTracking(userId, BILL_STATUS.CANCELLED);
+    await this.userBillTrackingService.handleUserBillTracking(bill._id, userId, BILL_STATUS.CANCELLED);
 
     // Send notification
     const product = bill.products[0];
@@ -572,7 +572,7 @@ export class BillService {
     bill.isSuccess = false;
     bill.reason = body.reason;
     await bill.save();
-    await this.userBillTrackingService.handleUserBillTracking(userId, BILL_STATUS.REFUND);
+    await this.userBillTrackingService.handleUserBillTracking(bill._id, userId, BILL_STATUS.REFUND);
 
     const store = await this.storeModel.findById(bill.storeId).lean();
     // Send notification to seller

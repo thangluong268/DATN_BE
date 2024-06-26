@@ -19,11 +19,6 @@ import { ShipperService } from './shipper.service';
 export class ShipperController {
   constructor(private readonly shipperService: ShipperService) {}
 
-  @Get('test')
-  async gest() {
-    return this.shipperService.selectShipper();
-  }
-
   @Roles(ROLE_NAME.MANAGER)
   @Get('excel')
   async downloadExcelShipper(@Res() response: Response) {

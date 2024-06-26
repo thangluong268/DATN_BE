@@ -7,7 +7,7 @@ import { BILL_STATUS } from 'shared/enums/bill.enum';
   timestamps: true,
 })
 export class UserBillTracking extends Document {
-  @Prop({ type: String })
+  @Prop({ type: String, required: true })
   billId: string;
 
   @Prop({ type: String, required: true })

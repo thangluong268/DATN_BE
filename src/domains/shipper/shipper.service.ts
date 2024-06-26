@@ -403,7 +403,7 @@ export class ShipperService {
     bill.status = BILL_STATUS.BACK;
     bill.reason = reason;
     await bill.save();
-    await this.userBillTrackingService.handleUserBillTracking(userId, BILL_STATUS.BACK);
+    await this.userBillTrackingService.handleUserBillTracking(bill._id, userId, BILL_STATUS.BACK);
 
     const store = await this.storeModel.findById(bill.storeId).lean();
     const product = bill.products[0];

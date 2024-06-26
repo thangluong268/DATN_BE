@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as dayjs from 'dayjs';
-import { Model } from 'mongoose';
+import { Model, ObjectId } from 'mongoose';
 import {
   BILL_STATUS_TRANSLATE_VALUE,
   NUM_OF_BAN_VALUE_BY_STATUS,
@@ -18,10 +18,10 @@ export class UserBillTrackingService {
     private readonly userBillTrackingModel: Model<UserBillTracking>,
   ) {}
 
-  async handleUserBillTracking(userId: string, status: BILL_STATUS) {
+  async handleUserBillTracking(billId: ObjectId, userId: string, status: BILL_STATUS) {
     const userBillTracking = await this.userBillTrackingModel.findOneAndUpdate(
       { userId },
-      { $inc: { numOfRefund: 1 }, status },
+      { $inc: { numOfRefund: 1 }, status, billId },
       { upsert: true, new: true },
     );
     if (userBillTracking.bannedDate) return;
