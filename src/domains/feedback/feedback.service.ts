@@ -46,7 +46,7 @@ export class FeedbackService {
     this.logger.log(`Create Feedback: ${userId} - ${productId}`);
     // TO DO: check limit = 3, plus wallet in first time feedback
     const numOfFeedback = await this.feedbackModel.countDocuments({ userId, productId });
-    if (numOfFeedback >= 3) throw new BadRequestException('Bạn chỉ được feedback 3 lần trên một sản phẩm');
+    if (numOfFeedback >= 3) throw new BadRequestException('Bạn chỉ được phản hồi 3 lần trên một sản phẩm');
     if (numOfFeedback === 0) await this.userModel.findByIdAndUpdate(userId, { $inc: { wallet: 100 } });
     const newFeedback = await this.feedbackModel.create({ ...feedback, userId, productId });
 
@@ -60,7 +60,7 @@ export class FeedbackService {
     const notification = await this.notificationService.create(receiverId, subjectInfo, NotificationType.FEEDBACK, link);
     this.notificationGateway.sendNotification(receiverId, notification);
 
-    return BaseResponse.withMessage(toDocModel(newFeedback), 'Tạo feedback thành công');
+    return BaseResponse.withMessage(toDocModel(newFeedback), 'Phản hồi thành công');
   }
 
   async getFeedbacks(user: any, query: FeedbackGetREQ) {
@@ -79,13 +79,13 @@ export class FeedbackService {
         return FeedbackGetRESP.of(user, userFeedback, feedback);
       }),
     );
-    return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy feedback thành công');
+    return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách phản hồi thành công');
   }
 
   async countFeedbackByProduct(productId: string) {
     this.logger.log(`Count Feedback By Product: ${productId}`);
     const total = await this.feedbackModel.countDocuments({ productId });
-    return BaseResponse.withMessage(total, 'Lấy tổng feedback thành công');
+    return BaseResponse.withMessage(total, 'Lấy tổng số phản hồi thành công');
   }
 
   async getFeedbackStar(productId: string) {
@@ -118,6 +118,6 @@ export class FeedbackService {
     const index = feedback.consensus.findIndex((id) => id.toString() === currentUserId.toString());
     index == -1 ? feedback.consensus.push(currentUserId) : feedback.consensus.splice(index, 1);
     await feedback.save();
-    return BaseResponse.withMessage({}, 'Đồng thuận feedback thành công');
+    return BaseResponse.withMessage({}, 'Đồng thuận với phản hồi khác thành công');
   }
 }

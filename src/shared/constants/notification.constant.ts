@@ -23,7 +23,7 @@ export const NOTIFICATION_CONTENT = {
   [BILL_STATUS_NOTIFICATION.REFUND_SELLER]: 'Người mua đã hoàn đơn hàng. Vui lòng xác nhận.',
   [BILL_STATUS_NOTIFICATION.CONFIRMED_REFUND]: 'Đơn hàng đã được xác nhận hoàn trả thành công.',
   [BILL_STATUS_NOTIFICATION.BACK_USER]: 'Đơn hàng của bạn sẽ được trả lại cho shop.',
-  [BILL_STATUS_NOTIFICATION.BACK_SELLER]: 'Người mua đã trả đơn hàng. Vui lòng xác nhận với shipper',
+  [BILL_STATUS_NOTIFICATION.BACK_SELLER]: 'Người mua đã trả đơn hàng. Vui lòng xác nhận với shipper.',
   [BILL_STATUS_NOTIFICATION.CONFIRM_DELIVERED_BY_USER]:
     'Người mua đã xác nhận nhận hàng.\nVui lòng kiểm tra đơn giao thành công.',
 };
