@@ -172,14 +172,14 @@ export class ConversationGateway implements OnGatewayInit, OnGatewayConnection, 
   @SubscribeMessage(WS_EVENT.CONVERSATION.IS_TYPING)
   async isTyping(@ConnectedSocket() client: AuthSocket, @MessageBody() body: MessageIsTypingREQ) {
     const userId = client.userId;
-    const { isTyping, senderRole } = body;
+    const { isTyping, senderRole, receiverId } = body;
     // const senderSocket = this.userSocketMap.get(userId);
-    // const receiverSocket = this.userSocketMap.get(receiverId);
+    const receiverSocket = this.userSocketMap.get(receiverId);
     const data =
       senderRole === ROLE_NAME.SELLER
         ? await this.userService.findStoreByUserId(userId)
         : await this.userService.findById(userId);
-    client.broadcast.emit(WS_EVENT.CONVERSATION.IS_TYPING, {
+    receiverSocket.emit(WS_EVENT.CONVERSATION.IS_TYPING, {
       name: senderRole === ROLE_NAME.SELLER ? data['name'] : data['fullName'],
       isTyping: isTyping,
     });
