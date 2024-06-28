@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { Roles } from 'domains/auth/decorators/auth-role.decorator';
 import { AuthJwtATGuard } from 'domains/auth/guards/auth-jwt-at.guard';
 import { AuthRoleGuard } from 'domains/auth/guards/auth-role.guard';
@@ -6,7 +6,6 @@ import { ROLE_NAME } from 'shared/enums/role-name.enum';
 import { FeedbackService } from './feedback.service';
 import { FeedbackCreateREQ } from './request/feedback-create.request';
 import { FeedbackGetREQ } from './request/feedback-get-request';
-import { FeedbackUpdateConsensusREQ } from './request/feedback-update-consensus.request';
 
 @Controller()
 export class FeedbackController {
@@ -36,8 +35,8 @@ export class FeedbackController {
 
   @Roles(ROLE_NAME.USER)
   @UseGuards(AuthJwtATGuard, AuthRoleGuard)
-  @Put('feedback-consensus')
-  updateConsensus(@Req() req, @Query() query: FeedbackUpdateConsensusREQ) {
-    return this.feedbackService.updateConsensus(req.user._id, query);
+  @Patch('feedback/:id/consensus')
+  updateConsensus(@Req() req, @Param('id') id: string) {
+    return this.feedbackService.updateConsensus(req.user._id.toString(), id);
   }
 }

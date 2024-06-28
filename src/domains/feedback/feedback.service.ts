@@ -16,8 +16,6 @@ import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
 import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 import { FeedbackCreateREQ } from './request/feedback-create.request';
 import { FeedbackGetREQ } from './request/feedback-get-request';
-import { FeedbackUpdateConsensusREQ } from './request/feedback-update-consensus.request';
-import { FeedbackGetRESP } from './response/feedback-get.response';
 import { Feedback } from './schema/feedback.schema';
 
 @Injectable()
@@ -65,20 +63,21 @@ export class FeedbackService {
 
   async getFeedbacks(user: any, query: FeedbackGetREQ) {
     this.logger.log(`Get Feedbacks`);
-    const condition = { productId: query.productId };
     const { skip, limit } = QueryPagingHelper.queryPaging(query);
-    const total = await this.feedbackModel.countDocuments(condition);
-    const feedbacks = await this.feedbackModel
-      .find(condition, {}, { lean: true })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-    const data = await Promise.all(
-      feedbacks.map(async (feedback) => {
-        const userFeedback = await this.userService.findById(feedback.userId);
-        return FeedbackGetRESP.of(user, userFeedback, feedback);
-      }),
-    );
+    const [data, total] = await Promise.all([
+      this.feedbackModel.aggregate([
+        { $match: { productId: query.productId } },
+        { $addFields: { userObjId: { $toObjectId: '$userId' } } },
+        { $lookup: { from: 'users', localField: 'userObjId', foreignField: '_id', as: 'user' } },
+        { $addFields: { avatar: { $first: '$user.avatar' }, name: { $first: '$user.fullName' } } },
+        { $addFields: { isConsensus: user ? { $in: [user.userId, '$consensus'] } : false } },
+        { $project: { user: 0, userObjId: 0, updatedAt: 0, isScan: 0, productId: 0 } },
+        { $sort: { createdAt: -1 } },
+        { $skip: skip },
+        { $limit: limit },
+      ]),
+      this.feedbackModel.countDocuments({ productId: query.productId }),
+    ]);
     return PaginationResponse.ofWithTotalAndMessage(data, total, 'Lấy danh sách phản hồi thành công');
   }
 
@@ -109,15 +108,14 @@ export class FeedbackService {
     return BaseResponse.withMessage({ starPercent, averageStar }, 'Lấy danh sách đánh giá sao thành công');
   }
 
-  async updateConsensus(currentUserId: string, query: FeedbackUpdateConsensusREQ) {
+  async updateConsensus(currentUserId: string, feedbackId: string) {
     this.logger.log(`Update Consensus: ${currentUserId}`);
-    const { productId, userId } = query;
-    if (currentUserId.toString() === userId.toString()) throw new BadRequestException('Bạn không thể đồng thuận với chính mình!');
-    const feedback = await this.feedbackModel.findOne({ userId, productId });
-    if (!feedback) throw new NotFoundException('Không tìm thấy feedback');
-    const index = feedback.consensus.findIndex((id) => id.toString() === currentUserId.toString());
-    index == -1 ? feedback.consensus.push(currentUserId) : feedback.consensus.splice(index, 1);
-    await feedback.save();
+    const feedback = await this.feedbackModel.findById(feedbackId).lean();
+    if (!feedback) throw new NotFoundException('Không tìm thấy phản hồi');
+    if (feedback.userId === currentUserId) throw new BadRequestException('Không thể đồng thuận với phản hồi của bản thân');
+    const isConsensus = feedback.consensus.includes(currentUserId);
+    const dataToUpdate = isConsensus ? { $pull: { consensus: currentUserId } } : { $push: { consensus: currentUserId } };
+    await this.feedbackModel.findByIdAndUpdate(feedbackId, dataToUpdate);
     return BaseResponse.withMessage({}, 'Đồng thuận với phản hồi khác thành công');
   }
 }
