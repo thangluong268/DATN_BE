@@ -27,7 +27,18 @@ export class CloudinaryController {
   }
 
   @Post()
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      fileFilter: (req: any, file: File, cb: any) => {
+        if (file.mimetype.match(/\/(jpg|jpeg|png|mp4)$/)) {
+          // Allow storage of file.
+          cb(null, true);
+        } else {
+          cb(new BadRequestException(`Không hỗ trợ loại file ${extname(file.originalname)}`));
+        }
+      },
+    }),
+  )
   uploadImage(@UploadedFile() file: File) {
     return this.cloudinaryService.uploadFile(file);
   }
@@ -45,7 +56,7 @@ export class CloudinaryController {
           // Allow storage of file.
           cb(null, true);
         } else {
-          cb(new BadRequestException(`Unsupported file type ${extname(file.originalname)}`));
+          cb(new BadRequestException(`Không hỗ trợ loại file ${extname(file.originalname)}`));
         }
       },
       storage: memoryStorage(),
