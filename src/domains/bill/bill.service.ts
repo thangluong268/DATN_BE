@@ -203,12 +203,14 @@ export class BillService {
       const seller = await this.userModel.findById(store.userId).lean();
 
       // Send message to user
-      this.conversationGateway.sendMessageServer(seller._id.toString(), {
-        senderRole: ROLE_NAME.SELLER,
-        text: NOTIFICATION_CONTENT_AUTO_BILL_SUCCESS(store.name),
-        receiverId: bill.userId,
-        receiverRole: ROLE_NAME.USER,
-      });
+      if (seller._id.toString() !== bill.userId) {
+        this.conversationGateway.sendMessageServer(seller._id.toString(), {
+          senderRole: ROLE_NAME.SELLER,
+          text: NOTIFICATION_CONTENT_AUTO_BILL_SUCCESS(store.name),
+          receiverId: bill.userId,
+          receiverRole: ROLE_NAME.USER,
+        });
+      }
 
       // Send notification to seller
       const product = bill.products[0];

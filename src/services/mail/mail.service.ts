@@ -38,6 +38,17 @@ export class MailService {
     });
   }
 
+  async sendBanUser(email: string) {
+    await this.mailerService.sendMail({
+      to: email,
+      subject: 'ACCOUNT BANNED',
+      template: 'store-banned.hbs',
+      context: {
+        content: 'Your account has been banned. Please contact the administrator for more information.',
+      },
+    });
+  }
+
   async sendActiveShipper(receiverEmail: string, email: string, password: string) {
     await this.mailerService.sendMail({
       to: receiverEmail,
