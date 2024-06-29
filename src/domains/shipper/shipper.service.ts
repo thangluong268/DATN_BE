@@ -334,7 +334,7 @@ export class ShipperService {
     }
     await this.userBillTrackingModel.findOneAndUpdate(
       { shipperId: userId },
-      { $inc: { numOfRefund: 1 }, status: BILL_STATUS.CANCELLED, billId: bill._id },
+      { $inc: { numOfBehavior: 1 }, status: BILL_STATUS.CANCELLED, billId: bill._id },
       { upsert: true, new: true },
     );
     return BaseResponse.withMessage({}, 'Từ chối đơn hàng thành công');
