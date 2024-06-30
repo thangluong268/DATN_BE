@@ -301,17 +301,17 @@ export class BillService {
     // Tạo mảng chứa 12 tháng với doanh thu mặc định là 0
     const monthlyRevenue = getMonthRevenue();
     let totalRevenue = 0;
-    let minRevenue: { month: string; revenue: number } = { month: '', revenue: 0 };
+    let minRevenue: { month: string; revenue: number } = { month: '', revenue: null };
     let maxRevenue: { month: string; revenue: number } = { month: '', revenue: 0 };
     data.forEach((entry: { _id: number; totalRevenue: number }) => {
       const month = entry._id;
       const revenue = entry.totalRevenue;
       monthlyRevenue[`Tháng ${month}`] = revenue;
       totalRevenue += revenue;
-      if (!minRevenue || revenue < minRevenue.revenue) {
+      if (!minRevenue.revenue || revenue < minRevenue.revenue) {
         minRevenue = { month: `Tháng ${month}`, revenue };
       }
-      if (!maxRevenue || revenue > maxRevenue.revenue) {
+      if (revenue > maxRevenue.revenue) {
         maxRevenue = { month: `Tháng ${month}`, revenue };
       }
     });
@@ -335,17 +335,17 @@ export class BillService {
     const data = await this.billModel.aggregate(BillGetCountCharityByYearREQ.toQueryCondition(store._id, year));
     const monthlyCharity = getMonthRevenue();
     let totalGive = 0;
-    let minGive: { month: string; numOfGive: number } = { month: '', numOfGive: 0 };
+    let minGive: { month: string; numOfGive: number } = { month: '', numOfGive: null };
     let maxGive: { month: string; numOfGive: number } = { month: '', numOfGive: 0 };
     data.forEach((entry: { _id: number; totalCharity: number }) => {
       const month = entry._id;
       const numOfGive = entry.totalCharity;
       monthlyCharity[`Tháng ${month}`] = numOfGive;
       totalGive += numOfGive;
-      if (!minGive || numOfGive < minGive.numOfGive) {
+      if (!minGive.numOfGive || numOfGive < minGive.numOfGive) {
         minGive = { month: `Tháng ${month}`, numOfGive };
       }
-      if (!maxGive || numOfGive > maxGive.numOfGive) {
+      if (numOfGive > maxGive.numOfGive) {
         maxGive = { month: `Tháng ${month}`, numOfGive };
       }
     });
@@ -371,17 +371,17 @@ export class BillService {
     ]);
     const monthlyRevenue = getMonthRevenue();
     let revenueTotalInYear = 0;
-    let minRevenue: { month: string; revenue: number } = { month: '', revenue: 0 };
+    let minRevenue: { month: string; revenue: number } = { month: '', revenue: null };
     let maxRevenue: { month: string; revenue: number } = { month: '', revenue: 0 };
     data.forEach((entry: { _id: number; totalRevenue: number }) => {
       const month = entry._id;
       const revenue = entry.totalRevenue;
       monthlyRevenue[`Tháng ${month}`] = revenue;
       revenueTotalInYear += revenue;
-      if (!minRevenue || revenue < minRevenue.revenue) {
+      if (!minRevenue.revenue || revenue < minRevenue.revenue) {
         minRevenue = { month: `Tháng ${month}`, revenue };
       }
-      if (!maxRevenue || revenue > maxRevenue.revenue) {
+      if (revenue > maxRevenue.revenue) {
         maxRevenue = { month: `Tháng ${month}`, revenue };
       }
     });
