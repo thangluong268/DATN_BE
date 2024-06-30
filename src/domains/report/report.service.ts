@@ -119,9 +119,9 @@ export class ReportService {
     await this.reportModel.findByIdAndUpdate(id, { status: true });
     const totalOfSubjectReport = await this.reportModel.countDocuments({ subjectId: report.subjectId });
     if (report.type === PolicyType.PRODUCT) {
-      await this.handleReportProduct(report.subjectId, totalOfSubjectReport);
+      this.handleReportProduct(report.subjectId, totalOfSubjectReport);
     } else if (report.type === PolicyType.STORE) {
-      await this.handleReportStore(report.subjectId, totalOfSubjectReport);
+      this.handleReportStore(report.subjectId, totalOfSubjectReport);
     }
     await this.removeRemainingReport(report.subjectId);
     return BaseResponse.withMessage({}, 'Chấp thuận báo cáo thành công!');

@@ -6,10 +6,10 @@ import { Document } from 'mongoose';
   timestamps: true,
 })
 export class Finance extends Document {
-  @Prop({ type: Number })
+  @Prop({ type: Number, default: 0 })
   expense: number;
 
-  @Prop({ type: Number })
+  @Prop({ type: Number, default: 0 })
   revenue: number;
 }
 

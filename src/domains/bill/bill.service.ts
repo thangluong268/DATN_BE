@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundEx
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { URL_FE } from 'app.config';
 import { Cart } from 'domains/cart/schema/cart.schema';
+import { Finance } from 'domains/finance/schema/finance.schema';
 import { Product } from 'domains/product/schema/product.schema';
 import { Promotion } from 'domains/promotion/schema/promotion.schema';
 import { Store } from 'domains/store/schema/store.schema';
@@ -68,6 +69,9 @@ export class BillService {
 
     @InjectModel(Store.name)
     private readonly storeModel: Model<Store>,
+
+    @InjectModel(Finance.name)
+    private readonly financeModel: Model<Finance>,
 
     private readonly userBillTrackingService: UserBillTrackingService,
 
@@ -359,7 +363,13 @@ export class BillService {
 
   async calculateTotalRevenueByYear(year: number) {
     this.logger.log(`Calculate Total Revenue By Year: ${year}`);
-    const data = await this.billModel.aggregate(BillGetCalculateTotalByYearREQ.toQueryCondition(year));
+    // const data = await this.billModel.aggregate(BillGetCalculateTotalByYearREQ.toQueryCondition(year));
+    const data = await this.financeModel.aggregate([
+      {
+        $match: { createdAt: { $gte: new Date(year, 0, 1), $lt: new Date(year + 1, 0, 1) } },
+      },
+      { $group: { _id: { $month: '$createdAt' }, totalRevenue: { $sum: '$revenue' } } },
+    ]);
     const monthlyRevenue = getMonthRevenue();
     let totalRevenue = 0;
     let minRevenue: { month: string; revenue: number } = { month: '', revenue: 0 };
@@ -409,15 +419,16 @@ export class BillService {
 
   async countTotalData() {
     this.logger.log(`Count Total Data`);
-    const totalProduct = await this.productModel.countDocuments();
-    const totalStore = await this.storeModel.countDocuments();
-    const totalUser = await this.userModel.countDocuments();
-    const totalRevenueAllTime = await this.billModel.aggregate(BillGetCalculateTotalByYearREQ.toQueryConditionForAllTime());
+    const totalProduct = await this.productModel.countDocuments({ status: true });
+    const totalStore = await this.storeModel.countDocuments({ status: true });
+    const totalUser = await this.userModel.countDocuments({ status: true });
+    const totalRevenue =
+      (await this.financeModel.aggregate([{ $group: { _id: null, totalRevenue: { $sum: '$revenue' } } }]))[0]?.totalRevenue || 0;
     const data = {
       totalProduct,
       totalStore,
       totalUser,
-      totalRevenue: totalRevenueAllTime[0]?.totalRevenue || 0,
+      totalRevenue,
     };
     return BaseResponse.withMessage(data, 'Lấy tổng số lượng dữ liệu thành công!');
   }
