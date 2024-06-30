@@ -297,7 +297,6 @@ export class BillService {
     const store = await this.storeModel.findOne({ userId: userId.toString() }).lean();
     if (!store) throw new NotFoundException('Không tìm thấy cửa hàng này!');
     const data = await this.billModel.aggregate(BillGetCalculateRevenueByYearREQ.toQueryCondition(year, store._id));
-    console.log(data);
     // Tạo mảng chứa 12 tháng với doanh thu mặc định là 0
     const monthlyRevenue = getMonthRevenue();
     let totalRevenue = 0;
@@ -315,6 +314,7 @@ export class BillService {
         maxRevenue = { month: `Tháng ${month}`, revenue };
       }
     });
+    minRevenue.revenue = minRevenue.revenue || 0;
     const totalRevenueAllTime = await this.billModel.aggregate(
       BillGetCalculateRevenueByYearREQ.toQueryConditionForAllTime(store._id),
     );
@@ -349,6 +349,7 @@ export class BillService {
         maxGive = { month: `Tháng ${month}`, numOfGive };
       }
     });
+    minGive.numOfGive = minGive.numOfGive || 0;
     const totalAllTime = await this.billModel.aggregate(BillGetCountCharityByYearREQ.toQueryConditionForAllTime(store._id));
     const response = {
       data: monthlyCharity,
@@ -385,6 +386,7 @@ export class BillService {
         maxRevenue = { month: `Tháng ${month}`, revenue };
       }
     });
+    minRevenue.revenue = minRevenue.revenue || 0;
     const revenueTotalAllTime =
       (await this.financeModel.aggregate([{ $group: { _id: null, totalRevenue: { $sum: '$revenue' } } }]))[0]?.totalRevenue || 0;
     const response = {
