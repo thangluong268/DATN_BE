@@ -1,6 +1,7 @@
 import { AddressProfile, User } from '../schema/user.schema';
 
 export class UserCreateRESP {
+  _id: string;
   fullName: string;
   email: string;
   address: AddressProfile[];
@@ -10,13 +11,13 @@ export class UserCreateRESP {
   wallet: number;
   warningCount: number;
   status: boolean;
-  _id: string;
   createdAt: Date;
   updatedAt: Date;
   avatar: string;
 
   static of(user: User): UserCreateRESP {
     return {
+      _id: user._id.toString(),
       fullName: user.fullName,
       email: user.email,
       address: user.address,
@@ -26,7 +27,6 @@ export class UserCreateRESP {
       wallet: user.wallet,
       warningCount: user.warningCount,
       status: user.status,
-      _id: user._id,
       createdAt: user['createdAt'],
       updatedAt: user['updatedAt'],
       avatar: user.avatar,
