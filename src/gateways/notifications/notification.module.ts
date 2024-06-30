@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from 'domains/auth/auth.module';
@@ -14,7 +14,7 @@ import { Notification, NotificationSchema } from './schema/notification.schema';
       { name: User.name, schema: UserSchema },
     ]),
     JwtModule.register({}),
-    AuthModule,
+    forwardRef(() => AuthModule),
   ],
   providers: [NotificationService, NotificationGateway],
   exports: [NotificationService, NotificationGateway],

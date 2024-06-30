@@ -34,7 +34,6 @@ import { BillCreateREQ } from './request/bill-create.request';
 import { BillGetAllByStatusSellerREQ } from './request/bill-get-all-by-status-seller.request';
 import { BillGetAllByStatusUserREQ } from './request/bill-get-all-by-status-user.request';
 import { BillGetCalculateRevenueByYearREQ } from './request/bill-get-calculate-revenue-by-year.request';
-import { BillGetCalculateTotalByYearREQ } from './request/bill-get-calculate-total-revenue-by-year.request';
 import { BillGetCountCharityByYearREQ } from './request/bill-get-count-charity-by-year.request';
 import { BillGetRevenueStoreREQ } from './request/bill-get-revenue-store.request';
 import { BillGetTotalByStatusSellerREQ } from './request/bill-get-total-by-status-seller.request';
@@ -61,6 +60,9 @@ export class BillService {
     @InjectModel(Cart.name)
     private readonly cartModel: Model<Cart>,
 
+    @InjectModel(Finance.name)
+    private readonly financeModel: Model<Finance>,
+
     @InjectModel(Promotion.name)
     private readonly promotionModel: Model<Promotion>,
 
@@ -69,9 +71,6 @@ export class BillService {
 
     @InjectModel(Store.name)
     private readonly storeModel: Model<Store>,
-
-    @InjectModel(Finance.name)
-    private readonly financeModel: Model<Finance>,
 
     private readonly userBillTrackingService: UserBillTrackingService,
 
@@ -371,14 +370,14 @@ export class BillService {
       { $group: { _id: { $month: '$createdAt' }, totalRevenue: { $sum: '$revenue' } } },
     ]);
     const monthlyRevenue = getMonthRevenue();
-    let totalRevenue = 0;
+    let revenueTotalInYear = 0;
     let minRevenue: { month: string; revenue: number } = { month: '', revenue: 0 };
     let maxRevenue: { month: string; revenue: number } = { month: '', revenue: 0 };
     data.forEach((entry: { _id: number; totalRevenue: number }) => {
       const month = entry._id;
       const revenue = entry.totalRevenue;
       monthlyRevenue[`Tháng ${month}`] = revenue;
-      totalRevenue += revenue;
+      revenueTotalInYear += revenue;
       if (!minRevenue || revenue < minRevenue.revenue) {
         minRevenue = { month: `Tháng ${month}`, revenue };
       }
@@ -386,11 +385,12 @@ export class BillService {
         maxRevenue = { month: `Tháng ${month}`, revenue };
       }
     });
-    const revenueAllTime = await this.billModel.aggregate(BillGetCalculateTotalByYearREQ.toQueryConditionForAllTime());
+    const revenueTotalAllTime =
+      (await this.financeModel.aggregate([{ $group: { _id: null, totalRevenue: { $sum: '$revenue' } } }]))[0]?.totalRevenue || 0;
     const response = {
       data: monthlyRevenue,
-      revenueTotalAllTime: revenueAllTime[0]?.totalRevenue || 0,
-      revenueTotalInYear: totalRevenue,
+      revenueTotalAllTime,
+      revenueTotalInYear,
       minRevenue,
       maxRevenue,
     };

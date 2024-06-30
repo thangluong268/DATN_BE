@@ -1,6 +1,5 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { CartModule } from 'domains/cart/cart.module';
 import { Cart, CartSchema } from 'domains/cart/schema/cart.schema';
 import { Finance, FinanceSchema } from 'domains/finance/schema/finance.schema';
 import { Product, ProductSchema } from 'domains/product/schema/product.schema';
@@ -30,7 +29,6 @@ import { Bill, BillSchema } from './schema/bill.schema';
       { name: Cart.name, schema: CartSchema },
       { name: Finance.name, schema: FinanceSchema },
     ]),
-    forwardRef(() => CartModule),
     NotificationModule,
     PaymentModule,
     UserBillTrackingModule,
