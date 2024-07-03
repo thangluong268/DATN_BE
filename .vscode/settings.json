@@ -23,5 +23,5 @@
       "source.fixAll.eslint": "explicit"
     }
   },
-  "cSpell.words": ["billsellers", "Cloudinary", "DTEX", "Haha", "PICPURIFY", "setex", "VNPAY"]
+  "cSpell.words": ["billsellers", "Cloudinary", "DTEX", "Haha", "OTPREQ", "PICPURIFY", "setex", "VNPAY"]
 }

@@ -13,15 +13,6 @@ const picpurifyUrl = 'https://www.picpurify.com/analyse/1.1';
 const path = require('path');
 const fs = require('fs');
 
-// const multer = require('multer');
-// const storage = multer.diskStorage({
-//   destination: 'uploads/', // Thư mục tạm thời
-//   filename: (req, file, cb) => {
-//     cb(null, `${Date.now()}-${file.originalname}`);
-//   },
-// });
-// multer({ storage: storage });
-
 export type File = Express.Multer.File;
 export type CloudinaryResponse = UploadApiResponse | UploadApiErrorResponse;
 
