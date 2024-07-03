@@ -182,6 +182,7 @@ export class CronjobsService {
 
   @Cron('*/1 * * * * *')
   async handleBanUser() {
+    // send mail when ban user
     const users = await this.userModel.find({ warningCount: { $gte: 3 }, role: { $nin: [ROLE_NAME.SHIPPER] } }).lean();
     for (const user of users) {
       await this.userModel.findByIdAndUpdate(user._id, { status: false });
