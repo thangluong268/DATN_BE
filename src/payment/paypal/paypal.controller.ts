@@ -23,9 +23,4 @@ export class PayPalController {
       res.redirect(`${URL_FE}/user/invoice`);
     }
   }
-
-  @Get('get-fee')
-  getFee() {
-    return this.paypalPaymentService.getFee();
-  }
 }

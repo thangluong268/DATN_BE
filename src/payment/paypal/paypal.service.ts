@@ -1,10 +1,8 @@
-import { BadRequestException } from '@nestjs/common';
 import { HOST, PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET } from 'app.config';
 import axios, { Axios, AxiosHeaders } from 'axios';
 import { Convert } from 'easy-currencies';
 import { PaymentDTO } from 'payment/dto/payment.dto';
 import { PaymentOrderRto } from './paypal.route';
-import { BaseResponse } from 'shared/generics/base.response';
 
 export class PaypalPaymentService {
   private readonly axios: Axios;
@@ -14,20 +12,6 @@ export class PaypalPaymentService {
     const auth = [PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET].join(':');
     this.basicAuth = Buffer.from(auth).toString('base64');
     this.axios = axios.create();
-  }
-
-  async getFee() {
-    try {
-      const res = await axios({
-        url: `${HOST}/chargingws/v2/getfee?partner_id=67806297097`,
-        method: 'get',
-        maxBodyLength: Infinity,
-        headers: {},
-      });
-      return BaseResponse.withMessage(res.data, 'Lấy phí thành công');
-    } catch (e) {
-      throw new BadRequestException((e && e.message) || 'Lỗi!!!');
-    }
   }
 
   private async getAccessToken(): Promise<string> {
