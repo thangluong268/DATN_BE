@@ -44,7 +44,7 @@ export class PromotionService {
     promotionCreateValidate(body);
     const voucherCode = await this.generateVoucherCode();
     await this.promotionModel.create({ ...body, voucherCode });
-    return BaseResponse.withMessage({}, 'Tạo khuyến mãi thành công!');
+    return BaseResponse.withMessage({ voucherCode }, 'Tạo khuyến mãi thành công!');
   }
 
   async getPromotionsByStoreId(user: any, storeId: string) {
