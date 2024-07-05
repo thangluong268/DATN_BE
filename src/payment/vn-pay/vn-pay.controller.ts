@@ -14,6 +14,7 @@ import * as crypto from 'crypto';
 import * as dayjs from 'dayjs';
 import { BillService } from 'domains/bill/bill.service';
 import * as querystring from 'qs';
+import { URL_FE_BILL_SUCCESS } from 'shared/constants/bill.constant';
 import { sortObject } from 'shared/helpers/vn-pay.helper';
 
 @Controller('vn-pay')
@@ -85,7 +86,7 @@ export class VNPayController {
         res.redirect(`${URL_FE}/error`);
       } else {
         this.billService.handleBillSuccess(paymentId);
-        res.redirect(`${URL_FE}/user/invoice`);
+        res.redirect(URL_FE_BILL_SUCCESS);
       }
     } else {
       this.billService.handleBillFail(paymentId);

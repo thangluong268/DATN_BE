@@ -2,6 +2,7 @@ import { Controller, Get, Req, Res } from '@nestjs/common';
 import { URL_FE } from 'app.config';
 import { BillService } from 'domains/bill/bill.service';
 import { PaypalPaymentService } from 'payment/paypal/paypal.service';
+import { URL_FE_BILL_SUCCESS } from 'shared/constants/bill.constant';
 
 @Controller('paypal')
 export class PayPalController {
@@ -20,7 +21,7 @@ export class PayPalController {
       res.redirect(`${URL_FE}/error`);
     } else {
       this.billService.handleBillSuccess(paymentId);
-      res.redirect(`${URL_FE}/user/invoice`);
+      res.redirect(URL_FE_BILL_SUCCESS);
     }
   }
 }

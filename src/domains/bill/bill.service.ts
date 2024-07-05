@@ -1,6 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { URL_FE } from 'app.config';
 import { Cart } from 'domains/cart/schema/cart.schema';
 import { Finance } from 'domains/finance/schema/finance.schema';
 import { Product } from 'domains/product/schema/product.schema';
@@ -20,6 +19,7 @@ import { PaypalGateway, VNPayGateway } from 'payment/payment.gateway';
 import { PaymentService } from 'payment/payment.service';
 import { PaypalPaymentService } from 'payment/paypal/paypal.service';
 import { RedisService } from 'services/redis/redis.service';
+import { URL_FE_BILL_SUCCESS } from 'shared/constants/bill.constant';
 import { NOTIFICATION_CONTENT_AUTO_BILL_SUCCESS, NOTIFICATION_LINK } from 'shared/constants/notification.constant';
 import { BILL_STATUS, BILL_STATUS_NOTIFICATION, PAYMENT_METHOD, PRODUCT_TYPE } from 'shared/enums/bill.enum';
 import { NotificationType } from 'shared/enums/notification.enum';
@@ -114,7 +114,7 @@ export class BillService {
       if (body.paymentMethod === PAYMENT_METHOD.CASH) {
         await session.commitTransaction();
         await this.handleBillSuccess(paymentId);
-        return BaseResponse.withMessage({ urlPayment: `${URL_FE}/user/invoice` }, 'Thanh toán thành công!');
+        return BaseResponse.withMessage({ urlPayment: URL_FE_BILL_SUCCESS }, 'Thanh toán thành công!');
       }
       const paymentBody = { paymentId, amount: totalPrice } as PaymentDTO;
       const urlPayment = await this.paymentService.processPayment(paymentBody, body.paymentMethod);
