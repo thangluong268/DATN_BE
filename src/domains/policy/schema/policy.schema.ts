@@ -6,6 +6,7 @@ import { PolicyType } from 'shared/enums/policy.enum';
   versionKey: false,
   timestamps: true,
 })
+//
 export class Policy extends Document {
   @Prop({ type: String })
   name: string;

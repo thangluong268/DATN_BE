@@ -12,6 +12,7 @@ import { Document } from 'mongoose';
 // userUses: những user đã sử dụng
 // endTime: ngày kết thúc
 // createdAt: ngày bắt đầu
+//
 
 @Schema({
   versionKey: false,

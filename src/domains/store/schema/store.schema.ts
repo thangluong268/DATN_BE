@@ -4,7 +4,7 @@ import { Document, FlattenMaps, Types, UpdateWriteOpResult } from 'mongoose';
 @Schema({
   versionKey: false,
   timestamps: true,
-})
+}) //
 export class Store extends Document {
   @Prop({ type: String, required: true })
   userId: string;

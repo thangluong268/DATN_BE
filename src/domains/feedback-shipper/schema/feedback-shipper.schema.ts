@@ -5,6 +5,7 @@ import { Document } from 'mongoose';
   versionKey: false,
   timestamps: true,
 })
+//
 export class FeedbackShipper extends Document {
   @Prop({ type: String })
   shipperId: string;

@@ -22,7 +22,7 @@ export type SocialProvider = {
   socialId: string;
   socialApp: SOCIAL_APP;
 };
-
+//
 @Schema({
   versionKey: false,
   timestamps: true,

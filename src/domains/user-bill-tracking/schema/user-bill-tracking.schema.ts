@@ -6,6 +6,7 @@ import { BILL_STATUS } from 'shared/enums/bill.enum';
   versionKey: false,
   timestamps: true,
 })
+//
 export class UserBillTracking extends Document {
   @Prop({ type: mongoose.Schema.ObjectId, required: true })
   billId: ObjectId;

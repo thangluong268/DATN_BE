@@ -5,6 +5,7 @@ import { Document } from 'mongoose';
   versionKey: false,
   timestamps: true,
 })
+//
 export class Category extends Document {
   @Prop()
   name: string;

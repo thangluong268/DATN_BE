@@ -6,6 +6,7 @@ import { ROLE_NAME } from 'shared/enums/role-name.enum';
   versionKey: false,
   timestamps: true,
 })
+//
 export class Message extends Document {
   @Prop({ type: String, required: true })
   conversationId: string;

@@ -6,6 +6,7 @@ import { Document } from 'mongoose';
   versionKey: false,
   timestamps: true,
 })
+//
 export class Cart extends Document {
   @Prop({ type: String })
   userId: string;

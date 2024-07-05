@@ -1,4 +1,4 @@
-import { ConflictException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { HOST } from 'app.config';
 import axios from 'axios';
 import { PaymentDTO } from 'payment/dto/payment.dto';
@@ -16,6 +16,6 @@ export const createVNPayPayment = async (body: PaymentDTO) => {
     });
     return res.data;
   } catch (e) {
-    throw new ConflictException((e && e.message) || 'Failed to check payment approval');
+    throw new BadRequestException((e && e.message) || 'Failed to check payment approval');
   }
 };

@@ -5,6 +5,7 @@ import { Document } from 'mongoose';
   versionKey: false,
   timestamps: true,
 })
+//
 export class Product extends Document {
   @Prop({ type: [String] })
   avatar: string[];

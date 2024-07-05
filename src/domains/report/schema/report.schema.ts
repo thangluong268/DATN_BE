@@ -6,6 +6,7 @@ import { PolicyType } from 'shared/enums/policy.enum';
   versionKey: false,
   timestamps: true,
 })
+//
 export class Report extends Document {
   @Prop({ type: String })
   subjectId: string;
