@@ -12,6 +12,7 @@ import { PaginationREQ } from 'shared/generics/pagination.request';
 import { PaginationResponse } from 'shared/generics/pagination.response';
 import { createExcelFile } from 'shared/helpers/excel.helper';
 import { QueryPagingHelper } from 'shared/helpers/pagination.helper';
+import { toDocModel } from 'shared/helpers/to-doc-model.helper';
 import { isBlank } from 'shared/validators/query.validator';
 import { PromotionDownloadExcelDTO } from './dto/promotion-download-excel.dto';
 import { PromotionCreateREQ } from './request/promotion-create.request';
@@ -43,8 +44,8 @@ export class PromotionService {
     this.logger.log(`Create promotion by userId: ${userId}, body: ${JSON.stringify(body)}`);
     promotionCreateValidate(body);
     const voucherCode = await this.generateVoucherCode();
-    await this.promotionModel.create({ ...body, voucherCode });
-    return BaseResponse.withMessage({ voucherCode }, 'Tạo khuyến mãi thành công!');
+    const newPromotion = await this.promotionModel.create({ ...body, voucherCode });
+    return BaseResponse.withMessage(toDocModel(newPromotion), 'Tạo khuyến mãi thành công!');
   }
 
   async getPromotionsByStoreId(user: any, storeId: string) {
