@@ -17,6 +17,7 @@ import { NotificationGateway } from 'gateways/notifications/notification.gateway
 import { NotificationService } from 'gateways/notifications/notification.service';
 import { NotificationUpdateREQ } from 'gateways/notifications/request/notification-update.request';
 import { Model } from 'mongoose';
+import { AVATAR_USER_DEFAULT } from 'shared/constants/common.constant';
 import { NOTIFICATION_LINK } from 'shared/constants/notification.constant';
 import { BILL_STATUS } from 'shared/enums/bill.enum';
 import { NotificationType } from 'shared/enums/notification.enum';
@@ -443,6 +444,6 @@ export class UserService {
   }
 
   async updateAvatar() {
-    await this.userModel.updateMany({}, { avatar: 'https://static-00.iconduck.com/assets.00/user-icon-2048x2048-ihoxz4vq.png' });
+    await this.userModel.updateMany({}, { avatar: AVATAR_USER_DEFAULT });
   }
 }

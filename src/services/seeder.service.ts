@@ -7,6 +7,8 @@ import { seedDataPolicy } from 'domains/policy/data-seed/data-seed';
 import { Policy } from 'domains/policy/schema/policy.schema';
 import { User } from 'domains/user/schema/user.schema';
 import { Model } from 'mongoose';
+import { AVATAR_USER_DEFAULT } from 'shared/constants/common.constant';
+import { GenderType } from 'shared/enums/common.enum';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 
 @Injectable()
@@ -42,12 +44,12 @@ export class SeederService {
   async seedAdmin() {
     const hashedPassword = await bcrypt.hash(PASSWORD_ADMIN, SALT_ROUNDS);
     await this.userModel.create({
-      avatar: '',
+      avatar: AVATAR_USER_DEFAULT,
       fullName: 'Admin',
       email: EMAIL_ADMIN,
       address: [],
       phone: '',
-      gender: 'Khác',
+      gender: GenderType.OTHER,
       birthday: new Date(),
       password: hashedPassword,
       role: [ROLE_NAME.ADMIN],

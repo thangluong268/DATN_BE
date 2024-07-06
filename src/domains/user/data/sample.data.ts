@@ -1,8 +1,9 @@
+import { AVATAR_USER_DEFAULT } from 'shared/constants/common.constant';
 import { ROLE_NAME } from 'shared/enums/role-name.enum';
 
 export const USER_DATA = [
   {
-    avatar: 'https://example.com/avatar1.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Nguyễn Văn A',
     email: 'user1@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -26,7 +27,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar2.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Trần Thị B',
     email: 'user2@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -50,7 +51,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar3.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Phạm Văn C',
     email: 'user3@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -74,7 +75,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar4.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Lê Thị D',
     email: 'user4@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -98,7 +99,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar5.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Hoàng Văn E',
     email: 'user5@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -122,7 +123,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar6.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Nguyễn Thị F',
     email: 'user6@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -146,7 +147,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar7.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Trần Văn G',
     email: 'user7@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -170,7 +171,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar8.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Phạm Thị H',
     email: 'user8@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -194,7 +195,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar9.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Lê Văn I',
     email: 'user9@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -218,7 +219,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar10.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Hoàng Thị K',
     email: 'user10@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -242,7 +243,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar11.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Nguyễn Văn L',
     email: 'user11@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -266,7 +267,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar12.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Trần Thị M',
     email: 'user12@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -290,7 +291,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar13.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Phạm Văn N',
     email: 'user13@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -314,7 +315,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar14.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Lê Thị O',
     email: 'user14@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -338,7 +339,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar15.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Hoàng Văn P',
     email: 'user15@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -362,7 +363,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar16.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Nguyễn Thị Q',
     email: 'user16@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -386,7 +387,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar17.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Trần Văn R',
     email: 'user17@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -410,7 +411,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar18.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Phạm Thị S',
     email: 'user18@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -434,7 +435,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar19.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Lê Văn T',
     email: 'user19@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -458,7 +459,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar20.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Hoàng Thị U',
     email: 'user20@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -482,7 +483,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar21.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Nguyễn Thị V',
     email: 'user21@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -506,7 +507,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar22.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Trần Văn X',
     email: 'user22@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -530,7 +531,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar23.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Phạm Thị Y',
     email: 'user23@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -554,7 +555,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar24.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Lê Văn Z',
     email: 'user24@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -578,7 +579,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar25.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Hoàng Thị A',
     email: 'user25@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -602,7 +603,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar26.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Nguyễn Văn B',
     email: 'user26@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -626,7 +627,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar27.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Trần Thị C',
     email: 'user27@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -650,7 +651,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar28.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Phạm Văn D',
     email: 'user28@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -674,7 +675,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar29.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Lê Thị E',
     email: 'user29@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -698,7 +699,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar30.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Hoàng Văn F',
     email: 'user30@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -722,7 +723,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar31.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Nguyễn Thị G',
     email: 'user31@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -746,7 +747,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar32.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Trần Văn H',
     email: 'user32@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -770,7 +771,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar33.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Phạm Thị I',
     email: 'user33@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -794,7 +795,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar34.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Lê Văn K',
     email: 'user34@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -818,7 +819,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar35.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Hoàng Thị L',
     email: 'user35@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',
@@ -842,7 +843,7 @@ export const USER_DATA = [
     role: [ROLE_NAME.USER],
   },
   {
-    avatar: 'https://example.com/avatar36.jpg',
+    avatar: AVATAR_USER_DEFAULT,
     fullName: 'Nguyễn Văn M',
     email: 'user36@example.com',
     password: '$2a$10$kVISen2Nvo0Rio7rAuuXKu0n1q1r9Qc1wLh6kQCamAjWy1JdzP0ye',

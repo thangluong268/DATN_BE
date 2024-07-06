@@ -1,7 +1,7 @@
 import { URL_FE } from 'app.config';
 import { BILL_STATUS } from 'shared/enums/bill.enum';
 
-export const URL_FE_BILL_SUCCESS = `${URL_FE}/bill/user`;
+export const URL_FE_BILL_SUCCESS = `${URL_FE}/user/invoice`;
 
 export const BILL_STATUS_TRANSITION = {
   [BILL_STATUS.NEW]: 'Đơn mới',
