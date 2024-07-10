@@ -27,18 +27,7 @@ export class CloudinaryController {
   }
 
   @Post()
-  @UseInterceptors(
-    FileInterceptor('file', {
-      fileFilter: (req: any, file: File, cb: any) => {
-        if (file.mimetype.match(/\/(jpg|jpeg|png|mp4)$/)) {
-          // Allow storage of file.
-          cb(null, true);
-        } else {
-          cb(new BadRequestException(`Không hỗ trợ loại file ${extname(file.originalname)}`));
-        }
-      },
-    }),
-  )
+  @UseInterceptors(FileInterceptor('file'))
   uploadImage(@UploadedFile() file: File) {
     return this.cloudinaryService.uploadFile(file);
   }
