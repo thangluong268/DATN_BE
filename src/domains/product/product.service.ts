@@ -225,6 +225,7 @@ export class ProductService {
                       keywords: '$$product.keywords',
                       storeId: '$$product.storeId',
                       storeName: '$name',
+                      storeAvatar: '$avatar',
                     },
                   },
                 },
