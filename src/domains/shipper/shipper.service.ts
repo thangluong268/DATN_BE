@@ -69,6 +69,7 @@ export class ShipperService {
     private readonly notificationService: NotificationService,
     private readonly notificationGateway: NotificationGateway,
 
+    // nothing
     private readonly mailService: MailService,
   ) {}
 
