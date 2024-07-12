@@ -302,7 +302,7 @@ export class CronjobsService {
   /**
    * Scan feedback
    */
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async scanFeedback() {
     const feedbacks = await this.feedbackModel.find({ isScan: false }).lean();
     if (feedbacks.length === 0) return;
