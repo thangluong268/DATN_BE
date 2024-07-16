@@ -4,7 +4,7 @@ import { Document, FlattenMaps, Types, UpdateWriteOpResult } from 'mongoose';
 @Schema({
   versionKey: false,
   timestamps: true,
-}) //
+})
 export class Store extends Document {
   @Prop({ type: String, required: true })
   userId: string;
@@ -24,7 +24,7 @@ export class Store extends Document {
   @Prop({ type: String })
   description: string;
 
-  @Prop({ type: Boolean, default: 0 })
+  @Prop({ type: Number, default: 0 })
   warningCount: number;
 
   @Prop({ type: Boolean, default: true })

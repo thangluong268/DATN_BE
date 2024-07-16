@@ -12,6 +12,7 @@ import { Finance } from 'domains/finance/schema/finance.schema';
 import { Product } from 'domains/product/schema/product.schema';
 import { Promotion } from 'domains/promotion/schema/promotion.schema';
 import { Report } from 'domains/report/schema/report.schema';
+import { StoreWallet } from 'domains/store-wallet/schema/store-wallet.schema';
 import { Store } from 'domains/store/schema/store.schema';
 import { Tax } from 'domains/tax/schema/tax.schema';
 import { UserBillTracking } from 'domains/user-bill-tracking/schema/user-bill-tracking.schema';
@@ -71,6 +72,9 @@ export class CronjobsService {
 
     @InjectModel(Feedback.name)
     private readonly feedbackModel: Model<Feedback>,
+
+    @InjectModel(StoreWallet.name)
+    private readonly storeWalletModel: Model<StoreWallet>,
 
     private readonly redisService: RedisService,
 
@@ -233,6 +237,7 @@ export class CronjobsService {
         const bonusCoins = Math.floor((bill.totalPricePayment * 0.2) / 1000);
         await this.userModel.findByIdAndUpdate(bill.userId, { $inc: { wallet: bonusCoins } });
         await this.userBillTrackingModel.deleteMany({ userId: bill.userId });
+        await this.storeWalletModel.updateOne({ storeId: bill.storeId }, { $inc: { wallet: totalPrice } });
       }),
     );
   }

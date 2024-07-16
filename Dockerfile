@@ -33,7 +33,7 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 
 # Expose the port used by your NestJS application
-EXPOSE 5000
+EXPOSE 5002
 
 # Start your NestJS application in production mode
 CMD ["npm", "run", "start:prod"]

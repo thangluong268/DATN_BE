@@ -6,6 +6,7 @@ import { Bill } from 'domains/bill/schema/bill.schema';
 import { Feedback } from 'domains/feedback/schema/feedback.schema';
 import { Product } from 'domains/product/schema/product.schema';
 import { Report } from 'domains/report/schema/report.schema';
+import { StoreWallet } from 'domains/store-wallet/schema/store-wallet.schema';
 import { Model } from 'mongoose';
 import { BILL_STATUS } from 'shared/enums/bill.enum';
 import { PolicyType } from 'shared/enums/policy.enum';
@@ -44,6 +45,9 @@ export class StoreService {
     @InjectModel(Report.name)
     private readonly reportModel: Model<Report>,
 
+    @InjectModel(StoreWallet.name)
+    private readonly storeWalletModel: Model<StoreWallet>,
+
     @InjectModel(Bill.name)
     private readonly billModel: Model<Bill>,
     private readonly billService: BillService,
@@ -57,6 +61,7 @@ export class StoreService {
     if (store) throw new ConflictException('Người dùng đã có cửa hàng!');
     const newStore = await this.storeModel.create({ userId, ...body });
     await this.userModel.findByIdAndUpdate(userId, { role: [...user.role, ROLE_NAME.SELLER] });
+    await this.storeWalletModel.create({ storeId: newStore._id.toString() });
     return BaseResponse.withMessage(newStore, 'Tạo cửa hàng thành công!');
   }
 

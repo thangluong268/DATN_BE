@@ -9,8 +9,10 @@ import { FeedbackModule } from 'domains/feedback/feedback.module';
 import { FinanceModule } from 'domains/finance/finance.module';
 import { PolicyModule } from 'domains/policy/policy.module';
 import { PromotionModule } from 'domains/promotion/promotion.module';
+import { ProposeModule } from 'domains/propose/propose.module';
 import { ReportModule } from 'domains/report/report.module';
 import { ShipperModule } from 'domains/shipper/shipper.module';
+import { StoreWalletModule } from 'domains/store-wallet/store-wallet.module';
 import { TaxModule } from 'domains/tax/tax.module';
 import { UserBillTrackingModule } from 'domains/user-bill-tracking/user-bill-tracking.module';
 import { ConversationModule } from 'gateways/conversations/conversation.module';
@@ -64,6 +66,8 @@ import { SeederService } from './services/seeder.service';
     ShipperModule,
     FeedbackShipperModule,
     MailModule,
+    StoreWalletModule,
+    ProposeModule,
     // ElasticSearchModule,
   ],
   providers: [SeederService, CronjobsService],
