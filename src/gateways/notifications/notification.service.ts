@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { NOTIFICATION_CONTENT } from 'shared/constants/notification.constant';
+import { NOTIFICATION_CONTENT, NOTIFICATION_CONTENT_PURCHASE_PROPOSE } from 'shared/constants/notification.constant';
 import { BILL_STATUS, BILL_STATUS_NOTIFICATION } from 'shared/enums/bill.enum';
 import { NotificationType } from 'shared/enums/notification.enum';
 import { PaginationREQ } from 'shared/generics/pagination.request';
@@ -36,10 +36,14 @@ export class NotificationService {
     type: NotificationType,
     link: string,
     billStatus?: BILL_STATUS | BILL_STATUS_NOTIFICATION,
+    proposeTitle?: string,
   ) {
     this.logger.log(`Create notification for user ${receiverId}`);
     const typeToGetContent = billStatus ? billStatus : type;
-    const content = this.getContent(typeToGetContent);
+    const content =
+      billStatus === BILL_STATUS_NOTIFICATION.PURCHASE_PROPOSE
+        ? NOTIFICATION_CONTENT_PURCHASE_PROPOSE(proposeTitle)
+        : this.getContent(typeToGetContent);
     const newNotification = await this.notificationModel.create({
       receiverId,
       subjectId: subjectInfo.subjectId,

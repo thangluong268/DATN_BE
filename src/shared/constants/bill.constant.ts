@@ -3,6 +3,7 @@ import { BILL_STATUS } from 'shared/enums/bill.enum';
 
 // fixed
 export const URL_FE_BILL_SUCCESS = `${URL_FE}/user/invoice`;
+export const URL_FE_BILL_PROPOSE = `${URL_FE}/shop/seller`;
 
 export const BILL_STATUS_TRANSITION = {
   [BILL_STATUS.NEW]: 'Đơn mới',

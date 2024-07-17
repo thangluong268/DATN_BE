@@ -40,6 +40,7 @@ export const NOTIFICATION_LINK = {
   [NotificationType.EVALUATION]: `/product/`, // + product id
   [NotificationType.FEEDBACK]: `/product/`, // + product id
   [BILL_STATUS_NOTIFICATION.NEW_SELLER]: `/shop/seller/`, // + store id
+  [BILL_STATUS_NOTIFICATION.PURCHASE_PROPOSE]: `/shop/seller/`, // + store id
   [BILL_STATUS.DELIVERING]: `/shop/seller/`, // + store id
   [BILL_STATUS.DELIVERED]: `/shop/seller/`, // + store id
   [BILL_STATUS.BACK]: `/shop/seller/`, // + store id
@@ -48,3 +49,5 @@ export const NOTIFICATION_LINK = {
 
 export const NOTIFICATION_CONTENT_AUTO_BILL_SUCCESS = (storeName: string) =>
   `Cảm ơn bạn đã mua sắm tại ${storeName}.\nMọi thắc mắc vui lòng liên hệ shop để được hỗ trợ.`;
+
+export const NOTIFICATION_CONTENT_PURCHASE_PROPOSE = (proposeTitle: string) => `Bạn đã mua ${proposeTitle}.`;

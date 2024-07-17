@@ -19,3 +19,20 @@ export const createVNPayPayment = async (body: PaymentDTO) => {
     throw new BadRequestException((e && e.message) || 'Failed to check payment approval');
   }
 };
+
+export const createVNPayPaymentPropose = async (body: PaymentDTO) => {
+  try {
+    const res = await axios({
+      url: `${HOST}/api/vn-pay/propose`,
+      method: 'post',
+      data: {
+        amount: body.amount,
+        bankCode: 'NCB',
+        paymentId: body.paymentId,
+      },
+    });
+    return res.data;
+  } catch (e) {
+    throw new BadRequestException((e && e.message) || 'Failed to check payment approval');
+  }
+};
