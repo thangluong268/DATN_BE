@@ -1,11 +1,10 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Product } from 'domains/product/schema/product.schema';
+import { StorePropose } from 'domains/store-propose/schema/store-propose.schema';
 import { Store } from 'domains/store/schema/store.schema';
 import { NotificationSubjectInfoDTO } from 'gateways/notifications/dto/notification-subject-info.dto';
 import { NotificationGateway } from 'gateways/notifications/notification.gateway';
 import { NotificationService } from 'gateways/notifications/notification.service';
-import { ObjectId } from 'mongodb';
 import { Model } from 'mongoose';
 import { PaymentDTO } from 'payment/dto/payment.dto';
 import { PaypalProposeGateway, VNPayProposeGateway } from 'payment/payment-propose.gateway';
@@ -16,11 +15,9 @@ import { NOTIFICATION_LINK } from 'shared/constants/notification.constant';
 import { BILL_STATUS_NOTIFICATION, PAYMENT_METHOD } from 'shared/enums/bill.enum';
 import { NotificationType } from 'shared/enums/notification.enum';
 import { BaseResponse } from 'shared/generics/base.response';
-import { shuffleArrayHelper } from 'shared/helpers/shuffle-array.helper';
 import { v4 as uuid } from 'uuid';
 import { ProposeBillCreateREQ } from './request/propose-bill-create.request';
 import { ProposeCreateREQ } from './request/propose-create.request';
-import { ProposeGetProductREQ } from './request/propose-get-product.request';
 import { ProposeGetRESP } from './response/propose-get.response';
 import { Propose } from './schema/propose.schema';
 
@@ -34,8 +31,8 @@ export class ProposeService {
     @InjectModel(Store.name)
     private readonly storeModel: Model<Store>,
 
-    @InjectModel(Product.name)
-    private readonly productModel: Model<Product>,
+    @InjectModel(StorePropose.name)
+    private readonly storeProposeModel: Model<StorePropose>,
 
     private readonly redisService: RedisService,
     private readonly paymentProposeService: PaymentProposeService,
@@ -65,23 +62,6 @@ export class ProposeService {
     );
   }
 
-  async getStoreProposes() {
-    this.logger.log(`Get store proposes`);
-    const proposes = await this.proposeModel.find({ status: true }).select('storeIds').lean();
-    const storeIdsPropose = Array.from(new Set(proposes.map((propose) => propose.storeIds).flat())).map(
-      (storeId) => new ObjectId(storeId),
-    );
-    const storeProposes = await this.storeModel.find({ _id: { $in: storeIdsPropose } }).lean();
-    const data = storeProposes.map((store) => ({
-      id: store._id.toString(),
-      name: store.name,
-      avatar: store.avatar,
-      address: store.address,
-      phoneNumber: store.phoneNumber,
-    }));
-    return BaseResponse.withMessage(data, 'Lấy danh sách cửa hàng đã mua gói đề xuất thành công');
-  }
-
   async purchase(userReq: any, id: string, body: ProposeBillCreateREQ) {
     this.logger.log(`Purchase propose`);
     const paymentId = uuid();
@@ -105,12 +85,24 @@ export class ProposeService {
     const data = await redisClient.get(paymentId);
     if (data) {
       const { proposeId, storeId } = JSON.parse(data);
-      const isExist = await this.proposeModel.exists({ _id: proposeId, storeIds: storeId });
-      if (!isExist) {
-        await this.proposeModel.findByIdAndUpdate(proposeId, { $push: { storeIds: storeId } });
+      const isExist = await this.storeProposeModel.exists({ storeId });
+      if (isExist) {
+        await this.storeProposeModel.deleteMany({ storeId });
       }
-      const store = await this.storeModel.findById(storeId).lean();
       const propose = await this.proposeModel.findById(proposeId).lean();
+      const store = await this.storeModel.findById(storeId).lean();
+
+      await this.storeProposeModel.create({
+        storeId,
+        storeAvatar: store.avatar,
+        storeName: store.name,
+        storeAddress: store.address,
+        storePhoneNumber: store.phoneNumber,
+        proposeId: proposeId.toString(),
+        title: propose.title,
+        price: propose.price,
+        timePackage: propose.timePackage,
+      });
       // Send notification to seller
       const subjectInfoToSeller = NotificationSubjectInfoDTO.ofProduct(propose._id.toString(), propose.title, propose.image);
       const receiverIdToSeller = store.userId;
@@ -145,27 +137,5 @@ export class ProposeService {
       return storeId;
     }
     return null;
-  }
-
-  async getProductsPropose(query: ProposeGetProductREQ) {
-    this.logger.log(`Get products propose`);
-    const limit = query.limit || 10;
-    const proposes = await this.proposeModel.find({ status: true }).select('storeIds').lean();
-    const storeIdsPropose = Array.from(new Set(proposes.map((propose) => propose.storeIds).flat()));
-    const shuffleStoreIds = shuffleArrayHelper<string>(storeIdsPropose);
-    const products = await this.productModel
-      .find({ storeId: { $in: shuffleStoreIds }, status: true })
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .lean();
-    return BaseResponse.withMessage(products, 'Lấy danh sách sản phẩm gợi ý thành công');
-  }
-
-  async getMyPropose(userReq: any) {
-    this.logger.log(`Get my propose`);
-    const store = await this.storeModel.findOne({ userId: userReq._id.toString() }).lean();
-    const proposes = await this.proposeModel.find({ storeIds: store._id.toString() }).sort({ price: -1 }).lean();
-    const res = proposes.length > 0 ? ProposeGetRESP.of(proposes[0]) : null;
-    return BaseResponse.withMessage(res, 'Lấy gói đề xuất của cửa hàng thành công');
   }
 }

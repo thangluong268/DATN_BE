@@ -20,9 +20,6 @@ export class Propose extends Document {
 
   @Prop({ type: Boolean, default: true })
   status: boolean;
-
-  @Prop({ type: [String], default: [] })
-  storeIds: string[];
 }
 
 export const ProposeSchema = SchemaFactory.createForClass(Propose);

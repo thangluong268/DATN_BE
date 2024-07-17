@@ -12,6 +12,7 @@ import { PromotionModule } from 'domains/promotion/promotion.module';
 import { ProposeModule } from 'domains/propose/propose.module';
 import { ReportModule } from 'domains/report/report.module';
 import { ShipperModule } from 'domains/shipper/shipper.module';
+import { StoreProposeModule } from 'domains/store-propose/store-propose.module';
 import { StoreWalletModule } from 'domains/store-wallet/store-wallet.module';
 import { TaxModule } from 'domains/tax/tax.module';
 import { UserBillTrackingModule } from 'domains/user-bill-tracking/user-bill-tracking.module';
@@ -68,6 +69,7 @@ import { SeederService } from './services/seeder.service';
     MailModule,
     StoreWalletModule,
     ProposeModule,
+    StoreProposeModule,
     // ElasticSearchModule,
   ],
   providers: [SeederService, CronjobsService],
